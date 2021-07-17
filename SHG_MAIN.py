@@ -277,7 +277,21 @@ def do_work():
         
         #image seuils protus
         frame1=np.copy(frame)
-        Seuil_haut=np.percentile(frame1,99.9999)*0.18
+        #MattC cut out disk first
+        #MattC BTW given default setting of disk_display this was never executed
+        #if ratio_fixe==0 and disk_display==True:
+        #MattC for now, let's always do this
+        if 1==1 :
+            #MattC - demo simple processing of proms seperate from disc settings
+            clahe2 = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(1,1))
+            cl2 = clahe2.apply(frame1)
+            x0=cercle[0]
+            y0=cercle[1]-1
+            r=int(cercle[2]*0.5)+1
+            #MattC - turn disc to black, more aesthetically pleasing, IMHO
+            frame1=cv2.circle(cl2, (x0,y0),r,0,-1)
+        #MattC adjust scaling
+        Seuil_haut=np.percentile(frame1,99.9999)
         Seuil_bas=0
         print('seuil bas protu', Seuil_bas)
         print('seuil haut protu', Seuil_haut)
@@ -285,11 +299,7 @@ def do_work():
         fc2=(frame1-Seuil_bas)* (65000/(Seuil_haut-Seuil_bas))
         fc2[fc2<0]=0
         frame_contrasted3=np.array(fc2, dtype='uint16')
-        if ratio_fixe==0 and disk_display==True:
-            x0=cercle[0]
-            y0=cercle[1]-1
-            r=int(cercle[2]*0.5)+1
-            frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)
+        #MattC code that was at this line moved up above ...
         if flag_result_show:
             cv2.imshow('sun3',frame_contrasted3)
             #cv2.waitKey(0)
