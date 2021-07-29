@@ -37,11 +37,21 @@ def make_header(rdr):
     hdr['EXPTIME']=0
     return hdr
 
-def solex_proc(serfile, options):
-    clearlog()
-    #plt.gray()              #palette de gris si utilise matplotlib pour visu debug
-    flag_display = options['flag_display']
-    logme('Using pixel shift : ' + str(options['shift']))
+# compute mean image of video
+def compute_mean(serfile):
+    """IN : serfile path"
+    OUT :numpy array
+    """
+    rdr = ser_reader(serfile)
+    logme('Width, Height : '+str(rdr.Width)+' '+str(rdr.Height)) 
+    logme('Number of frames : '+str(rdr.FrameCount))
+    my_data = np.zeros((rdr.ih, rdr.iw),dtype='uint64')
+    while rdr.has_frames():
+        img = rdr.next_frame()
+        my_data += img
+    return (my_data / rdr.FrameCount).astype('uint16')
+
+def compute_mean_return_fit(serfile, options, LineRecal = 1): 
     """
     ----------------------------------------------------------------------------
     Reconstuit l'image du disque a partir de l'image moyenne des trames et 
@@ -54,17 +64,15 @@ def solex_proc(serfile, options):
     longueur d'onde decalée
     ----------------------------------------------------------------------------
     """
+    flag_display = options['flag_display']
     # first compute mean image
     # rdr is the ser_reader object
-    mean_img, rdr = compute_mean(serfile)
+    mean_img= compute_mean(serfile)
+    rdr = ser_reader(serfile)
     hdr = make_header(rdr)
     ih = rdr.ih
     iw = rdr.iw
-    
-    WorkDir=os.path.dirname(serfile)+"/"
-    os.chdir(WorkDir)
-    base=os.path.basename(serfile)
-    basefich=os.path.splitext(base)[0]
+    basefich = options['basefich']
 
     """
     ----------------------------------------------------------------------------
@@ -116,7 +124,7 @@ def solex_proc(serfile, options):
     np_m=np.asarray(MinOfRaie)
     xm,ym=np_m.T
     #LineRecal=xm.min()
-    LineRecal=1
+    
     p=np.polyfit(ym,xm,2)
     
     #calcul des x colonnes pour les y lignes du polynome
@@ -129,28 +137,27 @@ def solex_proc(serfile, options):
         x=a*y**2+b*y+c
         deci=x-int(x)
         fit.append([int(x)-LineRecal,deci,y])
-        #ecart.append([x-LineRecal,y])
+    return fit, a, b, c
+
+def solex_proc(serfile, options):
+    clearlog()
+    #plt.gray()              #palette de gris si utilise matplotlib pour visu debug
+    
+    logme('Using pixel shift : ' + str(options['shift']))
+    WorkDir=os.path.dirname(serfile)+"/"
+    os.chdir(WorkDir)
+    base=os.path.basename(serfile)
+    basefich=os.path.splitext(base)[0]
+    options['basefich']=basefich
+    LineRecal=1
+    rdr = ser_reader(serfile)
+    hdr = make_header(rdr)
+    
+    
+    fit, a, b, c = compute_mean_return_fit(serfile, options, LineRecal)
+    
     # Modification Jean-Francois: correct the variable names: A0, A1, A2
     logme('Coeff A0, A1, A2 :  '+str(a)+'  '+str(b)+'  '+str(c))
-    
-    np_fit=np.asarray(fit)
-    xi, xdec,y = np_fit.T
-    xdec=xi+xdec+LineRecal
-    xi=xi+LineRecal
-    #imgplot1 = plt.imshow(myimg)
-    #plt.scatter(xm,ym,s=0.1, marker='.', edgecolors=('blue'))
-    #plt.scatter(xi,y,s=0.1, marker='.', edgecolors=('red'))
-    #plt.scatter(xdec,y,s=0.1, marker='.', edgecolors=('green'))
-    
-    #plt.show()
-
-    #on sauvegarde les params de reconstrution
-    #reconfile='recon_'+basefich+'.txt'
-    #np.savetxt(reconfile,ecart,fmt='%f',header='fichier recon',footer=str(LineRecal))
-
-    
-
-
     
     Disk, ih, iw, FrameCount = read_video_improved(serfile, fit, LineRecal, options)
 
@@ -162,7 +169,7 @@ def solex_proc(serfile, options):
         DiskHDU=fits.PrimaryHDU(Disk,header=hdr)
         DiskHDU.writeto(basefich+'_img.fits', overwrite='True')
     
-    if flag_display:
+    if options['flag_display']:
         cv2.destroyAllWindows()
     
     """
