@@ -52,6 +52,8 @@ def compute_mean(serfile):
     return (my_data / rdr.FrameCount).astype('uint16')
 
 def compute_mean_return_fit(serfile, options, LineRecal = 1): 
+    global hdr, ih, iw
+
     """
     ----------------------------------------------------------------------------
     Reconstuit l'image du disque a partir de l'image moyenne des trames et 
@@ -68,11 +70,6 @@ def compute_mean_return_fit(serfile, options, LineRecal = 1):
     # first compute mean image
     # rdr is the ser_reader object
     mean_img= compute_mean(serfile)
-    rdr = ser_reader(serfile)
-    hdr = make_header(rdr)
-    ih = rdr.ih
-    iw = rdr.iw
-    basefich = options['basefich']
 
     """
     ----------------------------------------------------------------------------
@@ -139,46 +136,9 @@ def compute_mean_return_fit(serfile, options, LineRecal = 1):
         fit.append([int(x)-LineRecal,deci,y])
     return fit, a, b, c
 
-def solex_proc(serfile, options):
-    clearlog()
-    #plt.gray()              #palette de gris si utilise matplotlib pour visu debug
+def correct_bad_lines_and_geom(Disk, options):
+    global hdr, basefich
     
-    logme('Using pixel shift : ' + str(options['shift']))
-    WorkDir=os.path.dirname(serfile)+"/"
-    os.chdir(WorkDir)
-    base=os.path.basename(serfile)
-    basefich=os.path.splitext(base)[0]
-    options['basefich']=basefich
-    LineRecal=1
-    rdr = ser_reader(serfile)
-    hdr = make_header(rdr)
-    
-    
-    fit, a, b, c = compute_mean_return_fit(serfile, options, LineRecal)
-    
-    # Modification Jean-Francois: correct the variable names: A0, A1, A2
-    logme('Coeff A0, A1, A2 :  '+str(a)+'  '+str(b)+'  '+str(c))
-    
-    Disk, ih, iw, FrameCount = read_video_improved(serfile, fit, LineRecal, options)
-
-    hdr['NAXIS1']=iw # note: slightly dodgy, new width
-   
-    #sauve fichier disque reconstruit
-
-    if options['save_fit']:
-        DiskHDU=fits.PrimaryHDU(Disk,header=hdr)
-        DiskHDU.writeto(basefich+'_img.fits', overwrite='True')
-    
-    if options['flag_display']:
-        cv2.destroyAllWindows()
-    
-    """
-    --------------------------------------------------------------------
-    --------------------------------------------------------------------
-    on passe au calcul des mauvaises lignes et de la correction geometrique
-    --------------------------------------------------------------------
-    --------------------------------------------------------------------
-    """
     iw=Disk.shape[1]
     ih=Disk.shape[0]
     img=Disk
@@ -226,31 +186,14 @@ def solex_proc(serfile, options):
 
     if options['save_fit']:
         DiskHDU=fits.PrimaryHDU(img,header=hdr)
-        DiskHDU.writeto(basefich+'_corr.fits', overwrite='True')     
-    
-    """
-    ------------------------------------------------------------
-    calcul de la geometrie si on voit les bords du soleil
-    sinon on applique un facteur x=1.0
-    ------------------------------------------------------------
-    """
-    
-    NewImg, newiw, flag_nobords = img, iw, False
-    
-    """
-    on fit un cercle !!!
-   
-    
-    CercleFit=detect_fit_cercle (frame,y1,y2)
-    print(CercleFit)
-    
-   
-    --------------------------------------------------------------
-    on echaine avec la correction de transversallium
-    --------------------------------------------------------------
-    """
+        DiskHDU.writeto(basefich+'_corr.fits', overwrite='True')
+    return img
 
-    frame = NewImg
+def correct_transversalium(img, flag_nobords, options):
+    global hdr, ih, basefich
+    frame = img
+    newiw=img.shape[1]
+    ih=img.shape[0]
     flag_nobords = False
     # on cherche la projection de la taille max du soleil en Y
     y1,y2=detect_bord(frame, axis=1,offset=0)
@@ -354,11 +297,60 @@ def solex_proc(serfile, options):
     BelleImage=np.divide(frame,flat)
     frame=np.array(BelleImage, dtype='uint16')
     # sauvegarde de l'image deflattée
-
     if options['save_fit']:
         DiskHDU=fits.PrimaryHDU(frame,header=hdr)
         DiskHDU.writeto(basefich+'_flat.fits', overwrite='True')
+    return frame
 
+def solex_proc(serfile, options):
+    global hdr, ih, iw, basefich
+    clearlog()
+    #plt.gray()              #palette de gris si utilise matplotlib pour visu debug
+    logme('Using pixel shift : ' + str(options['shift']))
+    WorkDir=os.path.dirname(serfile)+"/"
+    os.chdir(WorkDir)
+    base=os.path.basename(serfile)
+    basefich=os.path.splitext(base)[0]
+    LineRecal=1
+    rdr = ser_reader(serfile)
+    hdr = make_header(rdr)
+    ih = rdr.ih
+    iw = rdr.iw
+    
+    fit, a, b, c = compute_mean_return_fit(serfile, options, LineRecal)
+    
+    # Modification Jean-Francois: correct the variable names: A0, A1, A2
+    logme('Coeff A0, A1, A2 :  '+str(a)+'  '+str(b)+'  '+str(c))
+    
+    Disk, ih, iw, FrameCount = read_video_improved(serfile, fit, LineRecal, options)
+
+    hdr['NAXIS1']=iw # note: slightly dodgy, new width
+   
+    #sauve fichier disque reconstruit
+
+    if options['save_fit']:
+        DiskHDU=fits.PrimaryHDU(Disk,header=hdr)
+        DiskHDU.writeto(basefich+'_img.fits', overwrite='True')
+    
+    if options['flag_display']:
+        cv2.destroyAllWindows()
+    
+    """
+    --------------------------------------------------------------------
+    --------------------------------------------------------------------
+    on passe au calcul des mauvaises lignes et de la correction geometrique
+    --------------------------------------------------------------------
+    --------------------------------------------------------------------
+    """
+    img = correct_bad_lines_and_geom(Disk, options)
+        
+    """
+    --------------------------------------------------------------
+    on echaine avec la correction de transversallium
+    --------------------------------------------------------------
+    """
+    flag_nobords = False
+    frame_flatted = correct_transversalium(img,flag_nobords, options)
 
     """
     We now apply ellipse_fit to apply the geometric correction
@@ -366,25 +358,22 @@ def solex_proc(serfile, options):
     """
 
     if not 'ratio_fixe' in options and not 'slant_fix' in options:
-        frame, cercle = ellipse_to_circle(frame, options)
+        frame_circularized, cercle = ellipse_to_circle(frame_flatted, options)
     else:
         ratio = options['ratio_fixe'] if 'ratio_fixe' in options else 1.0
         phi = math.radians(options['slant_fix']) if 'slant_fix' in options else 0.0
-        frame, cercle = correct_image(frame / 65536, phi, ratio), (-1, -1, -1) # Note that we assume 16-bit
-        
-    
-    
+        frame_circularized, cercle = correct_image(frame_flatted / 65536, phi, ratio), (-1, -1, -1) # Note that we assume 16-bit
+
     # sauvegarde en fits de l'image finale
     
-
     if options['save_fit']:
-        DiskHDU=fits.PrimaryHDU(frame,header=hdr)
+        DiskHDU=fits.PrimaryHDU(frame_circularized,header=hdr)
         DiskHDU.writeto(basefich+'_recon.fits', overwrite='True')
             
     with  open(basefich+'_log.txt', "w") as logfile:
         logfile.writelines(mylog)
     
-    return frame, hdr, cercle
+    return frame_circularized, hdr, cercle
     
 
 
