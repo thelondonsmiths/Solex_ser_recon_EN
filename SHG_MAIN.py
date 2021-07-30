@@ -25,12 +25,6 @@ import tkinter as tk
 import ctypes # Modification Jean-Francois: for reading the monitor size
 import cv2
 
-flag_dictionnary = {
-    'd' : 'flag_display', #True False display all pictures
-    'c' : 'clahe_only',  #True/False
-    'f' : 'save_fit', #True/False
-    'p' : 'disk_display' #True/False protuberances 
-    }
 
 def usage():
     return "SHG_MAIN.py [-dcfrp] [file(s) to treat]"
@@ -115,6 +109,13 @@ options = {
 'disk_display' : True #protus
 }
 
+flag_dictionnary = {
+    'd' : 'flag_display', #True False display all pictures
+    'c' : 'clahe_only',  #True/False
+    'f' : 'save_fit', #True/False
+    'p' : 'disk_display' #True/False protuberances 
+    }
+
 # list of files to process
 ## add a command line argument.
 if len(sys.argv)>1 : 
@@ -125,7 +126,7 @@ if len(sys.argv)>1 :
             if argument.split('.')[-1].upper()=='SER' : 
                 serfiles.append(argument)
     print('theses files are going to be processed : ', serfiles)
-    print('with values : shift %s, flag_display %s, ratio_fixe "%s", slant_fix "%s", save_fit %s, clahe_only %s, disk_display %s' %(options['shift'], options['flag_display'], options['ratio_fixe'], options['slant_fix'], options['save_fit'], options['clahe_only'], options['disk_display']) )
+print('Processing will begin with values : \n shift %s, flag_display %s, ratio_fixe "%s", slant_fix "%s", save_fit %s, clahe_only %s, disk_display %s' %(options['shift'], options['flag_display'], options['ratio_fixe'], options['slant_fix'], options['save_fit'], options['clahe_only'], options['disk_display']) )
 
 # check for .ini file for working directory           
 try:
@@ -138,7 +139,7 @@ except:
     
 # if no command line arguments, open GUI interface
 if len(serfiles)==0 : 
-    serfiles, shift, flag_display, ratio_fixe, slant_fix, save_fit, clahe_only =UI_SerBrowse(WorkDir)
+    serfiles, shift, flag_display, ratio_fixe, slant_fix, save_fit, clahe_only =UI_SerBrowse(WorkDir) #TODO as options is defined as global, only serfiles could be returned
     try : 
         options['shift'] = int(shift)
     except ValueError : 
@@ -173,7 +174,6 @@ def do_work():
         
     # boucle sur la liste des fichers
     for serfile in serfiles:
-
         if serfile=='':
             sys.exit()
         print('file %s is processing'%serfile)
@@ -184,7 +184,7 @@ def do_work():
         if base=='':
             print('erreur nom de fichier : ',serfile)
             sys.exit()
-        
+
         # ouverture du fichier ser
         try:
             f=open(serfile, "rb")
