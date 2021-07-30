@@ -117,6 +117,10 @@ def get_edge_list(image, sigma = 2):
     return np.array([X, raw_X], dtype=object) 
 
 def ellipse_to_circle(image, options):
+    """from an entire sun frame, compute ellipse fit and return a circularise picture and center coordinates
+    IN : numpy array, dictionnayr of options
+    OUt :numpy array, numpy array (2 elements)
+    """
     image = image / 65536 # assume 16 bit
     factor = 4
     processed = get_edge_list(downscale_local_mean(image, (factor,factor))) * factor# down-scaled, then upscaled back
