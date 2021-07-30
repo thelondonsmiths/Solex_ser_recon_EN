@@ -30,27 +30,31 @@ def dofit(points):
     return center, width, height, phi, reg.return_fit(n_points=100)
 
 
-def two_step(X):
-    center, width, height, phi, _ = dofit(X)
+def two_step(points):
+    """Launch twice an ellipse fit. One with all edge points, one with only tresholded values.
+    IN : numpy array of edge points.
+    OUT : np.array(center), height, phi, ratio, points_tresholded, ellipse_points
+    """
+    center, width, height, phi, _ = dofit(points)
     mat = np.array([np.array([np.cos(phi), np.sin(phi)])/width, np.array([-np.sin(phi), np.cos(phi)])/height])
-    Xr = mat @ (X - np.array(center)).T
-    X1r = Xr[0, :]
-    X2r = Xr[1, :]   
+    Xr = mat @ (points - np.array(center)).T
     values = np.linalg.norm(Xr, axis = 0) - 1
     #print(np.mean(values), np.std(values), max(values), min(values))
     anomaly_threshold = max(values)
-    X = X[values > -max(values)]
-    center, width, height, phi, ellipse_points = dofit(X)
+    points_tresholded = points[values > -max(values)]
+    center, width, height, phi, ellipse_points = dofit(points_tresholded)
     mat = np.array([np.array([np.cos(phi), np.sin(phi)])/width, np.array([-np.sin(phi), np.cos(phi)])/height])
-    Xr = mat @ (X - np.array(center)).T
-    X1r = Xr[0, :]
-    X2r = Xr[1, :]    
+    Xr = mat @ (points_tresholded - np.array(center)).T
     values = np.linalg.norm(Xr, axis = 0) - 1
     #print(np.mean(values), np.std(values), max(values), min(values))
     ratio = width / height
-    return np.array(center), height, phi, ratio, X, ellipse_points
+    return np.array(center), height, phi, ratio, points_tresholded, ellipse_points
 
 def correct_image(image, phi, ratio, center):
+    """correct image geometry. TODO : a rotation is made instead of a tilt
+    IN : numpy array, float, float, numpy array (2 elements)
+    OUT : numpy array, numpy array (2 elements)
+    """
     logme('Y/X ratio : ' + "{:.3f}".format(ratio))
     logme('Tilt angle : ' + "{:.3f}".format(math.degrees(phi)) + " degrees")
     mat = np.array([[np.cos(phi), np.sin(phi)], [-np.sin(phi), np.cos(phi)]]) @ np.array([[1/ratio, 0], [0, 1]])
