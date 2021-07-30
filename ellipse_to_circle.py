@@ -21,10 +21,11 @@ from matplotlib.patches import Ellipse
 NUM_REG = 1 #6 # include biggest NUM_REG regions in fit
 
 
-def dofit(X):
-    X1 = X[:, 0]
-    X2 = X[:, 1]
-    reg = LsqEllipse().fit(X)
+def dofit(points):
+    """IN : numpy points coordinates
+    OUT : center, width, height, phi, fit informations
+    """
+    reg = LsqEllipse().fit(points)
     center, width, height, phi = reg.as_parameters()
     return center, width, height, phi, reg.return_fit(n_points=100)
 
@@ -125,7 +126,6 @@ def ellipse_to_circle(image, options):
     
     if options['flag_display']:
         fig, ax = plt.subplots(ncols=2, nrows = 2)
-
         ax[0][0].imshow(image, cmap=plt.cm.gray)
         ax[0][0].set_title('uncorrected image', fontsize = 11)
         ax[0][1].plot(raw_X[:, 1], image.shape[0] - raw_X[:, 0], 'ro', label = 'edge detection')
@@ -151,3 +151,5 @@ def ellipse_to_circle(image, options):
   
     circle = (center[0], center[1], height*ratio) # radius == height*ratio
     return fix_img, circle
+
+    
