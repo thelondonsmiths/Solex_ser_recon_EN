@@ -187,6 +187,8 @@ def correct_bad_lines_and_geom(Disk, options):
     if options['save_fit']:
         DiskHDU=fits.PrimaryHDU(img,header=hdr)
         DiskHDU.writeto(basefich+'_corr.fits', overwrite='True')
+        
+        
     return img
 
 def correct_transversalium(img, flag_nobords, options):
