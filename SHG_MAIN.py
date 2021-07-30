@@ -27,12 +27,20 @@ import cv2
 
 
 def usage():
-    return "SHG_MAIN.py [-dcfrp] [file(s) to treat]"
-
+    usage_ = "SHG_MAIN.py [-dcfp] [file(s) to treat]\n"
+    usage_ += "'d' : 'flag_display', display all pictures\n"
+    usage_ += "'c' : 'clahe_only',  only clahe picture is saved\n"
+    usage_ += "'f' : 'save_fit', all fits are saved\n"
+    usage_ += "'p' : 'disk_display' save protuberance pictures "
+    return usage_
+    
 def treat_flag_at_cli(arguments):
     global options
     #reading arguments
     for caracter in argument[1:]: #remove '-'
+        if caracter=='h':
+            print(usage())
+            sys.exit()
         try : 
             options[flag_dictionnary[caracter]]=True if flag_dictionnary.get(caracter) else False
         except KeyError : 
