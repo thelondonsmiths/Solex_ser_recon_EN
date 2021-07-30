@@ -127,14 +127,8 @@ def ellipse_to_circle(image, options):
     X, raw_X = processed[0], processed[1]
     center, height, phi, ratio, X_f, ellipse_points = two_step(X)
     center = np.array([center[1], center[0]])
-    #plt.imshow(image)
-    #plt.plot([center[0]], [center[1]], 'ro')
-    #plt.show()
-    fix_img, center = correct_image(image, phi, ratio, center)
     
-    #plt.imshow(fix_img)
-    #plt.plot([center[0]], [center[1]], 'ro')
-    #plt.show()
+    fix_img, center = correct_image(image, phi, ratio, center)
     
     if options['flag_display']:
         fig, ax = plt.subplots(ncols=2, nrows = 2)
