@@ -73,6 +73,10 @@ def correct_image(image, phi, ratio, center):
     return corrected_img, new_center
 
 def get_edge_list(image, sigma = 2):
+    """"from a picture, return a numpy array containing edge points
+    IN : frame as numpy array, integer
+    OUT : numpy array
+    """
     if sigma <= 0:
         logme('ERROR: could not find any edges')
         return image, (-1, -1, -1)
