@@ -62,60 +62,6 @@ class ser_reader:
     def has_frames(self):
         return self.FrameIndex+1 < self.FrameCount
 
-# read video and return constructed image of sun using fit and LineRecal
-def read_video_improved(serfile, fit, LineRecal, options):
-    rdr = ser_reader(serfile)
-    ih, iw = rdr.ih, rdr.iw
-    
-    if options['flag_display']:
-        cv2.namedWindow('disk', cv2.WINDOW_NORMAL)
-        FrameMax=rdr.FrameCount
-        cv2.resizeWindow('disk', FrameMax//3, ih//3)
-        cv2.moveWindow('disk', 200, 0)
-        #initialize le tableau qui va recevoir la raie spectrale de chaque trame
-        Disk=np.zeros((ih,FrameMax), dtype='uint16')
-        
-        cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-        cv2.moveWindow('image', 0, 0)
-        cv2.resizeWindow('image', int(iw), int(ih))
-    else:
-        #Disk=np.zeros((ih,1), dtype='uint16')
-        FrameMax=rdr.FrameCount
-        Disk=np.zeros((ih,FrameMax), dtype='uint16')
-        
-    shift = options['shift']
-    ind_l = (np.asarray(fit)[:, 0] + np.ones(ih) * (LineRecal + shift)).astype(int)
-    
-    #CLEAN if fitting goes too far
-    ind_l[ind_l < 0] = 0
-    ind_l[ind_l > iw - 2] = iw - 2
-    ind_r = (ind_l + np.ones(ih)).astype(int)
-    left_weights = np.ones(ih) - np.asarray(fit)[:, 1]
-    right_weights = np.ones(ih) - left_weights
-
-    # lance la reconstruction du disk a partir des trames
-    print('reader num frames:', rdr.FrameCount)
-    while rdr.has_frames():
-        img = rdr.next_frame()               
-        if options['flag_display'] and rdr.FrameIndex % 10 == 0 :
-            cv2.imshow('image', img)
-            if cv2.waitKey(1)==27:
-                cv2.destroyAllWindows()
-                sys.exit()
-
-        left_col = img[np.arange(ih), ind_l]
-        right_col = img[np.arange(ih), ind_r]
-        IntensiteRaie = left_col*left_weights + right_col*right_weights
-        
-        #ajoute au tableau disk 
-        Disk[:,rdr.FrameIndex]=IntensiteRaie
-        
-        if options['flag_display'] and rdr.FrameIndex % 10 ==0:
-            cv2.imshow ('disk', Disk)
-            if cv2.waitKey(1) == 27:                     # exit if Escape is hit
-                cv2.destroyAllWindows()    
-                sys.exit()
-    return Disk, ih, iw, rdr.FrameCount
 
 
 
