@@ -8,7 +8,7 @@ import numpy as np
 class ser_reader:
 
     def __init__(self, serfile):
-            #ouverture et lecture de l'entete du fichier ser
+        #ouverture et lecture de l'entete du fichier ser
         self.serfile = serfile
         self.FileID=np.fromfile(serfile, dtype='int8',count=14)
         offset=14
