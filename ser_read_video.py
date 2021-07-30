@@ -3,7 +3,7 @@
 with improvements by Andrew Smith
 
 """
-from solex_util import *
+import numpy as np
 
 class ser_reader:
 
