@@ -367,6 +367,7 @@ def solex_proc(serfile, options):
    
     #sauve fichier disque reconstruit
 
+
     if options['save_fit']:
         DiskHDU=fits.PrimaryHDU(Disk,header=hdr)
         DiskHDU.writeto(basefich+'_img.fits', overwrite='True')
@@ -395,8 +396,7 @@ def solex_proc(serfile, options):
     We now apply ellipse_fit to apply the geometric correction
 
     """
-    print("OPTIONS", options)
-    if not options['ratio_fixe'] and not options['slant_fix']:
+    if not 'ratio_fixe' in options and not 'slant_fix' in options:
         frame_circularized, cercle = ellipse_to_circle(frame_flatted, options)
     else:
         ratio = options['ratio_fixe'] if 'ratio_fixe' in options else 1.0

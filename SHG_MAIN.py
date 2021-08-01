@@ -214,7 +214,7 @@ def do_work():
         # dx: decalage en pixel par rapport au centre de la raie
 
         try : 
-            frame, header, cercle=sol.solex_proc(serfile,options)
+            frame, header, cercle=sol.solex_proc(serfile,options)       
         
             print('circle = ' , cercle)
 
@@ -327,6 +327,7 @@ def do_work():
         except :
             print('treatment collapse')
             cv2.destroyAllWindows()
+
 
 if 0:        
     cProfile.run('do_work()', sort='cumtime')
