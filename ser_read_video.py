@@ -1,6 +1,7 @@
 """
-@author: valerie desnoux
+@author: Valerie Desnoux
 with improvements by Andrew Smith
+Version 1 August 2021
 
 """
 import numpy as np

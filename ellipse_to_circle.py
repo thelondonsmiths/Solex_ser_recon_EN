@@ -1,3 +1,9 @@
+"""
+@author: Valerie Desnoux
+with improvements by Andrew Smith
+Version 1 August 2021
+
+"""
 from solex_util import *
 
 import skimage
@@ -21,6 +27,13 @@ from matplotlib.patches import Ellipse
 NUM_REG = 1 #6 # include biggest NUM_REG regions in fit
 
 
+def get_matrix(phi, r):
+    """
+    IN: phi, ellipse axes ratio
+    OUT: correction matrix
+    """
+    return np.array([[np.cos(phi), np.sin(phi)], [-np.sin(phi), np.cos(phi)]]) @ np.array([[1/r, 0], [0, 1]]) @  np.array([[np.cos(phi), -np.sin(phi)], [np.sin(phi), np.cos(phi)]])
+
 def dofit(points):
     """IN : numpy points coordinates
     OUT : center, width, height, phi, fit informations
@@ -36,14 +49,14 @@ def two_step(points):
     OUT : np.array(center), height, phi, ratio, points_tresholded, ellipse_points
     """
     center, width, height, phi, _ = dofit(points)
-    mat = np.array([np.array([np.cos(phi), np.sin(phi)])/width, np.array([-np.sin(phi), np.cos(phi)])/height])
+    mat = get_matrix(phi, height / width) * height
     Xr = mat @ (points - np.array(center)).T
     values = np.linalg.norm(Xr, axis = 0) - 1
     #print(np.mean(values), np.std(values), max(values), min(values))
     anomaly_threshold = max(values)
     points_tresholded = points[values > -max(values)]
     center, width, height, phi, ellipse_points = dofit(points_tresholded)
-    mat = np.array([np.array([np.cos(phi), np.sin(phi)])/width, np.array([-np.sin(phi), np.cos(phi)])/height])
+    mat = get_matrix(phi, height / width) * height
     Xr = mat @ (points_tresholded - np.array(center)).T
     values = np.linalg.norm(Xr, axis = 0) - 1
     #print(np.mean(values), np.std(values), max(values), min(values))
@@ -57,7 +70,8 @@ def correct_image(image, phi, ratio, center):
     """
     logme('Y/X ratio : ' + "{:.3f}".format(ratio))
     logme('Tilt angle : ' + "{:.3f}".format(math.degrees(phi)) + " degrees")
-    mat = np.array([[np.cos(phi), np.sin(phi)], [-np.sin(phi), np.cos(phi)]]) @ np.array([[1/ratio, 0], [0, 1]])
+    mat = get_matrix(phi, ratio)
+    logme('Linear transform correction matrix: \n' + str(mat))
     mat3 = np.zeros((3, 3))
     mat3[:2, :2] = mat
     mat3[2, 2] = 1

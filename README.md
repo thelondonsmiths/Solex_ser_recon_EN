@@ -9,7 +9,14 @@ Usage:
 
 Graphical user interface: launch SHG_MAIN (by double clicking under Windows). A Windows Desktop shortcut can also be created.
 In the Python GUI window, enter the name of the SER file(s) to be processed. Batch processing is possible but will halt if a file is unsuitable.
+
 Command line interface: python SHG_MAIN.py your_ser_file1.SER [your_ser_file2.SER ... if batch processing]
+
+Command line options:
+	-d : display all graphics
+	-c : only the CLAHE image is saved
+	-f : all FITS files are saved
+	-p : save the protuberance image
 
 Check the "Show graphics" box for a live reconstruction display, a graphic of the geometry correction and a quick view of the final images. 
 This will increase processing time significantly. This feature is not recommended for batch processing.
