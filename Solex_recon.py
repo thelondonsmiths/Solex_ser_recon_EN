@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 1 August 2021
+Version 10 August 2021
 
 ------------------------------------------------------------------------
 reconstruction on an image from the deviations between the minimum of the line and a reference line
@@ -22,30 +22,30 @@ from ellipse_to_circle import ellipse_to_circle, correct_image
 def read_video_improved(serfile, fit, LineRecal, options):
     rdr = ser_reader(serfile)
     ih, iw = rdr.ih, rdr.iw
+    FrameMax=rdr.FrameCount
+    disk_list = [np.zeros((ih,FrameMax), dtype='uint16') for _ in options['shift']]
+
     
     if options['flag_display']:
         cv2.namedWindow('disk', cv2.WINDOW_NORMAL)
-        FrameMax=rdr.FrameCount
         cv2.resizeWindow('disk', FrameMax//3, ih//3)
         cv2.moveWindow('disk', 200, 0)
-        #initialize le tableau qui va recevoir la raie spectrale de chaque trame
-        Disk=np.zeros((ih,FrameMax), dtype='uint16')
-        
         cv2.namedWindow('image', cv2.WINDOW_NORMAL)
         cv2.moveWindow('image', 0, 0)
         cv2.resizeWindow('image', int(iw), int(ih))
-    else:
-        #Disk=np.zeros((ih,1), dtype='uint16')
-        FrameMax=rdr.FrameCount
-        Disk=np.zeros((ih,FrameMax), dtype='uint16')
-        
-    shift = options['shift']
-    ind_l = (np.asarray(fit)[:, 0] + np.ones(ih) * (LineRecal + shift)).astype(int)
     
-    #CLEAN if fitting goes too far
-    ind_l[ind_l < 0] = 0
-    ind_l[ind_l > iw - 2] = iw - 2
-    ind_r = (ind_l + np.ones(ih)).astype(int)
+           
+    col_indeces = []
+
+    for shift in options['shift']:
+        ind_l = (np.asarray(fit)[:, 0] + np.ones(ih) * (LineRecal + shift)).astype(int)
+        
+        #CLEAN if fitting goes too far
+        ind_l[ind_l < 0] = 0
+        ind_l[ind_l > iw - 2] = iw - 2
+        ind_r = (ind_l + np.ones(ih)).astype(int)
+        col_indeces.append((ind_l, ind_r))
+        
     left_weights = np.ones(ih) - np.asarray(fit)[:, 1]
     right_weights = np.ones(ih) - left_weights
 
@@ -59,19 +59,19 @@ def read_video_improved(serfile, fit, LineRecal, options):
                 cv2.destroyAllWindows()
                 sys.exit()
 
-        left_col = img[np.arange(ih), ind_l]
-        right_col = img[np.arange(ih), ind_r]
-        IntensiteRaie = left_col*left_weights + right_col*right_weights
-        
-        #ajoute au tableau disk 
-        Disk[:,rdr.FrameIndex]=IntensiteRaie
+        for i in range(len(options['shift'])):
+            ind_l, ind_r = col_indeces[i]
+            left_col = img[np.arange(ih), ind_l]
+            right_col = img[np.arange(ih), ind_r]
+            IntensiteRaie = left_col*left_weights + right_col*right_weights
+            disk_list[i][:,rdr.FrameIndex]=IntensiteRaie
         
         if options['flag_display'] and rdr.FrameIndex % 10 ==0:
-            cv2.imshow ('disk', Disk)
+            cv2.imshow ('disk', disk_list[0])
             if cv2.waitKey(1) == 27:                     # exit if Escape is hit
                 cv2.destroyAllWindows()    
                 sys.exit()
-    return Disk, ih, iw, rdr.FrameCount
+    return disk_list, ih, iw, rdr.FrameCount
 
 
 def make_header(rdr):        
@@ -132,7 +132,7 @@ def compute_mean_return_fit(serfile, options, LineRecal = 1):
 
     if options['save_fit']:
         DiskHDU=fits.PrimaryHDU(mean_img,header=hdr)
-        DiskHDU.writeto(basefich+'_mean.fits', overwrite='True')
+        DiskHDU.writeto(basefich0+'_mean.fits', overwrite='True')
 
 
     #affiche image moyenne
@@ -292,12 +292,8 @@ def correct_transversalium(img, flag_nobords, options):
     c=p[2]
     d=p[3]
     e=p[4]
-    Smoothed=[]
-    for x in range(0,y2-y1):
-        y=a*x**4+b*x**3+c*x**2+d*x+e
-        Smoothed.append(y)
-
-
+    x = np.arange(y2-y1)
+    Smoothed=a*x**4+b*x**3+c*x**2+d*x+e
     
     # divise le profil reel par son filtre ce qui nous donne le flat
     hf=np.divide(ToSpline,Smoothed2)
@@ -318,14 +314,13 @@ def correct_transversalium(img, flag_nobords, options):
     
     # genere tableau image de flat 
     flat=[]
+    hf = np.array(hf) / min(hf) # don't make things bigger
     for i in range(0,newiw):
         flat.append(hf)
         
     np_flat=np.asarray(flat)
     flat = np_flat.T
-    #evite les divisions par zeros...
-    flat[flat==0]=1
-    
+    #print(hf, sum(hf)/len(hf), max(hf), min(hf))    
     # divise image par le flat
     BelleImage=np.divide(frame,flat)
     frame=np.array(BelleImage, dtype='uint16')
@@ -336,14 +331,14 @@ def correct_transversalium(img, flag_nobords, options):
     return frame
 
 def solex_proc(serfile, options):
-    global hdr, ih, iw, basefich
+    global hdr, ih, iw, basefich0, basefich
     clearlog()
     #plt.gray()              #palette de gris si utilise matplotlib pour visu debug
     logme('Using pixel shift : ' + str(options['shift']))
     WorkDir=os.path.dirname(serfile)+"/"
     os.chdir(WorkDir)
     base=os.path.basename(serfile)
-    basefich=os.path.splitext(base)[0]
+    basefich0=os.path.splitext(base)[0]
     LineRecal=1
     rdr = ser_reader(serfile)
     hdr = make_header(rdr)
@@ -355,58 +350,68 @@ def solex_proc(serfile, options):
     # Modification Jean-Francois: correct the variable names: A0, A1, A2
     logme('Coeff A0, A1, A2 :  '+str(a)+'  '+str(b)+'  '+str(c))
     
-    Disk, ih, iw, FrameCount = read_video_improved(serfile, fit, LineRecal, options)
+    disk_list, ih, iw, FrameCount = read_video_improved(serfile, fit, LineRecal, options)
 
     hdr['NAXIS1']=iw # note: slightly dodgy, new width
    
     #sauve fichier disque reconstruit
 
 
-    if options['save_fit']:
-        DiskHDU=fits.PrimaryHDU(Disk,header=hdr)
-        DiskHDU.writeto(basefich+'_img.fits', overwrite='True')
+    
     
     if options['flag_display']:
         cv2.destroyAllWindows()
+
+    cercle = (-1, -1, -1)
+    frames_circularized = []
+    for i in range(len(disk_list)):
+        basefich = basefich0 + '_shift='+str(options['shift'][i])
+
+        if options['save_fit']:
+            DiskHDU=fits.PrimaryHDU(disk_list[i],header=hdr)
+            DiskHDU.writeto(basefich+'_img.fits', overwrite='True')
     
-    """
-    --------------------------------------------------------------------
-    --------------------------------------------------------------------
-    Badlines and geometry
-    --------------------------------------------------------------------
-    --------------------------------------------------------------------
-    """
-    img = correct_bad_lines_and_geom(Disk, options)
-        
-    """
-    --------------------------------------------------------------
-    transversallium correction
-    --------------------------------------------------------------
-    """
-    flag_nobords = False
-    frame_flatted = correct_transversalium(img,flag_nobords, options)
-
-    """
-    We now apply ellipse_fit to apply the geometric correction
-
-    """
-    if options['ratio_fixe'] is None and options['slant_fix'] is None:
-        frame_circularized, cercle = ellipse_to_circle(frame_flatted, options)
-    else:
-        ratio = options['ratio_fixe']             if not options['ratio_fixe'] is None else 1.0
-        phi = math.radians(options['slant_fix'])  if not options['slant_fix'] is None else 0.0
-        frame_circularized, cercle = correct_image(frame_flatted / 65536, phi, ratio, np.array([-1.0, -1.0]))[0], (-1, -1, -1) # Note that we assume 16-bit
-
-    # sauvegarde en fits de l'image finale
-    
-    if options['save_fit']:
-        DiskHDU=fits.PrimaryHDU(frame_circularized,header=hdr)
-        DiskHDU.writeto(basefich+'_recon.fits', overwrite='True')
+        """
+        --------------------------------------------------------------------
+        --------------------------------------------------------------------
+        Badlines and geometry
+        --------------------------------------------------------------------
+        --------------------------------------------------------------------
+        """
+        img = correct_bad_lines_and_geom(disk_list[i], options)
             
-    with  open(basefich+'_log.txt', "w") as logfile:
+        """
+        --------------------------------------------------------------
+        transversallium correction
+        --------------------------------------------------------------
+        """
+        flag_nobords = False
+        frame_flatted = correct_transversalium(img,flag_nobords, options)
+
+        """
+        We now apply ellipse_fit to apply the geometric correction
+
+        """
+        
+        if options['ratio_fixe'] is None and options['slant_fix'] is None:
+            frame_circularized, cercle, options['ratio_fixe'], phi = ellipse_to_circle(frame_flatted, options)
+            options['slant_fix'] = math.degrees(phi) # in options angles are stored as degrees for some reason
+            frames_circularized.append(frame_circularized)
+        else:
+            ratio = options['ratio_fixe']             if not options['ratio_fixe'] is None else 1.0
+            phi = math.radians(options['slant_fix'])  if not options['slant_fix'] is None else 0.0
+            frames_circularized.append(correct_image(frame_flatted / 65536, phi, ratio, np.array([-1.0, -1.0]), print_log = i == 0)[0]) # Note that we assume 16-bit
+
+        # sauvegarde en fits de l'image finale
+        
+        if options['save_fit']:
+            DiskHDU=fits.PrimaryHDU(frame_circularized,header=hdr)
+            DiskHDU.writeto(basefich + '_recon.fits', overwrite='True')
+            
+    with  open(basefich0+'_log.txt', "w") as logfile:
         logfile.writelines(mylog)
     
-    return frame_circularized, hdr, cercle
+    return frames_circularized, hdr, cercle
     
 
 

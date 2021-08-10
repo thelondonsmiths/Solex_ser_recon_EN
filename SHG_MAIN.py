@@ -160,8 +160,17 @@ except:
 # if no command line arguments, open GUI interface
 if len(serfiles)==0 : 
     serfiles, shift, flag_display, ratio_fixe, slant_fix, save_fit, clahe_only =UI_SerBrowse(WorkDir) #TODO as options is defined as global, only serfiles could be returned
-    try : 
-        options['shift'] = int(shift)
+    try :
+        shift_choice = shift.split(':')
+        if len(shift_choice) == 1:
+            options['shift'] = list(map(int, [x.strip() for x in shift.split(',')]))
+        elif len(shift_choice) == 2:
+            options['shift'] = list(range(int(shift_choice[0].strip()), int(shift_choice[1].strip())+1))
+        elif len(shift_choice) == 3:
+            options['shift'] = list(range(int(shift_choice[0].strip()), int(shift_choice[1].strip())+1, int(shift_choice[2].strip())))
+        else:
+            print('invalid shift input')
+            sys.exit()
     except ValueError : 
         print('invalid shift value')
         sys.exit()
@@ -226,118 +235,97 @@ def do_work():
         # dx: decalage en pixel par rapport au centre de la raie
 
         try : 
-            frame, header, cercle=sol.solex_proc(serfile,options)       
+            frames, header, cercle=sol.solex_proc(serfile,options.copy())       
+            for frame, shift in zip(frames, options['shift']):
+                print('circle (x, y, r) = ' , cercle)
+                base=os.path.basename(serfile)
+                basefich=os.path.splitext(base)[0] +'_shift=' + str(shift)
+                
+                flag_result_show = options['flag_display']
+                
+                # create a CLAHE object (Arguments are optional)
+                # clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(5,5))
+                clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(2,2))
+                cl1 = clahe.apply(frame)
+                
+                # image leger seuils
+                frame1=np.copy(frame)
+                Seuil_bas=np.percentile(frame, 25)
+                Seuil_haut=np.percentile(frame,99.9999)
+                frame1[frame1>Seuil_haut]=65000
+                print('Seuil bas       :', np.floor(Seuil_bas))
+                print('Seuil haut      :', np.floor(Seuil_haut))
+                fc=(frame1-Seuil_bas)* (65000/(Seuil_haut-Seuil_bas))
+                fc[fc<0]=0
+                frame_contrasted=np.array(fc, dtype='uint16')
+                
+                # image seuils serres 
+                frame1=np.copy(frame)
+                Seuil_bas=(Seuil_haut*0.25)
+                Seuil_haut=np.percentile(frame1,99.9999)
+                print('Seuil bas HC    :', np.floor(Seuil_bas))
+                print('Seuil haut HC   :', np.floor(Seuil_haut))
+                frame1[frame1>Seuil_haut]=65000
+                fc2=(frame1-Seuil_bas)* (65000/(Seuil_haut-Seuil_bas))
+                fc2[fc2<0]=0
+                frame_contrasted2=np.array(fc2, dtype='uint16')
+                
+                # image seuils protus
+                frame1=np.copy(frame)
+                Seuil_bas=0
+                Seuil_haut=np.percentile(frame1,99.9999)*0.18        
+                print('Seuil bas protu :', np.floor(Seuil_bas))
+                print('Seuil haut protu:', np.floor(Seuil_haut))
+                frame1[frame1>Seuil_haut]=Seuil_haut
+                fc2=(frame1-Seuil_bas)* (65000/(Seuil_haut-Seuil_bas))
+                fc2[fc2<0]=0
+                frame_contrasted3=np.array(fc2, dtype='uint16')
+                if not cercle == (-1, -1, -1) and disk_display==True:
+                    x0=int(cercle[0])
+                    y0=int(cercle[1])
+                    r=int(cercle[2]) - 4
+                    frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)
+                
+                Seuil_bas=np.percentile(cl1, 25)
+                Seuil_haut=np.percentile(cl1,99.9999)*1.05
+                cc=(cl1-Seuil_bas)*(65000/(Seuil_haut-Seuil_bas))
+                cc[cc<0]=0
+                cc=np.array(cc, dtype='uint16')
+
+                # sauvegarde en png de clahe
+                cv2.imwrite(basefich+'_clahe.png',cc)   # Modification Jean-Francois: placed before the IF for clear reading
+                if not options['clahe_only']:
+                    # sauvegarde en png pour appliquer une colormap par autre script
+                    cv2.imwrite(basefich+'_disk.png',frame_contrasted)
+                    # sauvegarde en png pour appliquer une colormap par autre script
+                    cv2.imwrite(basefich+'_diskHC.png',frame_contrasted2)
+                    # sauvegarde en png pour appliquer une colormap par autre script
+                    cv2.imwrite(basefich+'_protus.png',frame_contrasted3)
+                
+                # Modification Jean-Francois: the 4 images are concatenated together in 1 image => 'Sun images'
+                # The 'Sun images' is scaled for the monitor maximal dimension ... it is scaled to match the dimension of the monitor without 
+                # changing the Y/X scale of the images 
+                if flag_result_show:
+                    im_1 = cv2.hconcat([frame_contrasted, frame_contrasted2])
+                    im_2 = cv2.hconcat([frame_contrasted3, cc])
+                    im_3 = cv2.vconcat([im_1, im_2])
+                    screen = tk.Tk()
+                    screensize = screen.winfo_screenwidth(), screen.winfo_screenheight()
+                    screen.destroy()
+                    scale = min(screensize[0] / im_3.shape[1], screensize[1] / im_3.shape[0])
+                    cv2.namedWindow('Sun images', cv2.WINDOW_NORMAL)
+                    cv2.moveWindow('Sun images', 0, 0)
+                    cv2.resizeWindow('Sun images',int(im_3.shape[1] * scale), int(im_3.shape[0] * scale))
+                    cv2.imshow('Sun images',im_3)
+                    cv2.waitKey(options['tempo'])  # affiche et continue
+                    cv2.destroyAllWindows()
         
-            print('circle (x, y, r) = ' , cercle)
-
-            base=os.path.basename(serfile)
-            basefich=os.path.splitext(base)[0]
-            
-            flag_result_show = options['flag_display']
-            
-            # create a CLAHE object (Arguments are optional)
-            # clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(5,5))
-            clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(2,2))
-            cl1 = clahe.apply(frame)
-            
-            # image leger seuils
-            frame1=np.copy(frame)
-            Seuil_bas=np.percentile(frame, 25)
-            Seuil_haut=np.percentile(frame,99.9999)
-            frame1[frame1>Seuil_haut]=65000
-            print('Seuil bas       :', np.floor(Seuil_bas))
-            print('Seuil haut      :', np.floor(Seuil_haut))
-            fc=(frame1-Seuil_bas)* (65000/(Seuil_haut-Seuil_bas))
-            fc[fc<0]=0
-            frame_contrasted=np.array(fc, dtype='uint16')
-            
-            # image seuils serres 
-            frame1=np.copy(frame)
-            Seuil_bas=(Seuil_haut*0.25)
-            Seuil_haut=np.percentile(frame1,99.9999)
-            print('Seuil bas HC    :', np.floor(Seuil_bas))
-            print('Seuil haut HC   :', np.floor(Seuil_haut))
-            frame1[frame1>Seuil_haut]=65000
-            fc2=(frame1-Seuil_bas)* (65000/(Seuil_haut-Seuil_bas))
-            fc2[fc2<0]=0
-            frame_contrasted2=np.array(fc2, dtype='uint16')
-            
-            # image seuils protus
-            frame1=np.copy(frame)
-            Seuil_bas=0
-            Seuil_haut=np.percentile(frame1,99.9999)*0.18        
-            print('Seuil bas protu :', np.floor(Seuil_bas))
-            print('Seuil haut protu:', np.floor(Seuil_haut))
-            frame1[frame1>Seuil_haut]=Seuil_haut
-            fc2=(frame1-Seuil_bas)* (65000/(Seuil_haut-Seuil_bas))
-            fc2[fc2<0]=0
-            frame_contrasted3=np.array(fc2, dtype='uint16')
-            if not cercle == (-1, -1, -1) and disk_display==True:
-                x0=int(cercle[0])
-                y0=int(cercle[1])
-                r=int(cercle[2]) - 4
-                frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)
-            
-            Seuil_bas=np.percentile(cl1, 25)
-            Seuil_haut=np.percentile(cl1,99.9999)*1.05
-            cc=(cl1-Seuil_bas)*(65000/(Seuil_haut-Seuil_bas))
-            cc[cc<0]=0
-            cc=np.array(cc, dtype='uint16')
-
-            # sauvegarde en png de clahe
-            cv2.imwrite(basefich+'_clahe.png',cc)   # Modification Jean-Francois: placed before the IF for clear reading
-            if not options['clahe_only']:
-                # sauvegarde en png pour appliquer une colormap par autre script
-                cv2.imwrite(basefich+'_disk.png',frame_contrasted)
-                # sauvegarde en png pour appliquer une colormap par autre script
-                cv2.imwrite(basefich+'_diskHC.png',frame_contrasted2)
-                # sauvegarde en png pour appliquer une colormap par autre script
-                cv2.imwrite(basefich+'_protus.png',frame_contrasted3)
-            
-            # Modification Jean-Francois: the 4 images are concatenated together in 1 image => 'Sun images'
-            # The 'Sun images' is scaled for the monitor maximal dimension ... it is scaled to match the dimension of the monitor without 
-            # changing the Y/X scale of the images 
-            if flag_result_show:
-                im_1 = cv2.hconcat([frame_contrasted, frame_contrasted2])
-                im_2 = cv2.hconcat([frame_contrasted3, cc])
-                im_3 = cv2.vconcat([im_1, im_2])
-                screen = tk.Tk()
-                screensize = screen.winfo_screenwidth(), screen.winfo_screenheight()
-                screen.destroy()
-                scale = min(screensize[0] / im_3.shape[1], screensize[1] / im_3.shape[0])
-                cv2.namedWindow('Sun images', cv2.WINDOW_NORMAL)
-                cv2.moveWindow('Sun images', 0, 0)
-                cv2.resizeWindow('Sun images',int(im_3.shape[1] * scale), int(im_3.shape[0] * scale))
-                cv2.imshow('Sun images',im_3)
-                cv2.waitKey(options['tempo'])  # affiche et continue
-                cv2.destroyAllWindows()
-            
-            """
-            #create colormap
-            im = cv2.imread(basefich+'_disk.png')
-            im_max=(np.amax(im))*1.3
-            im[im>im_max]=200
-            print ('im_max : ',im_max)
-            scale=255/im_max
-            imnp=np.array(im*scale, dtype='uint8')
-            imC = cv2.applyColorMap(imnp, cv2.COLORMAP_HOT)
-            iw=int(imC.shape[1]*sc)
-            ih=int(imC.shape[0]*sc)
-            cv2.resize(imC,dsize=(ih,iw))
-            cv2.namedWindow('color', cv2.WINDOW_NORMAL)
-            cv2.resizeWindow('color', iw, ih)
-            cv2.moveWindow('color',int(newiw*sc), 0)
-            cv2.imshow('color',imC)
-            cv2.waitKey(5000)
-            cv2.imwrite(basefich+'_color.png',imC)
-            """
-
-            frame2=np.copy(frame)
-            frame2=np.array(cl1, dtype='uint16')
-            # sauvegarde le fits
-            if options['save_fit']:
-                DiskHDU=fits.PrimaryHDU(frame2,header)
-                DiskHDU.writeto(basefich+'_clahe.fits', overwrite='True')
+                frame2=np.copy(frame)
+                frame2=np.array(cl1, dtype='uint16')
+                # sauvegarde le fits
+                if options['save_fit']:
+                    DiskHDU=fits.PrimaryHDU(frame2,header)
+                    DiskHDU.writeto(basefich+ '_clahe.fits', overwrite='True')
         except :
             print('ERROR ENCOUNTERED')
             traceback.print_exc()

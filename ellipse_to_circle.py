@@ -69,18 +69,20 @@ def two_step(points):
     ratio = width / height
     return np.array(center), height, phi, ratio, points_tresholded, ellipse_points
 
-def correct_image(image, phi, ratio, center):
+def correct_image(image, phi, ratio, center, print_log = False):
     """correct image geometry. TODO : a rotation is made instead of a tilt
     IN : numpy array, float, float, numpy array (2 elements)
     OUT : numpy array, numpy array (2 elements)
     """
-    logme('Y/X ratio : ' + "{:.3f}".format(ratio))
-    logme('Tilt angle : ' + "{:.3f}".format(math.degrees(phi)) + " degrees")
+    
     mat, theta = get_correction_matrix(phi, ratio)
-    print('unrotation angle theta = ' + "{:.3f}".format(math.degrees(theta)) + " degrees")
-    np.set_printoptions(suppress=True)
-    logme('Linear transform correction matrix: \n' + str(mat))
-    np.set_printoptions(suppress=False)
+    if print_log:
+        print('unrotation angle theta = ' + "{:.3f}".format(math.degrees(theta)) + " degrees")
+        np.set_printoptions(suppress=True)
+        logme('Y/X ratio : ' + "{:.3f}".format(ratio))
+        logme('Tilt angle : ' + "{:.3f}".format(math.degrees(phi)) + " degrees")
+        logme('Linear transform correction matrix: \n' + str(mat))
+        np.set_printoptions(suppress=False)
     mat3 = np.zeros((3, 3))
     mat3[:2, :2] = mat
     mat3[2, 2] = 1
@@ -165,7 +167,7 @@ def ellipse_to_circle(image, options):
     center, height, phi, ratio, X_f, ellipse_points = two_step(X)
     center = np.array([center[1], center[0]])
     
-    fix_img, center = correct_image(image, phi, ratio, center)
+    fix_img, center = correct_image(image, phi, ratio, center, print_log = True)
     
     if options['flag_display']:
         fig, ax = plt.subplots(ncols=2, nrows = 2)
@@ -194,6 +196,6 @@ def ellipse_to_circle(image, options):
         plt.show()
   
     circle = (center[0], center[1], height*ratio) # radius == height*ratio
-    return fix_img, circle
+    return fix_img, circle, ratio, phi
 
     
