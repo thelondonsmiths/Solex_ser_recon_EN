@@ -102,7 +102,7 @@ def get_flood_image(image):
     OUT: modified image
     TODO: simplify this function?
     """
-    thresh = np.sum(image) / (image.shape[0] * image.shape[1])
+    thresh = 0.9 * np.sum(image) / (image.shape[0] * image.shape[1])
     image[image < thresh] = 0
     image[image >= thresh] = 65000
     return image
@@ -144,7 +144,7 @@ def get_edge_list(image, sigma = 2):
     crop = 0.015
 
     mask = np.zeros(filt.shape)
-    mask[int(x_min+dx*crop):int(x_max-dx*crop), int(y_min+dy*crop):int(y_max-dy*crop)] = 1
+    mask[int(x_min+dx*crop):int(x_max-dx*crop), :] = 1
     filt *= mask
     X = np.argwhere(filt) # find the non-zero pixels again
 
@@ -171,7 +171,8 @@ def ellipse_to_circle(image, options):
         fig, ax = plt.subplots(ncols=2, nrows = 2)
         ax[0][0].imshow(image, cmap=plt.cm.gray)
         ax[0][0].set_title('uncorrected image', fontsize = 11)
-        ax[0][1].plot(raw_X[:, 1], image.shape[0] - raw_X[:, 0], 'ro', label = 'edge detection')
+        ax[0][1].imshow(image, cmap=plt.cm.gray)
+        ax[0][1].plot(raw_X[:, 1], raw_X[:, 0], 'ro', label = 'edge detection')
         ax[0][1].set_xlim([0, image.shape[1]])
         ax[0][1].set_ylim([0, image.shape[0]])
         ax[0][1].legend()
