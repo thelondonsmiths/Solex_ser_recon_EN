@@ -61,6 +61,29 @@ def treat_flag_at_cli(arguments):
             print(usage())
     print('options %s'%(options))
 
+
+def usage():
+    usage_ = "SHG_MAIN.py [-dcfp] [file(s) to treat]\n"
+    usage_ += "'d' : 'flag_display', display all pictures\n"
+    usage_ += "'c' : 'clahe_only',  only clahe picture is saved\n"
+    usage_ += "'f' : 'save_fit', all fits are saved\n"
+    usage_ += "'p' : 'disk_display' save protuberance pictures "
+    return usage_
+    
+def treat_flag_at_cli(arguments):
+    global options
+    #reading arguments
+    for caracter in argument[1:]: #remove '-'
+        if caracter=='h':
+            print(usage())
+            sys.exit()
+        try : 
+            options[flag_dictionnary[caracter]]=True if flag_dictionnary.get(caracter) else False
+        except KeyError : 
+            print('ERROR !!! At least one argument is not accepted')
+            print(usage())
+    print('options %s'%(options))
+
 def UI_SerBrowse (WorkDir):
     """
     Parameters
@@ -109,7 +132,7 @@ def UI_SerBrowse (WorkDir):
                
     FileNames=values['-FILE-']
     
-    
+
     return FileNames, values['-DX-'], values['-DISP-'], None if values['-RATIO-']=='' else values['-RATIO-'] , None if values['-SLANT-']=='' else values['-SLANT-'], values['-FIT-'], values['-CLAHE_ONLY-']
 
 """
@@ -147,7 +170,9 @@ if len(sys.argv)>1 :
             if argument.split('.')[-1].upper()=='SER' : 
                 serfiles.append(argument)
     print('theses files are going to be processed : ', serfiles)
+
 #print('Processing will begin with values : \n shift %s, flag_display %s, "%s", slant_fix "%s", save_fit %s, clahe_only %s, disk_display %s' %(options['shift'], options['flag_display'], options['ratio_fixe'], options['slant_fix'], options['save_fit'], options['clahe_only'], options['disk_display']) )
+
 
 # check for .ini file for working directory           
 try:
