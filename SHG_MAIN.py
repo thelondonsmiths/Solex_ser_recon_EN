@@ -40,48 +40,53 @@ import traceback
 
 def usage():
     usage_ = "SHG_MAIN.py [-dcfp] [file(s) to treat]\n"
-    usage_ += "'d' : 'flag_display', display all pictures\n"
-    usage_ += "'c' : 'clahe_only',  only clahe picture is saved\n"
-    usage_ += "'f' : 'save_fit', all fits are saved\n"
-    usage_ += "'p' : 'disk_display' save protuberance pictures "
-    usage_ += "'w' : 'window and batch shifting. x,y will produce 2 pictures, at x and y. x:y:z will produce sommes pictures, beginning at x, finishing at y, every z pixels. To make an halpha dopplergram, wrote -w-3:3:3   "
+    usage_ += "'d' : 'flag_display', display all pictures (False by default)\n"
+    usage_ += "'c' : 'clahe_only',  only final clahe picture is saved (True by default)\n"
+    usage_ += "'f' : 'save_fit', all fits are saved (False by default)\n"
+    usage_ += "'p' : 'disk_display' save protuberance pictures (False by default)\n"
+    usage_ += "'w' : 'window and batch shifting. 'x,y' will produce 2 pictures, at x and y.\n\tx:y:z will produce somes pictures, beginning at x, finishing at y, every z pixels.\n\t To make an halpha dopplergram at 3 px, wrote -w-3:3:3"
     return usage_
     
 def treat_flag_at_cli(arguments):
     global options
     #reading arguments
-    for caracter in argument[1:]: #remove '-'
+    i=0
+    while i < len(argument[1:]): #there's a '-' at first)
+        caracter = argument[1:][i]
         if caracter=='h':
             print(usage())
             sys.exit()
-        try : 
-            options[flag_dictionnary[caracter]]=True if flag_dictionnary.get(caracter) else False
-        except KeyError : 
-            print('ERROR !!! At least one argument is not accepted')
-            print(usage())
-    print('options %s'%(options))
-
-
-def usage():
-    usage_ = "SHG_MAIN.py [-dcfp] [file(s) to treat]\n"
-    usage_ += "'d' : 'flag_display', display all pictures\n"
-    usage_ += "'c' : 'clahe_only',  only clahe picture is saved\n"
-    usage_ += "'f' : 'save_fit', all fits are saved\n"
-    usage_ += "'p' : 'disk_display' save protuberance pictures "
-    return usage_
-    
-def treat_flag_at_cli(arguments):
-    global options
-    #reading arguments
-    for caracter in argument[1:]: #remove '-'
-        if caracter=='h':
-            print(usage())
-            sys.exit()
-        try : 
-            options[flag_dictionnary[caracter]]=True if flag_dictionnary.get(caracter) else False
-        except KeyError : 
-            print('ERROR !!! At least one argument is not accepted')
-            print(usage())
+        elif caracter=='w' :
+            #find caractere for shifting
+            shift=''
+            stop = False
+            try : 
+                while not stop : 
+                    if argument[1:][i+1].isdigit() or argument[1:][i+1]==':' or argument[1:][i+1]==',' or argument[1:][i+1]=='-': 
+                        shift+=argument[1:][i+1]
+                        i+=1
+                    else : 
+                        i+=1
+                        stop=True
+            except IndexError :
+                i+=1 #the reach the end of arguments.
+            shift_choice = shift.split(':')
+            if len(shift_choice) == 1:
+                options['shift'] = list(map(int, [x.strip() for x in shift.split(',')]))
+            elif len(shift_choice) == 2:
+                options['shift'] = list(range(int(shift_choice[0].strip()), int(shift_choice[1].strip())+1))
+            elif len(shift_choice) == 3:
+                options['shift'] = list(range(int(shift_choice[0].strip()), int(shift_choice[1].strip())+1, int(shift_choice[2].strip())))
+            else:
+                print('invalid shift input')
+                sys.exit()
+        else : 
+            try : #all others
+                options[flag_dictionnary[caracter]]=True if flag_dictionnary.get(caracter) else False
+                i+=1
+            except KeyError : 
+                print('ERROR !!! At least one argument is not accepted')
+                print(usage())
     print('options %s'%(options))
 
 def UI_SerBrowse (WorkDir):
@@ -132,7 +137,7 @@ def UI_SerBrowse (WorkDir):
                
     FileNames=values['-FILE-']
     
-
+    
     return FileNames, values['-DX-'], values['-DISP-'], None if values['-RATIO-']=='' else values['-RATIO-'] , None if values['-SLANT-']=='' else values['-SLANT-'], values['-FIT-'], values['-CLAHE_ONLY-']
 
 """
@@ -148,16 +153,18 @@ options = {
 'flag_display':False,
 'ratio_fixe' : None,
 'slant_fix' : None ,
-'save_fit' : True,
-'clahe_only' : False,
-'disk_display' : True #protus
+'save_fit' : False,
+'clahe_only' : True,
+'disk_display' : False, #protus
+'shift':'0'
 }
 
 flag_dictionnary = {
     'd' : 'flag_display', #True False display all pictures
     'c' : 'clahe_only',  #True/False
     'f' : 'save_fit', #True/False
-    'p' : 'disk_display' #True/False protuberances 
+    'p' : 'disk_display', #True/False protuberances 
+    'w' : 'shift'    
     }
 
 # list of files to process
@@ -170,9 +177,7 @@ if len(sys.argv)>1 :
             if argument.split('.')[-1].upper()=='SER' : 
                 serfiles.append(argument)
     print('theses files are going to be processed : ', serfiles)
-
 #print('Processing will begin with values : \n shift %s, flag_display %s, "%s", slant_fix "%s", save_fit %s, clahe_only %s, disk_display %s' %(options['shift'], options['flag_display'], options['ratio_fixe'], options['slant_fix'], options['save_fit'], options['clahe_only'], options['disk_display']) )
-
 
 # check for .ini file for working directory           
 try:
