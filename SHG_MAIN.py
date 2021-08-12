@@ -44,6 +44,7 @@ def usage():
     usage_ += "'c' : 'clahe_only',  only clahe picture is saved\n"
     usage_ += "'f' : 'save_fit', all fits are saved\n"
     usage_ += "'p' : 'disk_display' save protuberance pictures "
+    usage_ += "'w' : 'window and batch shifting. x,y will produce 2 pictures, at x and y. x:y:z will produce sommes pictures, beginning at x, finishing at y, every z pixels. To make an halpha dopplergram, wrote -w-3:3:3   "
     return usage_
     
 def treat_flag_at_cli(arguments):
@@ -88,7 +89,7 @@ def UI_SerBrowse (WorkDir):
     [sg.Checkbox('Save CLAHE.png only', default=False, key='-CLAHE_ONLY-')],
     [sg.Text('Y/X ratio (blank for auto)', size=(20,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
     [sg.Text('Tilt angle (blank for auto)',size=(20,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
-    [sg.Text('Pixel offset',size=(20,1)),sg.Input(default_text='0',size=(8,1),key='-DX-',enable_events=True)],
+    [sg.Text('Pixel offset',size=(20,1)),sg.Input(default_text='0',size=(8,1),tooltip= "'window and batch shifting.\nx,y will produce 2 pictures, at x and y.\n x:y:z will produce sommes pictures, beginning at x, finishing at y, every z pixels. To make an halpha dopplergram, wrote -w-3:3:3",key='-DX-',enable_events=True)],
     [sg.Button('OK'), sg.Cancel()]
     ] 
     
