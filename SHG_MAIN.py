@@ -252,11 +252,11 @@ def do_work():
                 frame1=np.copy(frame)
                 Seuil_bas=np.percentile(frame, 25)
                 Seuil_haut=np.percentile(frame,99.9999)
-                frame1[frame1>Seuil_haut]=65000
                 print('Seuil bas       :', np.floor(Seuil_bas))
                 print('Seuil haut      :', np.floor(Seuil_haut))
-                fc=(frame1-Seuil_bas)* (65000/(Seuil_haut-Seuil_bas))
+                fc=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
                 fc[fc<0]=0
+                fc[fc>65535] = 65535
                 frame_contrasted=np.array(fc, dtype='uint16')
                 
                 # image seuils serres 
@@ -265,9 +265,9 @@ def do_work():
                 Seuil_haut=np.percentile(frame1,99.9999)
                 print('Seuil bas HC    :', np.floor(Seuil_bas))
                 print('Seuil haut HC   :', np.floor(Seuil_haut))
-                frame1[frame1>Seuil_haut]=65000
-                fc2=(frame1-Seuil_bas)* (65000/(Seuil_haut-Seuil_bas))
+                fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
                 fc2[fc2<0]=0
+                fc2[fc2>65535] = 65535
                 frame_contrasted2=np.array(fc2, dtype='uint16')
                 
                 # image seuils protus
@@ -276,9 +276,9 @@ def do_work():
                 Seuil_haut=np.percentile(frame1,99.9999)*0.18        
                 print('Seuil bas protu :', np.floor(Seuil_bas))
                 print('Seuil haut protu:', np.floor(Seuil_haut))
-                frame1[frame1>Seuil_haut]=Seuil_haut
-                fc2=(frame1-Seuil_bas)* (65000/(Seuil_haut-Seuil_bas))
+                fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
                 fc2[fc2<0]=0
+                fc2[fc2>65535] = 65535
                 frame_contrasted3=np.array(fc2, dtype='uint16')
                 if not cercle == (-1, -1, -1) and disk_display==True:
                     x0=int(cercle[0])
@@ -288,8 +288,9 @@ def do_work():
                 
                 Seuil_bas=np.percentile(cl1, 25)
                 Seuil_haut=np.percentile(cl1,99.9999)*1.05
-                cc=(cl1-Seuil_bas)*(65000/(Seuil_haut-Seuil_bas))
+                cc=(cl1-Seuil_bas)*(65535/(Seuil_haut-Seuil_bas))
                 cc[cc<0]=0
+                cc[cc>65535] = 65535
                 cc=np.array(cc, dtype='uint16')
 
                 # sauvegarde en png de clahe
