@@ -314,7 +314,8 @@ def correct_transversalium(img, flag_nobords, options):
     
     # genere tableau image de flat 
     flat=[]
-    hf = np.array(hf) / min(hf) # don't make things bigger
+    hf = np.array(hf) / max(0.9, min(hf)) # don't make things bigger
+    hf[hf==0] = 1
     for i in range(0,newiw):
         flat.append(hf)
         
