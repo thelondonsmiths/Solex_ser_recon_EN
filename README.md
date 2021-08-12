@@ -37,8 +37,14 @@ Y/X ratio: enter a specific Y/X ratio, if this is known. Leave blank for auto-co
 Tilt angle: enter a specific tilt angle in degrees. Leave blank for auto-correction. Enter 0 if no tilt correction desired.
 
 Pixel offset: offset in pixels from the minimum of the line to reconstruct the image on another wavelength (displaced from the central minimum).
+	For no shift, leave the "Pixel offset" box at the default of '0'
+	Specify the output of a particular shift by entering a single number or particular values with commas: 'a,b,c,d,e'
+	For a range x to y with an interval of w, use colons: 'x:y:w'
+	If 'w' not specified, the default is 1 so  'x:y' will produce the range x, x+1, x+2, ... y-2, y-1, y
+	x, y, a, b, c can be positive or negative integers; the number w can only be a positive integer
+	Batch pixel shift processing of a batch of files is allowed
 
-Geometry correction may fail under certain circumstances and the program will stop. In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
+Geometry correction may fail under certain circumstances. In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
 
 For rapid processing during data acquisition, make sure "Show graphics" is off. Automatic geometry correction will also take some additional time.
 Moroever, if Y/X is set to 1, distortion due to inappropriate scanning speed vs frame rate can be recognised and optimised.
