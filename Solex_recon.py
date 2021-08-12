@@ -413,7 +413,3 @@ def solex_proc(serfile, options):
         logfile.writelines(mylog)
     
     return frames_circularized, hdr, cercle
-    
-
-
->>>>>>> a426667c1b071a900b0b0fda7fe26968e24a35e2
