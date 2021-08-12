@@ -13,10 +13,10 @@ In the Python GUI window, enter the name of the SER file(s) to be processed. Bat
 Command line interface: python SHG_MAIN.py your_ser_file1.SER [your_ser_file2.SER ... if batch processing]
 
 Command line options:
-	-d : display all graphics
-	-c : only the CLAHE image is saved
-	-f : all FITS files are saved
-	-p : save the protuberance image
+- d : display all graphics
+- c : only the CLAHE image is saved
+- f : all FITS files are saved
+- p : save the protuberance image
 
 Check the "Show graphics" box for a live reconstruction display, a graphic of the geometry correction and a quick view of the final images. 
 This will increase processing time significantly. This feature is not recommended for batch processing.
@@ -37,12 +37,12 @@ Y/X ratio: enter a specific Y/X ratio, if this is known. Leave blank for auto-co
 Tilt angle: enter a specific tilt angle in degrees. Leave blank for auto-correction. Enter 0 if no tilt correction desired.
 
 Pixel offset: offset in pixels from the minimum of the line to reconstruct the image on another wavelength (displaced from the central minimum).
-	For no shift, leave the "Pixel offset" box at the default of '0'
-	Specify the output of a particular shift by entering a single number or particular values with commas: 'a,b,c,d,e'
-	For a range x to y with an interval of w, use colons: 'x:y:w'
-	If 'w' not specified, the default is 1 so  'x:y' will produce the range x, x+1, x+2, ... y-2, y-1, y
-	x, y, a, b, c can be positive or negative integers; the number w can only be a positive integer
-	Batch pixel shift processing of a batch of files is allowed
+- For no shift, leave the "Pixel offset" box at the default of '0'
+- Specify the output of a particular shift by entering a single number or particular values with commas: 'a,b,c,d,e'
+- For a range x to y with an interval of w, use colons: 'x:y:w'
+- If 'w' not specified, the default is 1 so  'x:y' will produce the range x, x+1, x+2, ... y-2, y-1, y
+- x, y, a, b, c can be positive or negative integers; the number w can only be a positive integer
+- Batch pixel shift processing of a batch of files is allowed
 
 Geometry correction may fail under certain circumstances. In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
 
