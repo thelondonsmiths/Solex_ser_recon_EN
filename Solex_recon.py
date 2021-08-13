@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 10 August 2021
+Version 13 August 2021
 
 ------------------------------------------------------------------------
 reconstruction on an image from the deviations between the minimum of the line and a reference line
@@ -38,7 +38,7 @@ def read_video_improved(serfile, fit, LineRecal, options):
     col_indeces = []
 
     for shift in options['shift']:
-        ind_l = (np.asarray(fit)[:, 0] + np.ones(ih) * (LineRecal + int(shift))).astype(int)
+        ind_l = (np.asarray(fit)[:, 0] + np.ones(ih) * (LineRecal + shift)).astype(int)
         
         #CLEAN if fitting goes too far
         ind_l[ind_l < 0] = 0
@@ -75,7 +75,7 @@ def read_video_improved(serfile, fit, LineRecal, options):
 
 
 def make_header(rdr):        
-    # initialisation d'une entete fits (etait utilisé pour sauver les trames individuelles
+    # initialisation d'une entete fits (etait utilisé pour sauver les trames individuelles)
     hdr= fits.Header()
     hdr['SIMPLE']='T'
     hdr['BITPIX']=32

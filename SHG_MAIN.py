@@ -3,14 +3,14 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 1 August 2021
+Version 13 August 2021
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER files
 - interface able to select one or more files
 - call to the solex_recon module which processes the sequence and generates the FITS files
 - offers with openCV a display of the resultant image
-- wavelength selection with the pixel shift function
+- wavelength selection with the pixel shift function, including multiple wavelengths and a range of wavelengths
 - geometric correction with a fixed Y/X ratio
 - if Y/X remains at zero, then this will be calculated automatically
 --------------------------------------------------------------
@@ -19,7 +19,7 @@ Front end de traitements spectro helio de fichier ser
 - appel au module solex_recon qui traite la sequence et genere les fichiers fits
 - propose avec openCV un affichage de l'image resultat ou pas
 - decalage en longueur d'onde avec Shift
-- ajout d'une zone pour entrer un ratio fixe. Si reste à zero alors il sera calculé automatiquement
+- ajout d'une zone pour entrer un ratio fixe; si reste à zero alors il sera calculé automatiquement
 - ajout de sauvegarde png _protus avec flag disk_display en dur
 ---------------------------------------------------------------
 
@@ -44,7 +44,7 @@ def usage():
     usage_ += "'c' : 'clahe_only',  only final clahe picture is saved (True by default)\n"
     usage_ += "'f' : 'save_fit', all fits are saved (False by default)\n"
     usage_ += "'p' : 'disk_display' save protuberance pictures (False by default)\n"
-    usage_ += "'w' : 'window and batch shifting. 'x,y' will produce 2 pictures, at x and y.\n\tx:y:z will produce somes pictures, beginning at x, finishing at y, every z pixels.\n\t To make an halpha dopplergram at 3 px, wrote -w-3:3:3"
+    usage_ += "'w' : 'a,b,c' will produce images at a, b and c.\n\tx:y:w will produce images starting at x, finishing at y, every w pixels."
     return usage_
     
 def treat_flag_at_cli(arguments):
@@ -52,12 +52,12 @@ def treat_flag_at_cli(arguments):
     #reading arguments
     i=0
     while i < len(argument[1:]): #there's a '-' at first)
-        caracter = argument[1:][i]
-        if caracter=='h':
+        character = argument[1:][i]
+        if character=='h':
             print(usage())
             sys.exit()
-        elif caracter=='w' :
-            #find caractere for shifting
+        elif character=='w' :
+            #find characters for shifting
             shift=''
             stop = False
             try : 
@@ -82,7 +82,7 @@ def treat_flag_at_cli(arguments):
                 sys.exit()
         else : 
             try : #all others
-                options[flag_dictionnary[caracter]]=True if flag_dictionnary.get(caracter) else False
+                options[flag_dictionnary[character]]=True if flag_dictionnary.get(character) else False
                 i+=1
             except KeyError : 
                 print('ERROR !!! At least one argument is not accepted')
@@ -117,7 +117,7 @@ def UI_SerBrowse (WorkDir):
     [sg.Checkbox('Save CLAHE.png only', default=False, key='-CLAHE_ONLY-')],
     [sg.Text('Y/X ratio (blank for auto)', size=(20,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
     [sg.Text('Tilt angle (blank for auto)',size=(20,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
-    [sg.Text('Pixel offset',size=(20,1)),sg.Input(default_text='0',size=(8,1),tooltip= "'window and batch shifting.\nx,y will produce 2 pictures, at x and y.\n x:y:z will produce sommes pictures, beginning at x, finishing at y, every z pixels. To make an halpha dopplergram, wrote -w-3:3:3",key='-DX-',enable_events=True)],
+    [sg.Text('Pixel offset',size=(20,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
     [sg.Button('OK'), sg.Cancel()]
     ] 
     
@@ -149,14 +149,13 @@ disk_display=True
 serfiles = []
 
 options = {    
-'shift':0,
+'shift':[0],
 'flag_display':False,
 'ratio_fixe' : None,
 'slant_fix' : None ,
 'save_fit' : False,
 'clahe_only' : True,
 'disk_display' : False, #protus
-'shift':'0'
 }
 
 flag_dictionnary = {
@@ -242,7 +241,7 @@ def do_work():
         base=os.path.basename(serfile)
         basefich=os.path.splitext(base)[0]
         if base=='':
-            print('erreur nom de fichier : ',serfile)
+            print('filename ERROR : ',serfile)
             sys.exit()
 
         # ouverture du fichier ser
@@ -250,7 +249,7 @@ def do_work():
             f=open(serfile, "rb")
             f.close()
         except:
-            print('erreur ouverture fichier : ',serfile)
+            print('ERROR opening file : ',serfile)
             sys.exit()
 
         # save working directory
