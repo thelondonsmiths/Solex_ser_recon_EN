@@ -38,7 +38,7 @@ def read_video_improved(serfile, fit, LineRecal, options):
     col_indeces = []
 
     for shift in options['shift']:
-        ind_l = (np.asarray(fit)[:, 0] + np.ones(ih) * (LineRecal + shift)).astype(int)
+        ind_l = (np.asarray(fit)[:, 0] + np.ones(ih) * (LineRecal + int(shift))).astype(int)
         
         #CLEAN if fitting goes too far
         ind_l[ind_l < 0] = 0
