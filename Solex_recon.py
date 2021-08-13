@@ -67,7 +67,7 @@ def read_video_improved(serfile, fit, LineRecal, options):
             disk_list[i][:,rdr.FrameIndex]=IntensiteRaie
         
         if options['flag_display'] and rdr.FrameIndex % 10 ==0:
-            cv2.imshow ('disk', disk_list[0])
+            cv2.imshow ('disk', disk_list[1]) # disk_list[1] is always shift = 0
             if cv2.waitKey(1) == 27:                     # exit if Escape is hit
                 cv2.destroyAllWindows()    
                 sys.exit()
@@ -336,6 +336,7 @@ def solex_proc(serfile, options):
     clearlog()
     #plt.gray()              #palette de gris si utilise matplotlib pour visu debug
     logme('Using pixel shift : ' + str(options['shift']))
+    options['shift'] = [10, 0] + options['shift'] # 10, 0 are "fake"
     WorkDir=os.path.dirname(serfile)+"/"
     os.chdir(WorkDir)
     base=os.path.basename(serfile)
@@ -393,7 +394,7 @@ def solex_proc(serfile, options):
         We now apply ellipse_fit to apply the geometric correction
 
         """
-        
+        # disk_list[0] is always shift = 10, for more contrast for ellipse fit
         if options['ratio_fixe'] is None and options['slant_fix'] is None:
             frame_circularized, cercle, options['ratio_fixe'], phi = ellipse_to_circle(frame_flatted, options)
             options['slant_fix'] = math.degrees(phi) # in options angles are stored as degrees for some reason
@@ -405,11 +406,11 @@ def solex_proc(serfile, options):
 
         # sauvegarde en fits de l'image finale
         
-        if options['save_fit']:
+        if options['save_fit'] and i >= 2: # first two shifts are not user specified
             DiskHDU=fits.PrimaryHDU(frame_circularized,header=hdr)
             DiskHDU.writeto(basefich + '_recon.fits', overwrite='True')
             
     with  open(basefich0+'_log.txt', "w") as logfile:
         logfile.writelines(mylog)
     
-    return frames_circularized, hdr, cercle
+    return frames_circularized[2:], hdr, cercle

@@ -98,16 +98,36 @@ def correct_image(image, phi, ratio, center, print_log = False):
     return corrected_img, new_center
 
 def get_flood_image(image):
-    """ return an image, where all the pixels brighter than the average
+    """
+    Return an image, where all the pixels brighter than a threshold
     are made saturated, and all those below average are zeroed.
+    the threshhold is chosen as the local minimum of the pixel-brightness
+    histogram of the image. As a backup, the average brightness is used if
+    a local minimum cannot be found.
     IN: original image
     OUT: modified image
-    TODO: simplify this function?
     """
+    
+    
     thresh = 0.9 * np.sum(image) / (image.shape[0] * image.shape[1])
-    image[image < thresh] = 0
-    image[image >= thresh] = 65000
-    return image
+    print('thresh=', thresh)
+    img_blurred = cv2.blur(image, ksize=(5, 5))
+    n, bins = np.histogram(img_blurred.flatten(), bins=20)
+    bottom = -1
+    for i in range(19, 1, -1):
+        if n[i-1] < n [i]:
+            tip = i
+            break
+    for i in range(tip, 1, -1):
+        if n[i-1] > n [i]:
+            bottom = i
+            break
+    thresh2 = thresh if bottom == -1 else bins[bottom]
+    print('thresh2=', thresh2)
+            
+    img_blurred[img_blurred < thresh2] = 0
+    img_blurred[img_blurred >= thresh2] = 65000
+    return img_blurred
 
 def get_edge_list(image, sigma = 2):
     """from a picture, return a numpy array containing edge points
