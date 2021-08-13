@@ -17,8 +17,9 @@ Command line options:
 - c : only the CLAHE image is saved
 - f : all FITS files are saved
 - p : save the protuberance image
+- w: a,b,c will produce images at a, b and c ; x:y:w will produce images starting at x, finishing at y, every w pixels
 
-Check the "Show graphics" box for a live reconstruction display, a graphic of the geometry correction and a quick view of the final images. 
+Check the "Show graphics" box for a 'live view' reconstruction display, a graphic of the geometry correction and a quick view of the final images. 
 This will increase processing time significantly. This feature is not recommended for batch processing.
 
 If the "Save .fits files" box is checked, the following files will be stored in the same directory as the SER file:
