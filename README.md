@@ -5,7 +5,7 @@ Install the most recent version of Python from python.org. During Windows instal
 
 For Windows, double click the windows_setup file to install the needed Python libraries.
 
-Usage: 
+Usage:
 
 Graphical user interface: launch SHG_MAIN (by double clicking under Windows). A Windows Desktop shortcut can also be created.
 In the Python GUI window, enter the name of the SER file(s) to be processed. Batch processing is possible but will halt if a file is unsuitable.
@@ -19,7 +19,7 @@ Command line options:
 - p : save the protuberance image
 - w: a,b,c will produce images at a, b and c ; x:y:w will produce images starting at x, finishing at y, every w pixels
 
-Check the "Show graphics" box for a 'live view' reconstruction display, a graphic of the geometry correction and a quick view of the final images. 
+Check the "Show graphics" box for a 'live view' reconstruction display, a graphic of the geometry correction and a quick view of the final images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
 
 If the "Save .fits files" box is checked, the following files will be stored in the same directory as the SER file:
@@ -47,8 +47,8 @@ Pixel offset: offset in pixels from the minimum of the line to reconstruct the i
 
 Geometry correction may fail under certain circumstances. In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
 
-For rapid processing during data acquisition, make sure "Show graphics" is off. Automatic geometry correction will also take some additional time.
-Moroever, if Y/X is set to 1, distortion due to inappropriate scanning speed vs frame rate can be recognised and optimised.
+For rapid processing during data acquisition, make sure "Show graphics" is off.
+If Y/X is set to 1, distortion due to inappropriate scanning speed vs frame rate can be recognised and optimised.
 Similarly, if Tilt is set to 0, instrument misalignment can be recognised and corrected.
 
 Geometry graphics window can be killed by killed by pushing 'X'.
