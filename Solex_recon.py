@@ -186,7 +186,7 @@ def compute_mean_return_fit(serfile, options, LineRecal = 1):
         fit.append([int(x)-LineRecal,deci,y])
     return fit, a, b, c
 
-def correct_bad_lines_and_geom(Disk, options):
+def correct_bad_lines_and_geom(Disk, options, not_fake):
     global hdr, basefich
     
     iw=Disk.shape[1]
@@ -227,21 +227,22 @@ def correct_bad_lines_and_geom(Disk, options):
     
 
     # correction de lignes par filtrage median 13 lignes, empririque
+    img_copy = np.copy(img)
     for c in listcol:
         m=img[c-7:c+6,]
         s=np.median(m,0)
-        img[c-1:c,]=s
+        img_copy[c-1:c,]=s
     
     #sauvegarde le fits
 
-    if options['save_fit']:
-        DiskHDU=fits.PrimaryHDU(img,header=hdr)
+    if options['save_fit'] and not_fake:
+        DiskHDU=fits.PrimaryHDU(img_copy,header=hdr)
         DiskHDU.writeto(basefich+'_corr.fits', overwrite='True')
         
         
-    return img
+    return img_copy
 
-def correct_transversalium(img, flag_nobords, options):
+def correct_transversalium(img, flag_nobords, options, not_fake):
     global hdr, ih, basefich
     frame = img
     newiw=img.shape[1]
@@ -326,7 +327,7 @@ def correct_transversalium(img, flag_nobords, options):
     BelleImage=np.divide(frame,flat)
     frame=np.array(BelleImage, dtype='uint16')
     # sauvegarde de l'image deflattée
-    if options['save_fit']:
+    if options['save_fit'] and not_fake:
         DiskHDU=fits.PrimaryHDU(frame,header=hdr)
         DiskHDU.writeto(basefich+'_flat.fits', overwrite='True')
     return frame
@@ -369,7 +370,7 @@ def solex_proc(serfile, options):
     for i in range(len(disk_list)):
         basefich = basefich0 + '_shift='+str(options['shift'][i])
 
-        if options['save_fit']:
+        if options['save_fit'] and i >= 2:
             DiskHDU=fits.PrimaryHDU(disk_list[i],header=hdr)
             DiskHDU.writeto(basefich+'_img.fits', overwrite='True')
     
@@ -380,7 +381,7 @@ def solex_proc(serfile, options):
         --------------------------------------------------------------------
         --------------------------------------------------------------------
         """
-        img = correct_bad_lines_and_geom(disk_list[i], options)
+        img = correct_bad_lines_and_geom(disk_list[i], options, i >= 2)
             
         """
         --------------------------------------------------------------
@@ -388,7 +389,7 @@ def solex_proc(serfile, options):
         --------------------------------------------------------------
         """
         flag_nobords = False
-        frame_flatted = correct_transversalium(img,flag_nobords, options)
+        frame_flatted = correct_transversalium(img,flag_nobords, options, i >= 2)
 
         """
         We now apply ellipse_fit to apply the geometric correction
@@ -407,7 +408,7 @@ def solex_proc(serfile, options):
         # sauvegarde en fits de l'image finale
         
         if options['save_fit'] and i >= 2: # first two shifts are not user specified
-            DiskHDU=fits.PrimaryHDU(frame_circularized,header=hdr)
+            DiskHDU=fits.PrimaryHDU(frames_circularized[-1],header=hdr)
             DiskHDU.writeto(basefich + '_recon.fits', overwrite='True')
             
     with  open(basefich0+'_log.txt', "w") as logfile:
