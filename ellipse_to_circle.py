@@ -35,9 +35,10 @@ def get_correction_matrix(phi, r):
     OUT: correction matrix
     """
     stretch_matrix = rot(phi) @ np.array([[r, 0], [0, 1]]) @  rot(-phi)
-    theta = np.arctan(-stretch_matrix[0, 1] / stretch_matrix[1, 1]) 
+    theta = np.arctan(stretch_matrix[1, 0] / stretch_matrix[0, 0]) 
     unrotation_matrix = rot(theta)
     correction_matrix = unrotation_matrix @ stretch_matrix
+    correction_matrix[1, 0] = 0 # set the bottom-left element to exactly zero
     return np.linalg.inv(correction_matrix), theta
 
 def dofit(points):
@@ -175,7 +176,7 @@ def get_edge_list(image, sigma = 2):
     X = np.array(X, dtype='float')
     return np.array([X, raw_X], dtype=object) 
 
-def ellipse_to_circle(image, options):
+def ellipse_to_circle(image, options, basefich):
     """from an entire sun frame, compute ellipse fit and return a circularise picture and center coordinates
     IN : numpy array, dictionnayr of options
     OUt :numpy array, numpy array (2 elements)
@@ -193,16 +194,17 @@ def ellipse_to_circle(image, options):
         fig, ax = plt.subplots(ncols=2, nrows = 2)
         ax[0][0].imshow(image, cmap=plt.cm.gray)
         ax[0][0].set_title('uncorrected image', fontsize = 11)
+        ax[0][0].set_aspect('equal')
+        ax[0][1].set_aspect('equal')
         ax[0][1].imshow(image, cmap=plt.cm.gray)
         ax[0][1].plot(raw_X[:, 1], raw_X[:, 0], 'ro', label = 'edge detection')
-        ax[0][1].set_xlim([0, image.shape[1]])
-        ax[0][1].set_ylim([0, image.shape[0]])
         ax[0][1].legend()
-        ax[1][1].plot(X_f[:, 1], image.shape[0] - X_f[:, 0], 'ro', label = 'filtered edges')
-        ax[1][1].plot(ellipse_points[:, 1], image.shape[0] - ellipse_points[:, 0], color='b', label = 'ellipse fit')
-        ax[1][1].set_xlim([0, image.shape[1]])
-        ax[1][1].set_ylim([0, image.shape[0]])
+        ax[1][1].set_aspect('equal')
+        ax[1][1].plot(X_f[:, 1], X_f[:, 0], 'ro', label = 'filtered edges')
+        ax[1][1].plot(ellipse_points[:, 1], ellipse_points[:, 0], color='b', label = 'ellipse fit')
+        ax[1][1].set_ylim([image.shape[0], 0]) # make y-axis upside-down
         ax[1][1].legend()
+        ax[1][0].set_aspect('equal')
         ax[1][0].imshow(fix_img, cmap=plt.cm.gray)
         ax[1][0].set_title('geometrically corrected image', fontsize=11)
         ax[0][1].set_title('remember to close this window \n by pressing the "X"', color = 'red')
@@ -213,6 +215,8 @@ def ellipse_to_circle(image, options):
         timer = fig.canvas.new_timer(interval = options['tempo']) 
         timer.add_callback(close_event)
         timer.start()
+        if not options['clahe_only']:
+            plt.savefig(basefich + '_ellipse_fit.png', dpi=200)
         plt.show()
   
     circle = (center[0], center[1], height*ratio) # radius == height*ratio

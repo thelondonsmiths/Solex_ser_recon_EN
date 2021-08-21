@@ -231,15 +231,7 @@ def correct_bad_lines_and_geom(Disk, options, not_fake):
     for c in listcol:
         m=img[c-7:c+6,]
         s=np.median(m,0)
-        img_copy[c-1:c,]=s
-    
-    #sauvegarde le fits
-
-    if options['save_fit'] and not_fake:
-        DiskHDU=fits.PrimaryHDU(img_copy,header=hdr)
-        DiskHDU.writeto(basefich+'_corr.fits', overwrite='True')
-        
-        
+        img_copy[c-1:c,]=s        
     return img_copy
 
 def correct_transversalium(img, flag_nobords, options, not_fake):
@@ -369,7 +361,6 @@ def solex_proc(serfile, options):
     frames_circularized = []
     for i in range(len(disk_list)):
         basefich = basefich0 + '_shift='+str(options['shift'][i])
-
         if options['save_fit'] and i >= 2:
             DiskHDU=fits.PrimaryHDU(disk_list[i],header=hdr)
             DiskHDU.writeto(basefich+'_img.fits', overwrite='True')
@@ -397,7 +388,7 @@ def solex_proc(serfile, options):
         """
         # disk_list[0] is always shift = 10, for more contrast for ellipse fit
         if options['ratio_fixe'] is None and options['slant_fix'] is None:
-            frame_circularized, cercle, options['ratio_fixe'], phi = ellipse_to_circle(frame_flatted, options)
+            frame_circularized, cercle, options['ratio_fixe'], phi = ellipse_to_circle(frame_flatted, options, basefich)
             options['slant_fix'] = math.degrees(phi) # in options angles are stored as degrees for some reason
             frames_circularized.append(frame_circularized)
         else:
