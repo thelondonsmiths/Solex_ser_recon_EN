@@ -26,7 +26,6 @@ If the "Save .fits files" box is checked, the following files will be stored in 
 
 - xx_mean.fits: average image of all the frames in the SER video of the spectral line
 - xx_img.fits: raw image reconstruction
-- xx_corr.fits: image corrected for outliers
 - xx_flat.fits: corrected flat image
 - xx_recon.fits: final image, corrected for tilt
 - xx_clahe.fits: final image, with Contrast Limited Adaptive Histogram Equalization

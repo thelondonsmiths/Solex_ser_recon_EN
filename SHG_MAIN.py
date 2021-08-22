@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 13 August 2021
+Version 22 August 2021
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER files
@@ -229,7 +229,7 @@ def do_work():
     if len(serfiles)==1:
         options['tempo']=60000 #4000
     else:
-        options['tempo']=1000
+        options['tempo']=5000
         
     # boucle sur la liste des fichers
     for serfile in serfiles:
@@ -313,7 +313,7 @@ def do_work():
                 if not cercle == (-1, -1, -1) and disk_display==True:
                     x0=int(cercle[0])
                     y0=int(cercle[1])
-                    r=int(cercle[2]) - 4
+                    r=int(cercle[2])
                     frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)
                 
                 Seuil_bas=np.percentile(cl1, 25)

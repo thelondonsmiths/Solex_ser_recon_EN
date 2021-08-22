@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 13 August 2021
+Version 22 August 2021
 
 ------------------------------------------------------------------------
 reconstruction on an image from the deviations between the minimum of the line and a reference line

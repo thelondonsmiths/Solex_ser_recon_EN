@@ -1,6 +1,6 @@
 """
 @author: Andrew Smith
-Version 6 August 2021
+Version 22 August 2021
 
 """
 from solex_util import *
@@ -98,36 +98,80 @@ def correct_image(image, phi, ratio, center, print_log = False):
     new_center = (np.linalg.inv(mat) @ center.T).T - np.array([np.min(new_corners[:, 0]), np.min(new_corners[:, 1])])
     return corrected_img, new_center
 
+
+
+from numpy import polynomial
 def get_flood_image(image):
     """
     Return an image, where all the pixels brighter than a threshold
     are made saturated, and all those below average are zeroed.
-    the threshhold is chosen as the local minimum of the pixel-brightness
+    the threshhold is chosen as the local minimum of a cubic polynomial fit of the pixel-brightness
     histogram of the image. As a backup, the average brightness is used if
     a local minimum cannot be found.
     IN: original image
     OUT: modified image
     """
     
-    
     thresh = 0.9 * np.sum(image) / (image.shape[0] * image.shape[1])
     print('thresh=', thresh)
     img_blurred = cv2.blur(image, ksize=(5, 5))
     n, bins = np.histogram(img_blurred.flatten(), bins=20)
-    bottom = -1
-    for i in range(19, 1, -1):
-        if n[i-1] < n [i]:
-            tip = i
-            break
-    for i in range(tip, 1, -1):
-        if n[i-1] > n [i]:
-            bottom = i
-            break
-    thresh2 = thresh if bottom == -1 else bins[bottom]
+    '''
+    plt.hist(img_blurred.flatten(), bins=20)
+    plt.show()
+    '''
+    # fit the histogram to a cubic graph
+    coeff = polynomial.polynomial.Polynomial.fit(bins[1:], n, 3).convert().coef
+    print('cubic fit coeffs. :', coeff)
+   
+    d, c, b, a = coeff
+    def gf(x):
+        return a*x**3 + b*x**2 + c*x + d
+
+    '''
+    y_fitted = [gf(x) for x in bins[1:]]
+    plt.plot(bins[1:], y_fitted)
+    plt.plot(bins[1:], n)
+    plt.show()
+    '''
+    
+    # derivative is 3 * a * x**2 + 2 * b * x + c
+    # stationary points at {-2b +/- sqrt(4*b**2-12*a*c)} / 6a
+
+    sign = 1 # for local minimum
+    discriminant = 4*b**2-12*a*c
+    if discriminant >= 0:
+        minimum = (-2*b + sign*np.sqrt(discriminant)) / (6*a)
+        thresh2 = minimum
+    else:
+        print('WARNING: cubic fit failed: no local minimum (falling back to mean threshhold)')
+        thresh2 = thresh
+         
     print('thresh2=', thresh2)
-            
-    img_blurred[img_blurred < thresh2] = 0
-    img_blurred[img_blurred >= thresh2] = 65000
+    start_i = -1
+    for i in range(len(bins) - 1):
+        if bins[i] <= thresh2 < bins[i+1]:
+            start_i = i
+    if start_i == -1:
+        print('WARNING: fail to get start_i from cubic fit (default to average thresh)')
+        fail_flag = 1
+        thresh3 = thresh
+    else:
+        i = start_i
+        while i > 0 and i < len(bins) - 2:
+            if n[i-1] < n[i]:
+                i -= 1
+            elif n[i+1] < n[i]:
+                i += 1
+            else:
+                break
+        if i >= 1:
+            i -= 1 # make circle a little bigger
+        thresh3 = bins[i]
+        
+    print('thresh3 = ', thresh3)
+    img_blurred[img_blurred < thresh3] = 0
+    img_blurred[img_blurred >= thresh3] = 65000
     return img_blurred
 
 def get_edge_list(image, sigma = 2):
@@ -143,9 +187,9 @@ def get_edge_list(image, sigma = 2):
     low_threshold = np.median(cv2.blur(image, ksize=(5, 5))) / 10
     high_threshold = low_threshold*1.5
     print('using thresholds:', low_threshold, high_threshold)
-    image = get_flood_image(image)
+    image_flooded = get_flood_image(image)
     edges = skimage.feature.canny(
-        image=image,
+        image=image_flooded,
         sigma=sigma,
         low_threshold=low_threshold,
         high_threshold=high_threshold,
@@ -164,7 +208,7 @@ def get_edge_list(image, sigma = 2):
     x_min, y_min, x_max, y_max = np.min(X[:, 0]), np.min(X[:, 1]), np.max(X[:, 0]), np.max(X[:, 1])
     dx = x_max - x_min
     dy = y_max - y_min
-    crop = 0.015
+    crop = 0.017 # was : 0.015
 
     mask = np.zeros(filt.shape)
     mask[int(x_min+dx*crop):int(x_max-dx*crop), :] = 1
