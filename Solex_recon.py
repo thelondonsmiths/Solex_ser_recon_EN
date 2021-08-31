@@ -33,7 +33,6 @@ def read_video_improved(serfile, fit, LineRecal, options):
         cv2.namedWindow('image', cv2.WINDOW_NORMAL)
         cv2.moveWindow('image', 0, 0)
         cv2.resizeWindow('image', int(iw), int(ih))
-    
            
     col_indeces = []
 
@@ -127,9 +126,6 @@ def compute_mean_return_fit(serfile, options, LineRecal = 1):
     ----------------------------------------------------------------------------
     """
 
-    
-    #savefich=basefich+'_mean'
-
     if options['save_fit']:
         DiskHDU=fits.PrimaryHDU(mean_img,header=hdr)
         DiskHDU.writeto(basefich0+'_mean.fits', overwrite='True')
@@ -199,8 +195,7 @@ def correct_bad_lines_and_geom(Disk, options, not_fake):
     
     # somme de lignes projetées sur axe Y
     ysum=np.mean(img,1)
-    #plt.plot(ysum)
-    #plt.show()
+
     # ne considere que les lignes du disque avec marge de 15 lignes 
     ysum=ysum[y1+15:y2-15]
     
@@ -218,13 +213,10 @@ def correct_bad_lines_and_geom(Disk, options, not_fake):
     a=[0]*(y1+15)
     b=[0]*(ih-y2+15)
     hcol=np.concatenate((a,hcol,b))
-    #plt.plot(hcol)
-    #plt.show()
     
     # creation du tableau d'indice des lignes a corriger
     l_col=np.where(hcol!=0)
     listcol=l_col[0]
-    
 
     # correction de lignes par filtrage median 13 lignes, empririque
     img_copy = np.copy(img)
@@ -247,16 +239,8 @@ def correct_transversalium(img, flag_nobords, options, not_fake):
     if flag_nobords:
         ydisk=np.median(img,1)
     else:
-        #plt.hist(frame.ravel(),bins=1000,)
-        #plt.show()
-        #plt.hist(frame.ravel(),bins=1000,cumulative=True)
-       # plt.show()
-        seuil_bas=np.percentile(frame,25)
         seuil_haut=np.percentile(frame,97) 
-        #print ('Seuils de flat: ',seuil_bas, seuil_haut)
-        #print ('Seuils bas x: ',seuil_bas*4)
-        #print ('Seuils haut x: ',seuil_haut*0.25)
-        #myseuil=seuil_haut*0.2
+        
         myseuil=seuil_haut*0.5
         # filtre le profil moyen en Y en ne prenant que le disque
         ydisk=np.empty(ih+1)
@@ -267,27 +251,13 @@ def correct_transversalium(img, flag_nobords, options, not_fake):
                 ydisk[j]=np.median(temp)
             else:
                 ydisk[j]=1
-    y1=y1
-    y2=y2
+    
+    # ne prend que le profil des intensités pour eviter les rebonds de bords
     ToSpline= ydisk[y1:y2]
  
     
     Smoothed2=savgol_filter(ToSpline,301, 3) # window size, polynomial order
-    #best fit d'un polynome degre 4
-    np_m=np.asarray(ToSpline)
-    ym=np_m.T
-    xm=np.arange(y2-y1)
-    p=np.polyfit(xm,ym,4)
-    
-    #calcul des x colonnes pour les y lignes du polynome
-    a=p[0]
-    b=p[1]
-    c=p[2]
-    d=p[3]
-    e=p[4]
-    x = np.arange(y2-y1)
-    Smoothed=a*x**4+b*x**3+c*x**2+d*x+e
-    
+
     # divise le profil reel par son filtre ce qui nous donne le flat
     hf=np.divide(ToSpline,Smoothed2)
        
@@ -299,11 +269,8 @@ def correct_transversalium(img, flag_nobords, options, not_fake):
     b=[1]*(ih-y2+5)
     hf=np.concatenate((a,hf,b))
     
-    
-    Smoothed=np.concatenate((a,Smoothed,b))
     ToSpline=np.concatenate((a,ToSpline,b))
     Smoothed2=np.concatenate((a,Smoothed2,b))
-
     
     # genere tableau image de flat 
     flat=[]
@@ -314,10 +281,11 @@ def correct_transversalium(img, flag_nobords, options, not_fake):
         
     np_flat=np.asarray(flat)
     flat = np_flat.T
-    #print(hf, sum(hf)/len(hf), max(hf), min(hf))    
+
     # divise image par le flat
     BelleImage=np.divide(frame,flat)
     frame=np.array(BelleImage, dtype='uint16')
+    
     # sauvegarde de l'image deflattée
     if options['save_fit'] and not_fake:
         DiskHDU=fits.PrimaryHDU(frame,header=hdr)
@@ -350,9 +318,6 @@ def solex_proc(serfile, options):
     hdr['NAXIS1']=iw # note: slightly dodgy, new width
    
     #sauve fichier disque reconstruit
-
-
-    
     
     if options['flag_display']:
         cv2.destroyAllWindows()
