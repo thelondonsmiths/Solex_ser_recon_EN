@@ -41,6 +41,7 @@ def get_correction_matrix(phi, r):
     unrotation_matrix = rot(theta)
     correction_matrix = unrotation_matrix @ stretch_matrix
     correction_matrix[1, 0] = 0  # set the bottom-left element to exactly zero
+    correction_matrix /= correction_matrix[1, 1] # set bottom-right element to exactly one
     return np.linalg.inv(correction_matrix), theta
 
 
@@ -74,29 +75,14 @@ def two_step(points):
     return np.array(
         center), height, phi, ratio, points_tresholded, ellipse_points
 
-
-def correct_image(image, phi, ratio, center, print_log=False):
+# note: height is actually an ellipse axis
+def correct_image(image, phi, ratio, center, height, print_log=False):
     """correct image geometry. TODO : a rotation is made instead of a tilt
     IN : numpy array, float, float, numpy array (2 elements)
     OUT : numpy array, numpy array (2 elements)
     """
 
-    mat, theta = get_correction_matrix(phi, ratio)
-    if print_log:
-        print(
-            'unrotation angle theta = ' +
-            "{:.3f}".format(
-                math.degrees(theta)) +
-            " degrees")
-        np.set_printoptions(suppress=True)
-        logme('Y/X ratio : ' + "{:.3f}".format(ratio))
-        logme(
-            'Tilt angle : ' +
-            "{:.3f}".format(
-                math.degrees(phi)) +
-            " degrees")
-        logme('Linear transform correction matrix: \n' + str(mat))
-        np.set_printoptions(suppress=False)
+    mat, theta = get_correction_matrix(phi, ratio) 
     mat3 = np.zeros((3, 3))
     mat3[:2, :2] = mat
     mat3[2, 2] = 1
@@ -117,7 +103,26 @@ def correct_image(image, phi, ratio, center, print_log=False):
         np.uint16)  # note : 16-bit output
     new_center = (np.linalg.inv(mat) @ center.T).T - \
         np.array([np.min(new_corners[:, 0]), np.min(new_corners[:, 1])])
-    return corrected_img, new_center
+    
+    new_radius = height * np.sqrt(np.abs(ratio / np.linalg.det(mat))) # derivation: area of a circle / area of an ellipse
+
+    if print_log:
+        print(
+            'unrotation angle theta = ' +
+            "{:.3f}".format(
+                math.degrees(theta)) +
+            " degrees")
+        np.set_printoptions(suppress=True)
+        logme('Y/X ratio : ' + "{:.3f}".format(ratio))
+        logme(
+            'Tilt angle : ' +
+            "{:.3f}".format(
+                math.degrees(phi)) +
+            " degrees")
+        logme('Linear transform correction matrix: \n' + str(mat))
+        logme('Disk position, radius : ' + str(new_center) + ', ' + "{:.3f}".format(new_radius))
+        np.set_printoptions(suppress=False)
+    return corrected_img, (new_center[0], new_center[1], new_radius)
 
 
 def get_flood_image(image):
@@ -260,9 +265,9 @@ def ellipse_to_circle(image, options, basefich):
     center, height, phi, ratio, X_f, ellipse_points = two_step(X)
     center = np.array([center[1], center[0]])
 
-    fix_img, center = correct_image(image, phi, ratio, center, print_log=True)
+    fix_img, new_circle = correct_image(image, phi, ratio, center, height, print_log=True)
 
-    if options['flag_display']:
+    if not options['clahe_only']:
         fig, ax = plt.subplots(ncols=2, nrows=2)
         ax[0][0].imshow(image, cmap=plt.cm.gray)
         ax[0][0].set_title('uncorrected image', fontsize=11)
@@ -284,15 +289,15 @@ def ellipse_to_circle(image, options, basefich):
             'remember to close this window \n by pressing the "X"',
             color='red')
 
-        # creating a timer object to auto-close plot after some time
-        def close_event():
-            plt.close()
-        timer = fig.canvas.new_timer(interval=options['tempo'])
-        timer.add_callback(close_event)
-        timer.start()
-        if not options['clahe_only']:
-            plt.savefig(basefich + '_ellipse_fit.png', dpi=200)
-        plt.show()
-
-    circle = (center[0], center[1], height * ratio)  # radius == height*ratio
-    return fix_img, circle, ratio, phi
+        plt.savefig(basefich + '_ellipse_fit.png', dpi=200)
+        if options['flag_display']:
+            # creating a timer object to auto-close plot after some time
+            def close_event():
+                plt.close()
+            timer = fig.canvas.new_timer(interval=options['tempo'])
+            timer.add_callback(close_event)
+            timer.start()
+            plt.show()
+        else:
+            plt.clf()
+    return fix_img, new_circle, ratio, phi

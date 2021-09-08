@@ -349,16 +349,20 @@ def solex_proc(serfile, options):
         --------------------------------------------------------------------
         --------------------------------------------------------------------
         """
-        img = correct_bad_lines_and_geom(disk_list[i], options, i >= 2)
+        try:
+            img = correct_bad_lines_and_geom(disk_list[i], options, i >= 2)
 
-        """
-        --------------------------------------------------------------
-        transversallium correction
-        --------------------------------------------------------------
-        """
-        flag_nobords = False
-        frame_flatted = correct_transversalium(
-            img, flag_nobords, options, i >= 2)
+            """
+            --------------------------------------------------------------
+            transversallium correction
+            --------------------------------------------------------------
+            """
+            flag_nobords = False
+            frame_flatted =  correct_transversalium(img, flag_nobords, options, i >= 2)
+
+        except Exception:
+            logme('WARNING: correct_bad_lines / correct_transversalium FAILED')
+            frame_flatted = disk_list[i]
 
         """
         We now apply ellipse_fit to apply the geometric correction
@@ -376,7 +380,7 @@ def solex_proc(serfile, options):
             phi = math.radians(
                 options['slant_fix']) if not options['slant_fix'] is None else 0.0
             frames_circularized.append(correct_image(frame_flatted / 65536, phi, ratio, np.array(
-                [-1.0, -1.0]), print_log=i == 0)[0])  # Note that we assume 16-bit
+                [-1.0, -1.0]), -1.0, print_log=i == 0)[0])  # Note that we assume 16-bit
 
         # sauvegarde en fits de l'image finale
 
