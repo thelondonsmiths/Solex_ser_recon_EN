@@ -1,6 +1,6 @@
 """
 @author: Andrew Smith
-Version 22 August 2021
+Version 8 September 2021
 
 """
 from numpy import polynomial
