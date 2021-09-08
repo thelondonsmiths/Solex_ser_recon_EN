@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 22 August 2021
+Version 8 September 2021
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER files
@@ -118,7 +118,7 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only):
     [sg.Text('Y/X ratio (blank for auto)', size=(25,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
     [sg.Text('Tilt angle (blank for auto)',size=(25,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
     [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
-    [sg.Text('protus_radius_pixel_ajustment', size=(25,1)), sg.Input(default_text='0', size=(8,1), tooltip = 'make the big black circle on protus.png either bigger or smaller by inputting an integer', key='-delta_radius-')],
+    [sg.Text('Protus adjustment', size=(25,1)), sg.Input(default_text='0', size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='-delta_radius-')],
     [sg.Button('OK'), sg.Cancel()]
     ] 
     
