@@ -44,6 +44,8 @@ Pixel offset: offset in pixels from the minimum of the line to reconstruct the i
 - x, y, a, b, c can be positive or negative integers; the number w can only be a positive integer
 - Batch pixel shift processing of a batch of files is allowed
 
+Protus adjustment: make the black circle larger or smaller in radius by inputting a positive or negative integer (typically between -10 and +10).
+
 Geometry correction may fail under certain circumstances. In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
 
 For rapid processing during data acquisition, make sure "Show graphics" is off.
