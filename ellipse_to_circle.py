@@ -122,7 +122,7 @@ def correct_image(image, phi, ratio, center, height, print_log=False):
         logme('Linear transform correction matrix: \n' + str(mat))
         logme('Disk position, radius : ' + str(new_center) + ', ' + "{:.3f}".format(new_radius))
         np.set_printoptions(suppress=False)
-    return corrected_img, (new_center[0], new_center[1], new_radius)
+    return corrected_img, (new_center[0], new_center[1], new_radius), mat3
 
 
 def get_flood_image(image):
@@ -169,8 +169,7 @@ def get_flood_image(image):
         minimum = (-2 * b + sign * np.sqrt(discriminant)) / (6 * a)
         thresh2 = minimum
     else:
-        print(
-            'WARNING: cubic fit failed: no local minimum (falling back to mean threshhold)')
+        print('WARNING: cubic fit failed: no local minimum (falling back to mean threshhold)')
         thresh2 = thresh
 
     print('thresh2=', thresh2)
@@ -265,8 +264,15 @@ def ellipse_to_circle(image, options, basefich):
     center, height, phi, ratio, X_f, ellipse_points = two_step(X)
     center = np.array([center[1], center[0]])
 
-    fix_img, new_circle = correct_image(image, phi, ratio, center, height, print_log=True)
+    fix_img, new_circle, mat3 = correct_image(image, phi, ratio, center, height, print_log=True)
 
+
+    X_f3 = np.ones((X_f.shape[0], 3))
+    X_f3[:, 1] = X_f[:, 0]  # note that X_f is in (y, x) form while X_f3 is in (x, y)
+    X_f3[:, 0] = X_f[:, 1]
+    X_f3_t = (np.linalg.inv(mat3) @ X_f3.T).T
+    borders = [np.min(X_f3_t[:, 0]), np.min(X_f3_t[:, 1]), np.max(X_f3_t[:, 0]), np.max(X_f3_t[:, 1])]
+    print('sun borders found:' + str(borders))
     if not options['clahe_only']:
         fig, ax = plt.subplots(ncols=2, nrows=2)
         ax[0][0].imshow(image, cmap=plt.cm.gray)
@@ -284,6 +290,10 @@ def ellipse_to_circle(image, options, basefich):
         ax[1][1].legend()
         ax[1][0].set_aspect('equal')
         ax[1][0].imshow(fix_img, cmap=plt.cm.gray)
+        ax[1][0].axhline(y=borders[1])
+        ax[1][0].axhline(y=borders[3])
+        ax[1][0].axvline(x=borders[0])
+        ax[1][0].axvline(x=borders[2])
         ax[1][0].set_title('geometrically corrected image', fontsize=11)
         ax[0][1].set_title(
             'remember to close this window \n by pressing the "X"',
@@ -300,4 +310,4 @@ def ellipse_to_circle(image, options, basefich):
             plt.show()
         else:
             plt.clf()
-    return fix_img, new_circle, ratio, phi
+    return fix_img, new_circle, ratio, phi, borders
