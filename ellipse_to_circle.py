@@ -105,7 +105,6 @@ def correct_image(image, phi, ratio, center, height, print_log=False):
         np.array([np.min(new_corners[:, 0]), np.min(new_corners[:, 1])])
     
     new_radius = height * np.sqrt(np.abs(ratio / np.linalg.det(mat))) # derivation: area of a circle / area of an ellipse
-
     if print_log:
         print(
             'unrotation angle theta = ' +
@@ -120,7 +119,7 @@ def correct_image(image, phi, ratio, center, height, print_log=False):
                 math.degrees(phi)) +
             " degrees")
         logme('Linear transform correction matrix: \n' + str(mat))
-        logme('Disk position, radius : ' + str(new_center) + ', ' + "{:.3f}".format(new_radius))
+        logme('Disk position, radius : ' + ((str(new_center) + ', ' + "{:.3f}".format(new_radius)) if not height == -1.0 else 'UNKNOWN'))
         np.set_printoptions(suppress=False)
     return corrected_img, (new_center[0], new_center[1], new_radius), mat3
 

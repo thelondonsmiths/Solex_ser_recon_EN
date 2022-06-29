@@ -39,15 +39,15 @@ import cv2
 import traceback
 
 def usage():
-    usage_ = "SHG_MAIN.py [-dcfpw] [file(s) to treat]\n"
+    usage_ = "SHG_MAIN.py [-dcfpstw] [file(s) to treat]\n"
     usage_ += "'d' : 'flag_display', display all pictures (False by default)\n"
     usage_ += "'c' : 'clahe_only',  only final clahe picture is saved (True by default)\n"
     usage_ += "'f' : 'save_fit', all fits are saved (False by default)\n"
     usage_ += "'s' : 'crop_square_width', crop the width to equal the height (False by default)\n"
     usage_ += "'p' : 'disk_display' save protuberance pictures (False by default)\n"
+    usage_ += "'s' : will crop the final image width into a square centred on the sun in the x-direction (False by default)\n"
+    usage_ += "'t' : will disable transversalium correction\n"
     usage_ += "'w' : 'a,b,c' will produce images at a, b and c.\n\tx:y:w will produce images starting at x, finishing at y, every w pixels."
-    usage_ += "'s' : crop the final image width into a square centred on the sun in the x-direction"
-    usage_ += "'t' : disable transversalium correction"
     return usage_
     
 def treat_flag_at_cli(arguments):
@@ -85,6 +85,10 @@ def treat_flag_at_cli(arguments):
                 sys.exit()
         elif character=='t':
             options['transversalium'] = False
+            i+=1
+        elif character=='c':
+            options['clahe_only'] = False
+            i+=1
         else : 
             try : #all others
                 options[flag_dictionnary[character]]=True if flag_dictionnary.get(character) else False
