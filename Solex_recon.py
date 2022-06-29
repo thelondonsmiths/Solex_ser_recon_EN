@@ -151,7 +151,9 @@ def compute_mean_return_fit(serfile, options, LineRecal=1):
 
         cv2.destroyAllWindows()
 
-    y1, y2 = detect_bord(max_img, axis=1, offset=5)
+    y1, y2 = detect_bord(max_img, axis=1)
+    y1 = min(max_img.shape[0]-1, y1+10)
+    y2 = max(0, y2-10)
     logme('Vertical limits y1, y2 : ' + str(y1) + ' ' + str(y2))
 
     PosRaieHaut = y1
