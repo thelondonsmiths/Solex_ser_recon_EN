@@ -155,43 +155,12 @@ def compute_mean_return_fit(serfile, options, LineRecal=1):
     y1 = min(max_img.shape[0]-1, y1+10)
     y2 = max(0, y2-10)
     logme('Vertical limits y1, y2 : ' + str(y1) + ' ' + str(y2))
-
-    PosRaieHaut = y1
-    PosRaieBas = y2
-
-    """
-    -----------------------------------------------------------
-    Trouve les min intensité de la raie
-    -----------------------------------------------------------
-    """
-    # construit le tableau des min de la raie a partir du haut jusqu'en bas
-    MinOfRaie = []
-
-    for i in range(PosRaieHaut, PosRaieBas):
-        line_h = mean_img[i, :]
-        MinX = line_h.argmin()
-        MinOfRaie.append([MinX, i])
-        #print('MinOfRaie x,y', MinX,i)
-
-    # best fit d'un polynome degre 2, les lignes y sont les x et les colonnes
-    # x sont les y
-    np_m = np.asarray(MinOfRaie)
-    xm, ym = np_m.T
-    # LineRecal=xm.min()
-
-    p = np.polyfit(ym, xm, 2)
-
-    # calcul des x colonnes pour les y lignes du polynome
-    a = p[0]
-    b = p[1]
-    c = p[2]
-    fit = []
-    # ecart=[]
-    for y in range(0, ih):
-        x = a * y**2 + b * y + c
-        deci = x - int(x)
-        fit.append([int(x) - LineRecal, deci, y])
-    return fit, a, b, c, y1, y2
+    min_intensity = np.argmin(mean_img, axis = 1)
+    p = np.flip(np.asarray(np.polyfit(np.arange(y1, y2), min_intensity[y1:y2], 3), dtype='d'))
+    logme('spectral line polynomial fit: ' + str(p))
+    curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
+    fit = [[math.floor(curve[y]) - LineRecal, curve[y] - math.floor(curve[y]), y] for y in range(ih)]
+    return fit, y1, y2
 
 '''
 img: np array
@@ -275,10 +244,8 @@ def solex_proc(serfile, options):
     ih = rdr.ih
     iw = rdr.iw
 
-    fit, a, b, c, backup_y1, backup_y2 = compute_mean_return_fit(serfile, options, LineRecal)
+    fit, backup_y1, backup_y2 = compute_mean_return_fit(serfile, options, LineRecal)
 
-    # Modification Jean-Francois: correct the variable names: A0, A1, A2
-    logme('Coeff A0, A1, A2 :  ' + str(a) + '  ' + str(b) + '  ' + str(c))
 
     disk_list, ih, iw, FrameCount = read_video_improved(
         serfile, fit, LineRecal, options)

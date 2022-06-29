@@ -16,6 +16,7 @@ import cv2
 import sys
 import math
 from scipy.ndimage import gaussian_filter1d
+from numpy.polynomial.polynomial import polyval
 
 mylog = []
 
