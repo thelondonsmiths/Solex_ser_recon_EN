@@ -43,6 +43,7 @@ def usage():
     usage_ += "'d' : 'flag_display', display all pictures (False by default)\n"
     usage_ += "'c' : 'clahe_only',  only final clahe picture is saved (True by default)\n"
     usage_ += "'f' : 'save_fit', all fits are saved (False by default)\n"
+    usage_ += "'s' : 'crop_square_width', crop the width to equal the height (False by default)\n"
     usage_ += "'p' : 'disk_display' save protuberance pictures (False by default)\n"
     usage_ += "'w' : 'a,b,c' will produce images at a, b and c.\n\tx:y:w will produce images starting at x, finishing at y, every w pixels."
     return usage_
@@ -89,7 +90,7 @@ def treat_flag_at_cli(arguments):
                 print(usage())
     print('options %s'%(options))
 
-def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only):
+def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square):
     """
     Parameters
     ----------
@@ -115,6 +116,7 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only):
     [sg.Checkbox('Show graphics', default=default_graphics, key='-DISP-')],
     [sg.Checkbox('Save .fits files', default=default_fits, key='-FIT-')],
     [sg.Checkbox('Save CLAHE.png only', default=default_clahe_only, key='-CLAHE_ONLY-')],
+    [sg.Checkbox('Crop width square', default=default_crop_square, key='-crop_width_square-')],
     [sg.Text('Y/X ratio (blank for auto)', size=(25,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
     [sg.Text('Tilt angle (blank for auto)',size=(25,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
     [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
@@ -139,7 +141,7 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only):
     FileNames=values['-FILE-']
     
     
-    return FileNames, values['-DX-'], values['-DISP-'], None if values['-RATIO-']=='' else values['-RATIO-'] , None if values['-SLANT-']=='' else values['-SLANT-'], values['-FIT-'], values['-CLAHE_ONLY-'], values['-delta_radius-']
+    return FileNames, values['-DX-'], values['-DISP-'], None if values['-RATIO-']=='' else values['-RATIO-'] , None if values['-SLANT-']=='' else values['-SLANT-'], values['-FIT-'], values['-CLAHE_ONLY-'], values['-delta_radius-'], values['-crop_width_square-']
 
 """
 -------------------------------------------------------------------------------------------
@@ -157,7 +159,8 @@ options = {
 'save_fit' : False,
 'clahe_only' : True,
 'disk_display' : False, #protus
-'delta_radius' : 0
+'delta_radius' : 0,
+'crop_width_square' : False
 }
 
 flag_dictionnary = {
@@ -165,7 +168,8 @@ flag_dictionnary = {
     'c' : 'clahe_only',  #True/False
     'f' : 'save_fit', #True/False
     'p' : 'disk_display', #True/False protuberances 
-    'w' : 'shift'
+    'w' : 'shift',
+    's' : 'crop_width_square' # True / False
     }
 
 # list of files to process
@@ -186,14 +190,14 @@ try:
     with open(mydir_ini, "r") as f1:   
         param_init = f1.read().splitlines()
         WorkDir=param_init[0]
-        default_graphics, default_fits, default_clahe_only = param_init[1] == 'True', param_init[2] == 'True', param_init[3] == 'True'
+        default_graphics, default_fits, default_clahe_only, default_crop_square = param_init[1] == 'True', param_init[2] == 'True', param_init[3] == 'True' , param_init[4] == 'True'
 except:
     WorkDir=''
-    default_graphics, default_fits, default_clahe_only = False, False, False
+    default_graphics, default_fits, default_clahe_only, default_crop_square = False, False, False, False
     
 # if no command line arguments, open GUI interface
 if len(serfiles)==0 : 
-    serfiles, shift, flag_display, ratio_fixe, slant_fix, save_fit, clahe_only, delta_radius =UI_SerBrowse(WorkDir, default_graphics, default_fits, default_clahe_only) #TODO as options is defined as global, only serfiles could be returned
+    serfiles, shift, flag_display, ratio_fixe, slant_fix, save_fit, clahe_only, delta_radius, crop_square_width =UI_SerBrowse(WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square) #TODO as options is defined as global, only serfiles could be returned
     try :
         shift_choice = shift.split(':')
         if len(shift_choice) == 1:
@@ -227,7 +231,7 @@ if len(serfiles)==0 :
         sys.exit()
     options['save_fit'] = save_fit
     options['clahe_only'] = clahe_only
-    
+    options['crop_width_square'] = crop_square_width
     serfiles=serfiles.split(';')
 
 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
@@ -264,7 +268,7 @@ def do_work():
         # save working directory
         try:
             with open(mydir_ini, "w") as f1:
-                f1.write('\n'.join([WorkDir, str(options['flag_display']), str(options['save_fit']), str(options['clahe_only'])]))
+                f1.write('\n'.join([WorkDir, str(options['flag_display']), str(options['save_fit']), str(options['clahe_only']), str(options['crop_width_square'])]))
         except:
             traceback.print_exc()
             print('ERROR: couldnt write file ' + mydir_ini)    
@@ -277,6 +281,13 @@ def do_work():
         try : 
             frames, header, cercle=sol.solex_proc(serfile,options.copy())       
             for frame, shift in zip(frames, options['shift']):
+
+
+                if options['crop_width_square'] and not cercle == (-1, -1, -1):
+                    h2 = frame.shape[0] // 2
+                    frame = frame[:, max(0, int(cercle[0]) - h2) : min(int(cercle[0]) + h2, frame.shape[1])]
+                    cercle = (cercle[0] - max(0, int(cercle[0]) - h2), cercle[1], cercle[2])
+                
                 base=os.path.basename(serfile)
                 basefich=os.path.splitext(base)[0] +'_shift=' + str(shift)
                 
@@ -324,6 +335,10 @@ def do_work():
                     y0=int(cercle[1])
                     r=int(cercle[2]) + options['delta_radius']
                     frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)
+
+                    
+                        
+                    
                 
                 Seuil_bas=np.percentile(cl1, 25)
                 Seuil_haut=np.percentile(cl1,99.9999)*1.05
