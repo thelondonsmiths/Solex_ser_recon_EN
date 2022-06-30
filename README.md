@@ -1,5 +1,5 @@
-Solar disk reconstruction from SHG (spectroheliography) SER files. Only 16bit files are accepted. No AVI files are accepted.
-If no spectral line can recognised in the SER file, the program will stop.
+Solar disk reconstruction from SHG (spectroheliography) video files. Both 16bit and 8bit files are accepted. SER and AVI files are accepted.
+If no spectral line can recognised in the video file, the program will stop.
 
 Install the most recent version of Python from python.org. During Windows installation, check the box to update the PATH.
 
@@ -8,9 +8,9 @@ For Windows, double click the windows_setup file to install the needed Python li
 Usage:
 
 Graphical user interface: launch SHG_MAIN (by double clicking under Windows). A Windows Desktop shortcut can also be created.
-In the Python GUI window, enter the name of the SER file(s) to be processed. Batch processing is possible but will halt if a file is unsuitable.
+In the Python GUI window, enter the name of the video file(s) to be processed. Batch processing is possible but will halt if a file is unsuitable.
 
-Command line interface: python SHG_MAIN.py your_ser_file1.SER [your_ser_file2.SER ... if batch processing]
+Command line interface example: python SHG_MAIN.py my_file1.SER [my_file2.SER ... if batch processing]
 
 Command line options:
 - d : display all graphics
@@ -22,15 +22,22 @@ Command line options:
 Check the "Show graphics" box for a 'live view' reconstruction display, a graphic of the geometry correction and a quick view of the final images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
 
-If the "Save .fits files" box is checked, the following files will be stored in the same directory as the SER file:
+If the "Save .fits files" box is checked, the following files will be stored in the same directory as the video file:
 
-- xx_mean.fits: average image of all the frames in the SER video of the spectral line
-- xx_img.fits: raw image reconstruction
-- xx_flat.fits: corrected flat image
-- xx_recon.fits: final image, corrected for tilt
+- xx_mean.fits: average image of all the frames in the video of the spectral line
+- xx_raw.fits: raw image reconstruction
+- xx_circular.fits: geometrically corrected image
+- xx_detransversaliumed.fits: image corrected for line defects
 - xx_clahe.fits: final image, with Contrast Limited Adaptive Histogram Equalization
 
-If the "Save CLAHE.png only" box is checked, then only the final PNG image with Contrast Limited Adaptive Histogram Equalization will be saved.
+If the "Save CLAHE.png only" box is checked, then only the PNG image with Contrast Limited Adaptive Histogram Equalization will be saved.
+
+If the "Crop width square" box is checked, the width is cropped to be the same as the height, with the Sun centred.
+This feature is particularly helpful for stacking images (which typically require them all to be the same dimensions).
+
+If "Correct transversalium lines" is not checked, then the program makes no attempt to fix line defects.
+The function for fixing line defects works well if they are small and well-defined. Wide lines may require a more manual process.
+In this case, turning off the automated function may be helpful. The default should be for this box to be checked.
 
 Y/X ratio: enter a specific Y/X ratio, if this is known. Leave blank for auto-correction. Enter 1 if no correction desired.
 
