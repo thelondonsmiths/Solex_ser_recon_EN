@@ -1,7 +1,6 @@
 """
-@author: Valerie Desnoux
-with improvements by Andrew Smith
-Version 8 September 2021
+@author: Andrew Smith
+Version 30 June 2022
 
 """
 
@@ -31,18 +30,7 @@ def logme(s):
 
 
 def detect_bord(img, axis):
-
     ymean = np.mean(img, axis)
     ysmooth = gaussian_filter1d(ymean, 21)
-    '''
-    ysmooth2 = savgol_filter(ymean, 301, 3)
-    plt.plot(ymean)
-    plt.plot(ysmooth)
-    plt.plot(ysmooth2)
-    plt.show()
-    plt.plot(ysmooth/ymean)
-    plt.plot(ysmooth2/ymean)
-    plt.show()
-    '''
     ygrad = np.gradient(ysmooth)
     return ygrad.argmax(), ygrad.argmin()

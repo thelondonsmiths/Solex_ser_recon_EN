@@ -3,24 +3,22 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 8 September 2021
+Version 30 June 2022
 
 ------------------------------------------------------------------------
-reconstruction on an image from the deviations between the minimum of the line and a reference line
-
-calcul sur une image des ecarts simples entre min de la raie et une ligne de reference
+Reconstruction of an image from the deviations between the minimum of the line and a reference line
 -------------------------------------------------------------------------
 
 """
 
 from solex_util import *
-from ser_read_video import *
+from video_reader import *
 from ellipse_to_circle import ellipse_to_circle, correct_image
 
 
 # read video and return constructed image of sun using fit and LineRecal
-def read_video_improved(serfile, fit, LineRecal, options):
-    rdr = ser_reader(serfile)
+def read_video_improved(file, fit, LineRecal, options):
+    rdr = video_reader(file)
     ih, iw = rdr.ih, rdr.iw
     FrameMax = rdr.FrameCount
     disk_list = [np.zeros((ih, FrameMax), dtype='uint16')
@@ -95,11 +93,11 @@ def make_header(rdr):
 # compute mean and max image of video
 
 
-def compute_mean_max(serfile):
-    """IN : serfile path"
+def compute_mean_max(file):
+    """IN : file path"
     OUT :numpy array
     """
-    rdr = ser_reader(serfile)
+    rdr = video_reader(file)
     logme('Width, Height : ' + str(rdr.Width) + ' ' + str(rdr.Height))
     logme('Number of frames : ' + str(rdr.FrameCount))
     my_data = np.zeros((rdr.ih, rdr.iw), dtype='uint64')
@@ -111,30 +109,21 @@ def compute_mean_max(serfile):
     return (my_data / rdr.FrameCount).astype('uint16'), max_data
 
 
-def compute_mean_return_fit(serfile, options, LineRecal=1):
+def compute_mean_return_fit(file, options, LineRecal=1):
     global hdr, ih, iw
 
     """
     ----------------------------------------------------------------------------
-    Reconstuit l'image du disque a partir de l'image moyenne des trames et
-    des trames extraite du fichier ser avec un fit polynomial
-    Corrige de mauvaises lignes et transversallium
-
-    basefich: nom du fichier de base de la video sans extension, sans repertoire
-    shift: ecart en pixel par rapport au centre de la raie pour explorer longueur d'onde decalée
+    Use the mean image to find the location of the spectral line of maximum darkness
+    Apply a 3rd order polynomial fit to the datapoints, and return the fit, as well as the
+    detected extent of the line in the y-direction.
     ----------------------------------------------------------------------------
     """
     flag_display = options['flag_display']
     # first compute mean image
-    # rdr is the ser_reader object
-    mean_img, max_img = compute_mean_max(serfile)
-
-    """
-    ----------------------------------------------------------------------------
-    Calcul polynome ecart sur une image au centre de la sequence
-    ----------------------------------------------------------------------------
-    """
-
+    # rdr is the video_reader object
+    mean_img, max_img = compute_mean_max(file)
+    
     if options['save_fit']:
         DiskHDU = fits.PrimaryHDU(mean_img, header=hdr)
         DiskHDU.writeto(basefich0 + '_mean.fits', overwrite='True')
@@ -151,15 +140,26 @@ def compute_mean_return_fit(serfile, options, LineRecal=1):
 
         cv2.destroyAllWindows()
 
-    y1, y2 = detect_bord(max_img, axis=1)
+    y1, y2 = detect_bord(max_img, axis=1) # use maximum image to detect borders
     y1 = min(max_img.shape[0]-1, y1+10)
     y2 = max(0, y2-10)
     logme('Vertical limits y1, y2 : ' + str(y1) + ' ' + str(y2))
-    min_intensity = np.argmin(mean_img, axis = 1)
+    min_intensity = np.argmin(mean_img, axis = 1) # use mean image to detect spectral line
     p = np.flip(np.asarray(np.polyfit(np.arange(y1, y2), min_intensity[y1:y2], 3), dtype='d'))
     logme('spectral line polynomial fit: ' + str(p))
     curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
     fit = [[math.floor(curve[y]) - LineRecal, curve[y] - math.floor(curve[y]), y] for y in range(ih)]
+    if not options['clahe_only']:
+        fig, ax = plt.subplots()
+        ax.imshow(mean_img, cmap=plt.cm.gray)
+        s = (y2-y1)//20 + 1
+        ax.plot(min_intensity[y1:y2:s], np.arange(y1, y2, s), 'rx', label='line detection')
+        ax.plot(curve, np.arange(ih), label='polynomial fit')
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        ax.set_aspect(0.1)
+        plt.tight_layout()
+        plt.savefig(basefich0+'_spectral_line_data.png', dpi=400)
+        plt.close()
     return fit, y1, y2
 
 '''
@@ -185,7 +185,7 @@ def correct_transversalium2(img, circle, borders, options, not_fake):
         y_mean.append(np.mean(strip))
 
 
-    smoothed = savgol_filter(y_mean, 301, 3)
+    smoothed = savgol_filter(y_mean, min(301, len(y_mean) // 2 * 2 - 1), 3)
     #plt.plot(y_s, y_median)
     #plt.plot(y_s, smoothed)
     #plt.show()
@@ -221,34 +221,34 @@ def correct_transversalium2(img, circle, borders, options, not_fake):
         plt.xlabel('y')
         plt.ylabel('transversalium correction factor')
         plt.savefig(basefich+'_transversalium_correction.png')
-        plt.clf()
+        plt.close()
 
     ret = (img.T * c).T # multiply each row in image by correction factor
     ret[ret > 65535] = 65535 # prevent overflow
     return np.array(ret, dtype='uint16') 
     
-def solex_proc(serfile, options):
+def solex_proc(file, options):
     global hdr, ih, iw, basefich0, basefich
     clearlog()
     # plt.gray()              #palette de gris si utilise matplotlib pour visu
     # debug
     logme('Using pixel shift : ' + str(options['shift']))
     options['shift'] = [10, 0] + options['shift']  # 10, 0 are "fake"
-    WorkDir = os.path.dirname(serfile) + "/"
+    WorkDir = os.path.dirname(file) + "/"
     os.chdir(WorkDir)
-    base = os.path.basename(serfile)
+    base = os.path.basename(file)
     basefich0 = os.path.splitext(base)[0]
     LineRecal = 1
-    rdr = ser_reader(serfile)
+    rdr = video_reader(file)
     hdr = make_header(rdr)
     ih = rdr.ih
     iw = rdr.iw
 
-    fit, backup_y1, backup_y2 = compute_mean_return_fit(serfile, options, LineRecal)
+    fit, backup_y1, backup_y2 = compute_mean_return_fit(file, options, LineRecal)
 
 
     disk_list, ih, iw, FrameCount = read_video_improved(
-        serfile, fit, LineRecal, options)
+        file, fit, LineRecal, options)
 
     hdr['NAXIS1'] = iw  # note: slightly dodgy, new width
 

@@ -3,25 +3,17 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 8 September 2021
+Version 30 June 2022
 
 --------------------------------------------------------------
-Front end of spectroheliograph processing of SER files
+Front end of spectroheliograph processing of SER and AVI files
 - interface able to select one or more files
-- call to the solex_recon module which processes the sequence and generates the FITS files
+- call to the solex_recon module which processes the sequence and generates the PNG and FITS files
 - offers with openCV a display of the resultant image
 - wavelength selection with the pixel shift function, including multiple wavelengths and a range of wavelengths
 - geometric correction with a fixed Y/X ratio
-- if Y/X remains at zero, then this will be calculated automatically
+- if Y/X is blank, then this will be calculated automatically
 --------------------------------------------------------------
-Front end de traitements spectro helio de fichier ser
-- interface pour selectionner un ou plusieurs fichiers
-- appel au module solex_recon qui traite la sequence et genere les fichiers fits
-- propose avec openCV un affichage de l'image resultat ou pas
-- decalage en longueur d'onde avec Shift
-- ajout d'une zone pour entrer un ratio fixe; si reste à zero alors il sera calculé automatiquement
-- ajout de sauvegarde png _protus avec flag disk_display en dur
----------------------------------------------------------------
 
 """
 import math
@@ -120,7 +112,7 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, d
     
     layout = [
     [sg.Text('SER file name(s)', size=(15, 1)), sg.InputText(default_text='',size=(75,1),key='-FILE-'),
-     sg.FilesBrowse('Open',file_types=(("SER Files", "*.ser"),),initial_folder=WorkDir)],
+     sg.FilesBrowse('Open',file_types=(("SER Files", "*.ser"),("AVI Files", "*.avi"),),initial_folder=WorkDir)],
     [sg.Checkbox('Show graphics', default=default_graphics, key='-DISP-')],
     [sg.Checkbox('Save .fits files', default=default_fits, key='-FIT-')],
     [sg.Checkbox('Save CLAHE.png only', default=default_clahe_only, key='-CLAHE_ONLY-')],
@@ -191,7 +183,7 @@ if len(sys.argv)>1 :
         if '-' in argument: #it's flag options
             treat_flag_at_cli(argument)
         else : #it's a file or some files
-            if argument.split('.')[-1].upper()=='SER' : 
+            if argument.split('.')[-1].upper()=='SER' or argument.split('.')[-1].upper()=='AVI': 
                 serfiles.append(argument)
     print('theses files are going to be processed : ', serfiles)
 #print('Processing will begin with values : \n shift %s, flag_display %s, "%s", slant_fix "%s", save_fit %s, clahe_only %s, disk_display %s' %(options['shift'], options['flag_display'], options['ratio_fixe'], options['slant_fix'], options['save_fit'], options['clahe_only'], options['disk_display']) )
@@ -348,12 +340,7 @@ def do_work():
                     x0=int(cercle[0])
                     y0=int(cercle[1])
                     r=int(cercle[2]) + options['delta_radius']
-                    frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)
-
-                    
-                        
-                    
-                
+                    frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)            
                 Seuil_bas=np.percentile(cl1, 25)
                 Seuil_haut=np.percentile(cl1,99.9999)*1.05
                 cc=(cl1-Seuil_bas)*(65535/(Seuil_haut-Seuil_bas))

@@ -1,6 +1,6 @@
 """
 @author: Andrew Smith
-Version 8 September 2021
+Version 30 June 2022
 
 """
 from numpy import polynomial
@@ -308,5 +308,5 @@ def ellipse_to_circle(image, options, basefich):
             timer.start()
             plt.show()
         else:
-            plt.clf()
+            plt.close()
     return fix_img, new_circle, ratio, phi, borders
