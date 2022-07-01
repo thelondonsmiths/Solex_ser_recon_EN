@@ -120,6 +120,10 @@ def correct_image(image, phi, ratio, center, height, print_log=False):
             " degrees")
         logme('Linear transform correction matrix: \n' + str(mat))
         logme('Disk position, radius : ' + ((str(new_center) + ', ' + "{:.3f}".format(new_radius)) if not height == -1.0 else 'UNKNOWN'))
+        logme ('Unrotation : '  +
+            "{:.3f}".format(
+                math.degrees(theta)) +
+            " degrees")
         np.set_printoptions(suppress=False)
     return corrected_img, (new_center[0], new_center[1], new_radius), mat3
 
