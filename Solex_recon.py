@@ -185,8 +185,10 @@ def correct_transversalium2(img, circle, borders, options, not_fake):
         y_mean.append(np.mean(strip))
 
 
-    smoothed = savgol_filter(y_mean, min(301, len(y_mean) // 2 * 2 - 1), 3)
-    #plt.plot(y_s, y_median)
+    #smoothed2 = savgol_filter(y_mean, min(301, len(y_mean) // 2 * 2 - 1), 3)
+    smoothed = savgol_filter(y_mean, min(options['trans_strength'], len(y_mean) // 2 * 2 - 1), 3)
+    #plt.plot(y_s, y_mean)
+    #plt.plot(y_s, smoothed2)
     #plt.plot(y_s, smoothed)
     #plt.show()
 
@@ -216,6 +218,7 @@ def correct_transversalium2(img, circle, borders, options, not_fake):
 
     c = np.ones(img.shape[0])
     c[y1:y2] = correction_t
+    #c[c<1] = 1
     if not_fake and not options['clahe_only']:
         plt.plot(c)
         plt.xlabel('y')
@@ -257,7 +260,11 @@ def solex_proc(file, options):
     if options['flag_display']:
         cv2.destroyAllWindows()
 
-
+    if options['transversalium']:
+        logme('transversalium correction strength: ' + str(options['trans_strength']))
+    else:
+        logme('transversalium disabled')
+        
     borders = [0,0,0,0]
     cercle = (-1, -1, -1)
     frames_circularized = []
