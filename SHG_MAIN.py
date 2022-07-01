@@ -90,7 +90,7 @@ def treat_flag_at_cli(arguments):
                 print(usage())
     print('options %s'%(options))
 
-def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium):
+def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength):
     """
     Parameters
     ----------
@@ -111,13 +111,20 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, d
     sg.theme_button_color(('white', '#500000'))
     
     layout = [
-    [sg.Text('SER file name(s)', size=(15, 1)), sg.InputText(default_text='',size=(75,1),key='-FILE-'),
+    [sg.Text('File name(s)', size=(10, 1)), sg.InputText(default_text='',size=(75,1),key='-FILE-'),
      sg.FilesBrowse('Open',file_types=(("SER Files", "*.ser"),("AVI Files", "*.avi"),),initial_folder=WorkDir)],
     [sg.Checkbox('Show graphics', default=default_graphics, key='-DISP-')],
     [sg.Checkbox('Save .fits files', default=default_fits, key='-FIT-')],
     [sg.Checkbox('Save CLAHE.png only', default=default_clahe_only, key='-CLAHE_ONLY-')],
     [sg.Checkbox('Crop width square', default=default_crop_square, key='-crop_width_square-')],
     [sg.Checkbox('Correct transversalium lines', default=default_transversalium, key='-transversalium-')],
+    [sg.Text("Transversalium correction strength (pixels x 100):", key='text_trans')],
+    [sg.Slider(range=(0.5,7),
+         default_value=default_transversalium_strength,
+         resolution=0.5,     
+         size=(25,15),
+         orientation='horizontal',
+         font=('Helvetica', 12), key='-trans_strength-')],
     [sg.Text('Y/X ratio (blank for auto)', size=(25,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
     [sg.Text('Tilt angle (blank for auto)',size=(25,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
     [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
@@ -143,7 +150,7 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, d
     
     
     return FileNames, values['-DX-'], values['-DISP-'], None if values['-RATIO-']=='' else values['-RATIO-'] , None if values['-SLANT-']=='' else values['-SLANT-'], \
-values['-FIT-'], values['-CLAHE_ONLY-'], values['-delta_radius-'], values['-crop_width_square-'], values['-transversalium-']
+values['-FIT-'], values['-CLAHE_ONLY-'], values['-delta_radius-'], values['-crop_width_square-'], values['-transversalium-'], values['-trans_strength-']
 
 """
 -------------------------------------------------------------------------------------------
@@ -163,7 +170,8 @@ options = {
 'disk_display' : False, #protus
 'delta_radius' : 0,
 'crop_width_square' : False,
-'transversalium' : True
+'transversalium' : True,
+'trans_strength': 301
 }
 
 flag_dictionnary = {
@@ -194,14 +202,14 @@ try:
     with open(mydir_ini, "r") as f1:   
         param_init = f1.read().splitlines()
         WorkDir=param_init[0]
-        default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium = param_init[1] == 'True', param_init[2] == 'True', param_init[3] == 'True' , param_init[4] == 'True', param_init[5] == 'True'
+        default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength = param_init[1] == 'True', param_init[2] == 'True', param_init[3] == 'True' , param_init[4] == 'True', param_init[5] == 'True', float(param_init[6])
 except:
     WorkDir=''
-    default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium = False, False, False, False, True
+    default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength = False, False, False, False, True, 3
     
 # if no command line arguments, open GUI interface
 if len(serfiles)==0 : 
-    serfiles, shift, flag_display, ratio_fixe, slant_fix, save_fit, clahe_only, delta_radius, crop_square_width, transversalium =UI_SerBrowse(WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium) #TODO as options is defined as global, only serfiles could be returned
+    serfiles, shift, flag_display, ratio_fixe, slant_fix, save_fit, clahe_only, delta_radius, crop_square_width, transversalium, trans_strength =UI_SerBrowse(WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength) #TODO as options is defined as global, only serfiles could be returned
     try :
         shift_choice = shift.split(':')
         if len(shift_choice) == 1:
@@ -237,6 +245,8 @@ if len(serfiles)==0 :
     options['clahe_only'] = clahe_only
     options['crop_width_square'] = crop_square_width
     options['transversalium'] = transversalium
+    options['trans_strength'] = int(trans_strength*100) + 1
+
     serfiles=serfiles.split(';')
 
 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
@@ -273,7 +283,7 @@ def do_work():
         # save working directory
         try:
             with open(mydir_ini, "w") as f1:
-                f1.write('\n'.join([WorkDir, str(options['flag_display']), str(options['save_fit']), str(options['clahe_only']), str(options['crop_width_square']), str(options['transversalium'])]))
+                f1.write('\n'.join([WorkDir, str(options['flag_display']), str(options['save_fit']), str(options['clahe_only']), str(options['crop_width_square']), str(options['transversalium']), str(options['trans_strength']/100)]))
         except:
             traceback.print_exc()
             print('ERROR: couldnt write file ' + mydir_ini)    
@@ -284,13 +294,14 @@ def do_work():
         # dx: decalage en pixel par rapport au centre de la raie
 
         try : 
-            frames, header, cercle=sol.solex_proc(serfile,options.copy())       
+            frames, header, cercle=sol.solex_proc(serfile,options.copy())
+            circle0 = cercle
             for frame, shift in zip(frames, options['shift']):
                 if options['crop_width_square']:
                     if not cercle == (-1, -1, -1):
                         h2 = frame.shape[0] // 2
-                        frame = frame[:, max(0, int(cercle[0]) - h2) : min(int(cercle[0]) + h2, frame.shape[1])]
-                        cercle = (cercle[0] - max(0, int(cercle[0]) - h2), cercle[1], cercle[2])
+                        frame = frame[:, max(0, int(circle0[0]) - h2) : min(int(circle0[0]) + h2, frame.shape[1])]
+                        cercle = (circle0[0] - max(0, int(circle0[0]) - h2), circle0[1], circle0[2])
                     else:
                         print('Error: cannot crop square without circle fit (crop-square cancelled)')
                 
