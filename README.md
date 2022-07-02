@@ -16,6 +16,8 @@ Command line options:
 - d : display all graphics
 - c : only the CLAHE image is saved
 - f : all FITS files are saved
+- s : crop width to make square
+- t : disable transversalium correction
 - p : save the protuberance image
 - w: a,b,c will produce images at a, b and c ; x:y:w will produce images starting at x, finishing at y, every w pixels
 
@@ -33,7 +35,8 @@ If the "Save .fits files" box is checked, the following files will be stored in 
 If the "Save CLAHE.png only" box is checked, then only the PNG image with Contrast Limited Adaptive Histogram Equalization will be saved.
 
 If the "Crop width square" box is checked, the width is cropped to be the same as the height, with the Sun centred.
-This feature is particularly helpful for stacking images (which typically require them all to be the same dimensions).
+This feature is particularly helpful for stacking images (which typically require them all to be the same dimensions) and creating animations.
+The crop feature is really only useful for full disk images.
 
 If "Correct transversalium lines" is not checked, then the program makes no attempt to fix line defects.
 The function for fixing line defects works well if they are small and well-defined. Wide lines may require a more manual process.
