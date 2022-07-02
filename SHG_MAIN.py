@@ -37,7 +37,6 @@ def usage():
     usage_ += "'f' : 'save_fit', all fits are saved (False by default)\n"
     usage_ += "'s' : 'crop_square_width', crop the width to equal the height (False by default)\n"
     usage_ += "'p' : 'disk_display' save protuberance pictures (False by default)\n"
-    usage_ += "'s' : will crop the final image width into a square centred on the sun in the x-direction (False by default)\n"
     usage_ += "'t' : will disable transversalium correction\n"
     usage_ += "'w' : 'a,b,c' will produce images at a, b and c.\n\tx:y:w will produce images starting at x, finishing at y, every w pixels."
     return usage_
@@ -233,7 +232,6 @@ flag_dictionnary = {
 ## add a command line argument.
 if len(sys.argv)>1 : 
     for argument in sys.argv[1:]:
-        print('handling argument: ' + argument)
         if '-' == argument[0]: #it's flag options
             treat_flag_at_cli(argument)
         else : #it's a file or some files
