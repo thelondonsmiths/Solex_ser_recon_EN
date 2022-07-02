@@ -88,6 +88,7 @@ def treat_flag_at_cli(arguments):
             except KeyError : 
                 print('ERROR !!! At least one argument is not accepted')
                 print(usage())
+                i+=1
     print('options %s'%(options))
 
 def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength):
@@ -152,63 +153,9 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, d
     return FileNames, values['-DX-'], values['-DISP-'], None if values['-RATIO-']=='' else values['-RATIO-'] , None if values['-SLANT-']=='' else values['-SLANT-'], \
 values['-FIT-'], values['-CLAHE_ONLY-'], values['-delta_radius-'], values['-crop_width_square-'], values['-transversalium-'], values['-trans_strength-']
 
-"""
--------------------------------------------------------------------------------------------
-le programme commence ici !
---------------------------------------------------------------------------------------------
-"""
-disk_display=True
-serfiles = []
 
-options = {    
-'shift':[0],
-'flag_display':False,
-'ratio_fixe' : None,
-'slant_fix' : None ,
-'save_fit' : False,
-'clahe_only' : True,
-'disk_display' : False, #protus
-'delta_radius' : 0,
-'crop_width_square' : False,
-'transversalium' : True,
-'trans_strength': 301
-}
-
-flag_dictionnary = {
-    'd' : 'flag_display', #True False display all pictures
-    'c' : 'clahe_only',  #True/False
-    'f' : 'save_fit', #True/False
-    'p' : 'disk_display', #True/False protuberances 
-    'w' : 'shift',
-    's' : 'crop_width_square', # True / False
-    't' : 'transversalium' # True / False
-    }
-
-# list of files to process
-## add a command line argument.
-if len(sys.argv)>1 : 
-    for argument in sys.argv : 
-        if '-' in argument: #it's flag options
-            treat_flag_at_cli(argument)
-        else : #it's a file or some files
-            if argument.split('.')[-1].upper()=='SER' or argument.split('.')[-1].upper()=='AVI': 
-                serfiles.append(argument)
-    print('theses files are going to be processed : ', serfiles)
-#print('Processing will begin with values : \n shift %s, flag_display %s, "%s", slant_fix "%s", save_fit %s, clahe_only %s, disk_display %s' %(options['shift'], options['flag_display'], options['ratio_fixe'], options['slant_fix'], options['save_fit'], options['clahe_only'], options['disk_display']) )
-
-# check for .ini file for working directory           
-try:
-    mydir_ini=os.path.dirname(sys.argv[0])+'/SHG.ini'
-    with open(mydir_ini, "r") as f1:   
-        param_init = f1.read().splitlines()
-        WorkDir=param_init[0]
-        default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength = param_init[1] == 'True', param_init[2] == 'True', param_init[3] == 'True' , param_init[4] == 'True', param_init[5] == 'True', float(param_init[6])
-except:
-    WorkDir=''
-    default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength = False, False, False, False, True, 3
-    
-# if no command line arguments, open GUI interface
-if len(serfiles)==0 : 
+# get and return options and serfiles from user using GUI
+def inputUI():
     serfiles, shift, flag_display, ratio_fixe, slant_fix, save_fit, clahe_only, delta_radius, crop_square_width, transversalium, trans_strength =UI_SerBrowse(WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength) #TODO as options is defined as global, only serfiles could be returned
     try :
         shift_choice = shift.split(':')
@@ -248,7 +195,64 @@ if len(serfiles)==0 :
     options['trans_strength'] = int(trans_strength*100) + 1
 
     serfiles=serfiles.split(';')
+    return options, serfiles
 
+"""
+-------------------------------------------------------------------------------------------
+le programme commence ici !
+--------------------------------------------------------------------------------------------
+"""
+disk_display=True
+serfiles = []
+
+options = {    
+'shift':[0],
+'flag_display':False,
+'ratio_fixe' : None,
+'slant_fix' : None ,
+'save_fit' : False,
+'clahe_only' : True,
+'disk_display' : False, #protus
+'delta_radius' : 0,
+'crop_width_square' : False,
+'transversalium' : True,
+'trans_strength': 301
+}
+
+flag_dictionnary = {
+    'd' : 'flag_display', #True False display all pictures
+    'c' : 'clahe_only',  #True/False
+    'f' : 'save_fit', #True/False
+    'p' : 'disk_display', #True/False protuberances 
+    'w' : 'shift',
+    's' : 'crop_width_square', # True / False
+    't' : 'transversalium' # True / False
+    }
+
+# list of files to process
+## add a command line argument.
+if len(sys.argv)>1 : 
+    for argument in sys.argv[1:]:
+        print('handling argument: ' + argument)
+        if '-' == argument[0]: #it's flag options
+            treat_flag_at_cli(argument)
+        else : #it's a file or some files
+            if argument.split('.')[-1].upper()=='SER' or argument.split('.')[-1].upper()=='AVI': 
+                serfiles.append(argument)
+    print('theses files are going to be processed : ', serfiles)
+#print('Processing will begin with values : \n shift %s, flag_display %s, "%s", slant_fix "%s", save_fit %s, clahe_only %s, disk_display %s' %(options['shift'], options['flag_display'], options['ratio_fixe'], options['slant_fix'], options['save_fit'], options['clahe_only'], options['disk_display']) )
+
+# check for .ini file for working directory           
+try:
+    mydir_ini=os.path.dirname(sys.argv[0])+'/SHG.ini'
+    with open(mydir_ini, "r") as f1:   
+        param_init = f1.read().splitlines()
+        WorkDir=param_init[0]
+        default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength = param_init[1] == 'True', param_init[2] == 'True', param_init[3] == 'True' , param_init[4] == 'True', param_init[5] == 'True', float(param_init[6])
+except:
+    WorkDir=''
+    default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength = False, False, False, False, True, 3
+   
 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
 #si plusieurs fichiers à traiter
 
@@ -402,4 +406,10 @@ def do_work():
 if 0:        
     cProfile.run('do_work()', sort='cumtime')
 else:
-    do_work()
+    # if no command line arguments, open GUI interface
+    if len(serfiles)==0:
+        while True:
+            options, serfiles = inputUI()
+            do_work()
+    else:
+        do_work() # use inputs from CLI
