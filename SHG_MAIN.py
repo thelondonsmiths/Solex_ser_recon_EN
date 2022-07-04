@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 30 June 2022
+Version 4 July 2022
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER and AVI files
@@ -29,13 +29,14 @@ import traceback
 import cv2
 
 def usage():
-    usage_ = "SHG_MAIN.py [-dcfpstw] [file(s) to treat]\n"
-    usage_ += "'d' : 'flag_display', display all pictures (False by default)\n"
-    usage_ += "'c' : 'clahe_only',  only final clahe picture is saved (True by default)\n"
-    usage_ += "'f' : 'save_fit', all fits are saved (False by default)\n"
+    usage_ = "SHG_MAIN.py [-dcfpstwm] [file(s) to treat]\n"
+    usage_ += "'d' : 'flag_display', display all graphics (False by default)\n"
+    usage_ += "'c' : 'clahe_only',  only final clahe image is saved (False by default)\n"
+    usage_ += "'f' : 'save_fit', all fits files are saved (False by default)\n"
+    usage_ += "'m' : mirror flip in x-direction (False by default)\n"
+    usage_ += "'p' : 'disk_display' disables black disk on protuberance images (False by default)\n"
     usage_ += "'s' : 'crop_square_width', crop the width to equal the height (False by default)\n"
-    usage_ += "'p' : 'disk_display' save protuberance pictures (False by default)\n"
-    usage_ += "'t' : will disable transversalium correction\n"
+    usage_ += "'t' : disables transversalium correction (False by default)\n"
     usage_ += "'w' : 'a,b,c' will produce images at a, b and c.\n\tx:y:w will produce images starting at x, finishing at y, every w pixels."
     return usage_
     
@@ -78,6 +79,9 @@ def treat_flag_at_cli(arguments):
         elif character=='c':
             options['clahe_only'] = False
             i+=1
+        elif character=='p':
+            options['disk_display'] = False
+            i+=1
         else : 
             try : #all others
                 options[flag_dictionnary[character]]=True if flag_dictionnary.get(character) else False
@@ -100,7 +104,7 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, d
     [sg.Checkbox('Save clahe.png only', default=default_clahe_only, key='-CLAHE_ONLY-')],
     [sg.Checkbox('Crop square', default=default_crop_square, key='-crop_width_square-')],
     [sg.Checkbox('Mirror X', default=False, key='-flip_x-')],
-    [sg.Text("Image rotation:", key='img_rotate_slider')],
+    [sg.Text("Rotate png images:", key='img_rotate_slider')],
     [sg.Slider(range=(0,270),
          default_value=default_rotation,
          resolution=90,     
@@ -109,7 +113,7 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, d
          font=('Helvetica', 12),
          key='img_rotate')],
     [sg.Checkbox('Correct transversalium lines', default=default_transversalium, key='-transversalium-', enable_events=True)],
-    [sg.Text("Transversalium correction strength (pixels x 100):", key='text_trans', visible=default_transversalium)],
+    [sg.Text("Transversalium correction strength (pixels x 100) :", key='text_trans', visible=default_transversalium)],
     [sg.Slider(range=(0.5,7),
          default_value=default_transversalium_strength,
          resolution=0.5,     
@@ -181,7 +185,9 @@ def interpret_UI_values(ui_values):
         elif len(shift_choice) == 3:
             options['shift'] = list(range(int(shift_choice[0].strip()), int(shift_choice[1].strip())+1, int(shift_choice[2].strip())))
         else:
-            raise Exception('invalid shift input!')
+            raise Exception('invalid offset input!')
+        if len(options['shift']) == 0:
+            raise Exception('Error: pixel offset input lower bound greater than upper bound!')
     except ValueError : 
         raise Exception('invalid pixel offset value!')        
     options['flag_display'] = ui_values['-DISP-']
