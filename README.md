@@ -16,15 +16,16 @@ Command line options:
 - d : display all graphics
 - c : only the CLAHE image is saved
 - f : all FITS files are saved
+-m : mirror flip in the x-direction
+- p : disables black disk on protuberance images
 - s : crop width to make square
 - t : disable transversalium correction
-- p : save the protuberance image
 - w: a,b,c will produce images at a, b and c ; x:y:w will produce images starting at x, finishing at y, every w pixels
 
 Check the "Show graphics" box for a 'live view' reconstruction display, a graphic of the geometry correction and a quick view of the final images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
 
-If the "Save .fits files" box is checked, the following files will be stored in the same directory as the video file:
+If the "Save fits files" box is checked, the following files will be stored in the same directory as the video file:
 
 - xx_mean.fits: average image of all the frames in the video of the spectral line
 - xx_raw.fits: raw image reconstruction
@@ -32,11 +33,16 @@ If the "Save .fits files" box is checked, the following files will be stored in 
 - xx_detransversaliumed.fits: image corrected for line defects
 - xx_clahe.fits: final image, with Contrast Limited Adaptive Histogram Equalization
 
-If the "Save CLAHE.png only" box is checked, then only the PNG image with Contrast Limited Adaptive Histogram Equalization will be saved.
+If the "Save clahe.png only" box is checked, then only the png image with Contrast Limited Adaptive Histogram Equalization will be saved.
 
 If the "Crop width square" box is checked, the width is cropped to be the same as the height, with the Sun centred.
-This feature is particularly helpful for stacking images (which typically require them all to be the same dimensions) and creating animations.
+This feature is particularly helpful for stacking images (which typically require them all to be the same dimensions) and creating animations and mosaics.
 The crop feature is really only useful for full disk images.
+
+If "Mirror X" is checked, the image is reversed after the geometric correction to compensate for scanning in the reverse direction. This applies to all files (png and fits).
+The choice of "Mirror X" is deliberately not remembered.
+
+The "Rotate png images" silder applies only to the final png output images. Rotation is counterclockwise in degrees (0, 90, 180, 270)
 
 If "Correct transversalium lines" is not checked, then the program makes no attempt to fix line defects.
 The function for fixing line defects works well if they are small and well-defined. Wide lines may require a more manual process.
@@ -71,3 +77,5 @@ Similarly, if Tilt is set to 0, instrument misalignment can be recognised and co
 
 Geometry graphics window can be killed by killed by pushing 'X'.
 Composite results window should be killed by pushing any key on the keyboard.
+By default, the Processing GUI will reappear after each run.
+The prior file location and several other GUI states are saved in the SHG.ini file.
