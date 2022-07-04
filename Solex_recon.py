@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-@author: Valerie Desnoux
-with improvements by Andrew Smith
-contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 30 June 2022
+@author: Andrew Smith
+contributors: Valerie Desnoux, Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
+Version 4 July 2022
 
 ------------------------------------------------------------------------
 Reconstruction of an image from the deviations between the minimum of the line and a reference line
@@ -19,7 +18,7 @@ from ellipse_to_circle import ellipse_to_circle, correct_image
 
 def solex_proc(file, options):
     clearlog()
-    logme('Using pixel shift : ' + str(options['shift']))
+    logme('Pixel shift : ' + str(options['shift']))
     options['shift'] = [10, 0] + options['shift']  # 10, 0 are "fake"
     WorkDir = os.path.dirname(file) + "/"
     os.chdir(WorkDir)
@@ -43,9 +42,11 @@ def solex_proc(file, options):
         cv2.destroyAllWindows()
 
     if options['transversalium']:
-        logme('transversalium correction strength: ' + str(options['trans_strength']))
+        logme('Transversalium correction : ' + str(options['trans_strength']))
     else:
         logme('transversalium disabled')
+    logme('Mirror X : ' + str(options['flip_x']))
+    logme('Post-rotation : ' + str(options['img_rotate']) + ' degrees')
         
     borders = [0,0,0,0]
     cercle0 = (-1, -1, -1)
