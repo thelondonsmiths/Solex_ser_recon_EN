@@ -1,5 +1,6 @@
 """
 @author: Andrew Smith
+contributors: Valerie Desnoux, Jean-Francois Pittet
 Version 30 June 2022
 
 """
@@ -118,7 +119,7 @@ def correct_image(image, phi, ratio, center, height, print_log=False):
             "{:.3f}".format(
                 math.degrees(phi)) +
             " degrees")
-        logme('Linear transform correction matrix: \n' + str(mat))
+        logme('Linear transform correction matrix : \n' + str(mat))
         logme('Disk position, radius : ' + ((str(new_center) + ', ' + "{:.3f}".format(new_radius)) if not height == -1.0 else 'UNKNOWN'))
         logme ('Unrotation : '  +
             "{:.3f}".format(
