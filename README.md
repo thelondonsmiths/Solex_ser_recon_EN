@@ -16,7 +16,7 @@ Command line options:
 - d : display all graphics
 - c : only the CLAHE image is saved
 - f : all FITS files are saved
--m : mirror flip in the x-direction
+- m : mirror flip in the x-direction
 - p : disables black disk on protuberance images
 - s : crop width to make square
 - t : disable transversalium correction
