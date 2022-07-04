@@ -25,10 +25,8 @@ import Solex_recon as sol
 from astropy.io import fits
 import cProfile
 import PySimpleGUI as sg
-import tkinter as tk
-import ctypes # Modification Jean-Francois: for reading the monitor size
-import cv2
 import traceback
+import cv2
 
 def usage():
     usage_ = "SHG_MAIN.py [-dcfpstw] [file(s) to treat]\n"
@@ -90,41 +88,36 @@ def treat_flag_at_cli(arguments):
                 i+=1
     print('options %s'%(options))
 
-def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength):
-    """
-    Parameters
-    ----------
-    WorkDir : TYPE string
-        repertoire par defaut à l'ouverture de la boite de dialogue
-
-    Returns 
-    -------
-    Filenames : TYPE string
-        liste des fichiers selectionnés, avec leur extension et le chemin complet
-    Shift : Type string
-        Ecart en pixel demandé pour reconstruire le disque 
-        sur une longeur d'onde en relatif par rapport au centre de la raie  
-    ratio_fixe : ratio Y/X en fixe, si egal à zéro alors calcul automatique
-    flag_isplay: affiche ou non la construction du disque en temps réel
-    """
+def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation):
     sg.theme('Dark2')
     sg.theme_button_color(('white', '#500000'))
     
     layout = [
-    [sg.Text('File name(s)', size=(10, 1)), sg.InputText(default_text='',size=(75,1),key='-FILE-'),
+    [sg.Text('File(s)', size=(5, 1)), sg.InputText(default_text='',size=(75,1),key='-FILE-'),
      sg.FilesBrowse('Open',file_types=(("SER Files", "*.ser"),("AVI Files", "*.avi"),),initial_folder=WorkDir)],
     [sg.Checkbox('Show graphics', default=default_graphics, key='-DISP-')],
-    [sg.Checkbox('Save .fits files', default=default_fits, key='-FIT-')],
-    [sg.Checkbox('Save CLAHE.png only', default=default_clahe_only, key='-CLAHE_ONLY-')],
-    [sg.Checkbox('Crop width square', default=default_crop_square, key='-crop_width_square-')],
-    [sg.Checkbox('Correct transversalium lines', default=default_transversalium, key='-transversalium-')],
-    [sg.Text("Transversalium correction strength (pixels x 100):", key='text_trans')],
+    [sg.Checkbox('Save fits files', default=default_fits, key='-FIT-')],
+    [sg.Checkbox('Save clahe.png only', default=default_clahe_only, key='-CLAHE_ONLY-')],
+    [sg.Checkbox('Crop square', default=default_crop_square, key='-crop_width_square-')],
+    [sg.Checkbox('Mirror X', default=False, key='-flip_x-')],
+    [sg.Text("Image rotation:", key='img_rotate_slider')],
+    [sg.Slider(range=(0,270),
+         default_value=default_rotation,
+         resolution=90,     
+         size=(25,15),
+         orientation='horizontal',
+         font=('Helvetica', 12),
+         key='img_rotate')],
+    [sg.Checkbox('Correct transversalium lines', default=default_transversalium, key='-transversalium-', enable_events=True)],
+    [sg.Text("Transversalium correction strength (pixels x 100):", key='text_trans', visible=default_transversalium)],
     [sg.Slider(range=(0.5,7),
          default_value=default_transversalium_strength,
          resolution=0.5,     
          size=(25,15),
          orientation='horizontal',
-         font=('Helvetica', 12), key='-trans_strength-')],
+         font=('Helvetica', 12),
+         key='-trans_strength-',
+         visible=default_transversalium)],
     [sg.Text('Y/X ratio (blank for auto)', size=(25,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
     [sg.Text('Tilt angle (blank for auto)',size=(25,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
     [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
@@ -136,21 +129,28 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, d
     window['-FILE-'].update(WorkDir) 
     window.BringToFront()
     
+    
     while True:
         event, values = window.read()
         if event==sg.WIN_CLOSED or event=='Cancel': 
             sys.exit()
         
         if event=='OK':
-            break
+            if not values['-FILE-'] == WorkDir and not values['-FILE-'] == '':
+                try:
+                    serfiles, options = interpret_UI_values(values)
+                    window.close()
+                    return serfiles, options
+                except Exception as inst:
+                    sg.Popup('Error: ' + inst.args[0], keep_on_top=True)
+                    
+            else:
+                # display pop-up file not entered
+                sg.Popup('Error: file not entered! Please enter file(s)', keep_on_top=True)
+        window.Element('-trans_strength-').Update(visible = values['-transversalium-'])
+        window.Element('text_trans').Update(visible = values['-transversalium-'])    
 
-    window.close()
-               
-    FileNames=values['-FILE-']
     
-    
-    return FileNames, values['-DX-'], values['-DISP-'], None if values['-RATIO-']=='' else values['-RATIO-'] , None if values['-SLANT-']=='' else values['-SLANT-'], \
-values['-FIT-'], values['-CLAHE_ONLY-'], values['-delta_radius-'], values['-crop_width_square-'], values['-transversalium-'], values['-trans_strength-']
 
 '''
 open SHG.ini and read parameters
@@ -163,17 +163,16 @@ def read_ini():
         with open(mydir_ini, "r") as f1:   
             param_init = f1.read().splitlines()
             WorkDir=param_init[0]
-            default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength = param_init[1] == 'True', param_init[2] == 'True', param_init[3] == 'True' , param_init[4] == 'True', param_init[5] == 'True', float(param_init[6])
+            default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation = param_init[1] == 'True', param_init[2] == 'True', param_init[3] == 'True' , param_init[4] == 'True', param_init[5] == 'True', float(param_init[6]), int(param_init[7])
     except:
+        print('note: error reading .ini file - using default parameters')
         WorkDir=''
-        default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength = False, False, False, False, True, 3
-    return WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength
+        default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation = False, False, False, False, True, 3, 0
+    return WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation
 
-# get and return options and serfiles from user using GUI
-def inputUI():
-    WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength = read_ini()
-    serfiles, shift, flag_display, ratio_fixe, slant_fix, save_fit, clahe_only, delta_radius, crop_square_width, transversalium, trans_strength =UI_SerBrowse(WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength) #TODO as options is defined as global, only serfiles could be returned
-    try :
+def interpret_UI_values(ui_values):
+    try:
+        shift = ui_values['-DX-']
         shift_choice = shift.split(':')
         if len(shift_choice) == 1:
             options['shift'] = list(map(int, [x.strip() for x in shift.split(',')]))
@@ -182,35 +181,42 @@ def inputUI():
         elif len(shift_choice) == 3:
             options['shift'] = list(range(int(shift_choice[0].strip()), int(shift_choice[1].strip())+1, int(shift_choice[2].strip())))
         else:
-            print('invalid shift input')
-            sys.exit()
+            raise Exception('invalid shift input!')
     except ValueError : 
-        print('invalid shift value')
-        sys.exit()
-        
-    options['flag_display'] = flag_display
+        raise Exception('invalid pixel offset value!')        
+    options['flag_display'] = ui_values['-DISP-']
     try : 
-        options['ratio_fixe'] = float(ratio_fixe) if not ratio_fixe is None else None
+        options['ratio_fixe'] = float(ui_values['-RATIO-']) if ui_values['-RATIO-'] else None
     except ValueError : 
-        print('invalid ratio_fixe value')
-        sys.exit()
+        raise Exception('invalid Y/X ratio value')
     try : 
-        options['slant_fix'] = float(slant_fix) if not slant_fix is None else None
+        options['slant_fix'] = float(ui_values['-SLANT-']) if ui_values['-SLANT-'] else None
     except ValueError : 
-        print('invalid slant_fix value')
-        sys.exit()
+        raise Exception('invalid tilt angle value!')
     try:
-        options['delta_radius'] = int(delta_radius)
+        options['delta_radius'] = int(ui_values['-delta_radius-'])
     except ValueError:
-        print('invalid protus_radius_adjustment')
-        sys.exit()
-    options['save_fit'] = save_fit
-    options['clahe_only'] = clahe_only
-    options['crop_width_square'] = crop_square_width
-    options['transversalium'] = transversalium
-    options['trans_strength'] = int(trans_strength*100) + 1
+        raise Exception('invalid protus_radius_adjustment')
+    options['save_fit'] = ui_values['-FIT-']
+    options['clahe_only'] = ui_values['-CLAHE_ONLY-']
+    options['crop_width_square'] = ui_values['-crop_width_square-']
+    options['transversalium'] = ui_values['-transversalium-']
+    options['trans_strength'] = int(ui_values['-trans_strength-']*100) + 1
+    options['flip_x'] = ui_values['-flip_x-']
+    options['img_rotate'] = int(ui_values['img_rotate'])
+    serfiles=ui_values['-FILE-'].split(';')
+    try:
+        for serfile in serfiles:
+            f=open(serfile, "rb")
+            f.close()
+    except:
+        raise Exception('ERROR opening file :'+serfile+'!')
+    return serfiles, options
 
-    serfiles=serfiles.split(';')
+# get and return options and serfiles from user using GUI
+def inputUI():
+    WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation = read_ini()
+    serfiles, options = UI_SerBrowse(WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation) #TODO as options is defined as global, only serfiles could be returned
     return options, serfiles, WorkDir
 
 
@@ -220,7 +226,6 @@ def inputUI():
 le programme commence ici !
 --------------------------------------------------------------------------------------------
 """
-disk_display=True
 serfiles = []
 WorkDir = ''
 
@@ -231,11 +236,13 @@ options = {
 'slant_fix' : None ,
 'save_fit' : False,
 'clahe_only' : True,
-'disk_display' : False, #protus
+'disk_display' : True, #protus
 'delta_radius' : 0,
 'crop_width_square' : False,
 'transversalium' : True,
-'trans_strength': 301
+'trans_strength': 301,
+'img_rotate': 0,
+'flip_x': False,
 }
 
 flag_dictionnary = {
@@ -245,7 +252,8 @@ flag_dictionnary = {
     'p' : 'disk_display', #True/False protuberances 
     'w' : 'shift',
     's' : 'crop_width_square', # True / False
-    't' : 'transversalium' # True / False
+    't' : 'transversalium', # True / False
+    'm' : 'flip_x' # True / False
     }
 
 # list of files to process
@@ -291,7 +299,7 @@ def do_work():
         try:
             mydir_ini=os.path.dirname(sys.argv[0])+'/SHG.ini'
             with open(mydir_ini, "w") as f1:
-                f1.write('\n'.join([WorkDir, str(options['flag_display']), str(options['save_fit']), str(options['clahe_only']), str(options['crop_width_square']), str(options['transversalium']), str(options['trans_strength']/100)]))
+                f1.write('\n'.join([WorkDir, str(options['flag_display']), str(options['save_fit']), str(options['clahe_only']), str(options['crop_width_square']), str(options['transversalium']), str(options['trans_strength']/100), str(options['img_rotate'])]))
         except:
             traceback.print_exc()
             print('ERROR: couldnt write file ' + mydir_ini)    
@@ -302,105 +310,7 @@ def do_work():
         # dx: decalage en pixel par rapport au centre de la raie
 
         try : 
-            frames, header, cercle=sol.solex_proc(serfile,options.copy())
-            circle0 = cercle
-            for frame, shift in zip(frames, options['shift']):
-                if options['crop_width_square']:
-                    if not cercle == (-1, -1, -1):
-                        h2 = frame.shape[0] // 2
-                        frame = frame[:, max(0, int(circle0[0]) - h2) : min(int(circle0[0]) + h2, frame.shape[1])]
-                        cercle = (circle0[0] - max(0, int(circle0[0]) - h2), circle0[1], circle0[2])
-                    else:
-                        print('Error: cannot crop square without circle fit (crop-square cancelled)')
-                
-                base=os.path.basename(serfile)
-                basefich=os.path.splitext(base)[0] +'_shift=' + str(shift)
-                
-                flag_result_show = options['flag_display']
-                
-                # create a CLAHE object (Arguments are optional)
-                # clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(5,5))
-                clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(2,2))
-                cl1 = clahe.apply(frame)
-                
-                # image leger seuils
-                frame1=np.copy(frame)
-                Seuil_bas=np.percentile(frame, 25)
-                Seuil_haut=np.percentile(frame,99.9999)
-                print('Seuil bas       :', np.floor(Seuil_bas))
-                print('Seuil haut      :', np.floor(Seuil_haut))
-                fc=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
-                fc[fc<0]=0
-                fc[fc>65535] = 65535
-                frame_contrasted=np.array(fc, dtype='uint16')
-                
-                # image seuils serres 
-                frame1=np.copy(frame)
-                Seuil_bas=(Seuil_haut*0.25)
-                Seuil_haut=np.percentile(frame1,99.9999)
-                print('Seuil bas HC    :', np.floor(Seuil_bas))
-                print('Seuil haut HC   :', np.floor(Seuil_haut))
-                fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
-                fc2[fc2<0]=0
-                fc2[fc2>65535] = 65535
-                frame_contrasted2=np.array(fc2, dtype='uint16')
-                
-                # image seuils protus
-                frame1=np.copy(frame)
-                Seuil_bas=0
-                Seuil_haut=np.percentile(frame1,99.9999)*0.18        
-                print('Seuil bas protu :', np.floor(Seuil_bas))
-                print('Seuil haut protu:', np.floor(Seuil_haut))
-                fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
-                fc2[fc2<0]=0
-                fc2[fc2>65535] = 65535
-                frame_contrasted3=np.array(fc2, dtype='uint16')
-                if not cercle == (-1, -1, -1) and disk_display==True:
-                    x0=int(cercle[0])
-                    y0=int(cercle[1])
-                    r=int(cercle[2]) + options['delta_radius']
-                    frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)            
-                Seuil_bas=np.percentile(cl1, 25)
-                Seuil_haut=np.percentile(cl1,99.9999)*1.05
-                cc=(cl1-Seuil_bas)*(65535/(Seuil_haut-Seuil_bas))
-                cc[cc<0]=0
-                cc[cc>65535] = 65535
-                cc=np.array(cc, dtype='uint16')
-
-                # sauvegarde en png de clahe
-                cv2.imwrite(basefich+'_clahe.png',cc)   # Modification Jean-Francois: placed before the IF for clear reading
-                if not options['clahe_only']:
-                    # sauvegarde en png pour appliquer une colormap par autre script
-                    #cv2.imwrite(basefich+'_disk.png',frame_contrasted)
-                    # sauvegarde en png pour appliquer une colormap par autre script
-                    cv2.imwrite(basefich+'_diskHC.png',frame_contrasted2)
-                    # sauvegarde en png pour appliquer une colormap par autre script
-                    cv2.imwrite(basefich+'_protus.png',frame_contrasted3)
-                
-                # Modification Jean-Francois: the 4 images are concatenated together in 1 image => 'Sun images'
-                # The 'Sun images' is scaled for the monitor maximal dimension ... it is scaled to match the dimension of the monitor without 
-                # changing the Y/X scale of the images 
-                if flag_result_show:
-                    im_1 = cv2.hconcat([frame_contrasted, frame_contrasted2])
-                    im_2 = cv2.hconcat([frame_contrasted3, cc])
-                    im_3 = cv2.vconcat([im_1, im_2])
-                    screen = tk.Tk()
-                    screensize = screen.winfo_screenwidth(), screen.winfo_screenheight()
-                    screen.destroy()
-                    scale = min(screensize[0] / im_3.shape[1], screensize[1] / im_3.shape[0])
-                    cv2.namedWindow('Sun images', cv2.WINDOW_NORMAL)
-                    cv2.moveWindow('Sun images', 0, 0)
-                    cv2.resizeWindow('Sun images',int(im_3.shape[1] * scale), int(im_3.shape[0] * scale))
-                    cv2.imshow('Sun images',im_3)
-                    cv2.waitKey(options['tempo'])  # affiche et continue
-                    cv2.destroyAllWindows()
-        
-                frame2=np.copy(frame)
-                frame2=np.array(cl1, dtype='uint16')
-                # sauvegarde le fits
-                if options['save_fit']:
-                    DiskHDU=fits.PrimaryHDU(frame2,header)
-                    DiskHDU.writeto(basefich+ '_clahe.fits', overwrite='True')
+            sol.solex_proc(serfile,options.copy()) 
         except:
             print('ERROR ENCOUNTERED')
             traceback.print_exc()
