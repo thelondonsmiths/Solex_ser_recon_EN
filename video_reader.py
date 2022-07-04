@@ -1,6 +1,6 @@
 """
 @author: Andrew Smith 
-with improvements by Matt Considine
+contributors: Valerie Desnoux, Matt Considine
 Version 30 June 2022
 
 """
