@@ -1,6 +1,7 @@
 """
 @author: Andrew Smith
-Version 30 June 2022
+contributors: Valerie Desnoux, Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
+Version 4 July 2022
 
 """
 
@@ -167,7 +168,7 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
     logme('Vertical limits y1, y2 : ' + str(y1) + ' ' + str(y2))
     min_intensity = np.argmin(mean_img, axis = 1) # use mean image to detect spectral line
     p = np.flip(np.asarray(np.polyfit(np.arange(y1, y2), min_intensity[y1:y2], 3), dtype='d'))
-    logme('spectral line polynomial fit: ' + str(p))
+    logme('Spectral line polynomial fit : ' + str(p))
     curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
     fit = [[math.floor(curve[y]), curve[y] - math.floor(curve[y]), y] for y in range(ih)]
     if not options['clahe_only']:
