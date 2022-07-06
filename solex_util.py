@@ -297,7 +297,8 @@ def image_process(frame, cercle, options, header, basefich):
         x0=int(cercle[0])
         y0=int(cercle[1])
         r=int(cercle[2]) + options['delta_radius']
-        frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)            
+        if r > 0:
+            frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)            
     Seuil_bas=np.percentile(cl1, 25)
     Seuil_haut=np.percentile(cl1,99.9999)*1.05
     cc=(cl1-Seuil_bas)*(65535/(Seuil_haut-Seuil_bas))
