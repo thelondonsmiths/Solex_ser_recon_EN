@@ -68,6 +68,7 @@ Pixel offset: offset in pixels from the minimum of the line to reconstruct the i
 - Batch pixel shift processing of a batch of files is allowed
 
 Protus adjustment: make the black circle larger or smaller in radius by inputting a positive or negative integer (typically between -10 and +10).
+If you want to turn off the black disk altogether, then enter a negative number greater than the radius (e.g. -9999).
 
 Geometry correction may fail under certain circumstances. In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
 
