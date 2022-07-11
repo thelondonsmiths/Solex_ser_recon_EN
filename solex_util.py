@@ -109,13 +109,14 @@ def make_header(rdr):
 
 # compute mean and max image of video
 
-
 def detect_bord(img, axis):
-    ymean = np.mean(img, axis)
-    ysmooth = gaussian_filter1d(ymean, 21)
-    ygrad = np.gradient(ysmooth)
-    return ygrad.argmax(), ygrad.argmin()
-
+    blur = cv2.blur(img, ksize=(5,5))
+    ymean = np.mean(blur, axis)
+    threshhold = np.median(ymean) / 5
+    where_sun = ymean > threshhold
+    lb = np.argmax(where_sun)
+    ub = img.shape[int(not axis)] - 1 - np.argmax(np.flip(where_sun)) # int(not axis) : get the other axis 1 -> 0 and 0 -> 1
+    return lb, ub
 
 def compute_mean_max(file):
     """IN : file path"
@@ -161,7 +162,6 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
             sys.exit()
 
         cv2.destroyAllWindows()
-
     y1, y2 = detect_bord(max_img, axis=1) # use maximum image to detect borders
     y1 = min(max_img.shape[0]-1, y1+10)
     y2 = max(0, y2-10)
