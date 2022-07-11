@@ -25,7 +25,8 @@ import scipy
 from ellipse import LsqEllipse
 from matplotlib.patches import Ellipse
 
-NUM_REG = 1  # 6 # include biggest NUM_REG regions in fit
+NUM_REG = 2  # 6 # include biggest NUM_REG regions in fit
+             # for multiple full-disk scans this must be changed to 1
 
 
 def rot(x):
