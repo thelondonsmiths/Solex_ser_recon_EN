@@ -29,7 +29,7 @@ import traceback
 import cv2
 
 def usage():
-    usage_ = "SHG_MAIN.py [-dcfpstwm] [file(s) to treat]\n"
+    usage_ = "SHG_MAIN.py [-dcfpstwm] [file(s) to treat, * allowed]\n"
     usage_ += "'d' : 'flag_display', display all graphics (False by default)\n"
     usage_ += "'c' : 'clahe_only',  only final clahe image is saved (False by default)\n"
     usage_ += "'f' : 'save_fit', save all fits files (False by default)\n"
