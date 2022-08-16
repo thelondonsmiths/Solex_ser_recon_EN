@@ -42,12 +42,13 @@ def usage():
     return usage_
     
 def treat_flag_at_cli(arguments):
+    """read cli arguments and produce options variable"""
     global options
     #reading arguments
     i=0
     while i < len(argument[1:]): #there's a '-' at first)
         character = argument[1:][i]
-        if character=='h':
+        if character=='h': #asking help menu
             print(usage())
             sys.exit()
         elif character=='w' :
