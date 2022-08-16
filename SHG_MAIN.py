@@ -34,7 +34,7 @@ def usage():
     usage_ += "'c' : 'clahe_only',  only final clahe image is saved (False by default)\n"
     usage_ += "'f' : 'save_fit', save all fits files (False by default)\n"
     usage_ += "'m' : 'mirror flip', mirror flip in x-direction (False by default)\n"
-    usage_ += "'p' : 'disk_display' disable black disk on protuberance images (False by default)\n"
+    usage_ += "'p' : 'disk_display' produce black disk with protuberance images (True by default)\n"
     usage_ += "'s' : 'crop_square_width', crop the width to equal the height (False by default)\n"
     usage_ += "'t' : 'disable transversalium', disable transversalium correction (False by default)\n"
     usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels.\n"
@@ -91,7 +91,7 @@ def treat_flag_at_cli(arguments):
                 print('ERROR !!! At least one argument is not accepted')
                 print(usage())
                 i+=1
-    print('options %s'%(options))
+    print('options %s' % (options))
 
 def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation):
     sg.theme('Dark2')
