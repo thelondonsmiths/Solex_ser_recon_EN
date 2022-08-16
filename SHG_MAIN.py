@@ -32,12 +32,13 @@ def usage():
     usage_ = "SHG_MAIN.py [-dcfpstwm] [file(s) to treat]\n"
     usage_ += "'d' : 'flag_display', display all graphics (False by default)\n"
     usage_ += "'c' : 'clahe_only',  only final clahe image is saved (False by default)\n"
-    usage_ += "'f' : 'save_fit', all fits files are saved (False by default)\n"
-    usage_ += "'m' : mirror flip in x-direction (False by default)\n"
-    usage_ += "'p' : 'disk_display' disables black disk on protuberance images (False by default)\n"
+    usage_ += "'f' : 'save_fit', save all fits files (False by default)\n"
+    usage_ += "'m' : 'mirror flip', mirror flip in x-direction (False by default)\n"
+    usage_ += "'p' : 'disk_display' disable black disk on protuberance images (False by default)\n"
     usage_ += "'s' : 'crop_square_width', crop the width to equal the height (False by default)\n"
-    usage_ += "'t' : disables transversalium correction (False by default)\n"
-    usage_ += "'w' : 'a,b,c' will produce images at a, b and c.\n\tx:y:w will produce images starting at x, finishing at y, every w pixels."
+    usage_ += "'t' : 'disable transversalium', disable transversalium correction (False by default)\n"
+    usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels.\n"
+    usage_ += "'w' : 'x:y:w'  produce images starting at x, finishing at y, every w pixels."
     return usage_
     
 def treat_flag_at_cli(arguments):
