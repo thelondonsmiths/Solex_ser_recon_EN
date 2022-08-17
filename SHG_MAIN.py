@@ -271,7 +271,7 @@ flag_dictionnary = {
     'w' : 'shift',
     's' : 'crop_width_square', # True / False
     't' : 'transversalium', # True / False
-    'm' : 'flip_x' # True / False,
+    'm' : 'flip_x' # True / False
     }
 
 # list of files to process
@@ -299,6 +299,7 @@ def do_work(cli = False):
         print('file %s is processing'%serfile)
         WorkDir = os.path.dirname(serfile)+"/"
         os.chdir(WorkDir)
+
         ####SPECIAL NEED FOR INI FILES FROM CLI###
         if cli:
             WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation = read_ini(cli=True)
