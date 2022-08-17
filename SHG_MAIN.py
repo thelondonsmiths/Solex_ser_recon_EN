@@ -163,18 +163,30 @@ open SHG.ini and read parameters
 return parameters from file, or default if file not found or invalid
 '''
 def read_ini():
-    # check for .ini file for working directory           
+    # check for .ini file for working directory
+    global options, WorkDir
+    print('Check if .ini file is present')
+
     try:
-        mydir_ini=os.path.dirname(sys.argv[0])+'/SHG.ini'
-        with open(mydir_ini, "r") as f1:   
+        mydir_ini=os.path.join(os.path.dirname(sys.argv[0]),'SHG.ini')
+
+        with open(mydir_ini, "r") as f1:
+            print('a SHG.ini is present. Read data from it', 'file : ',mydir_ini, 'in',  os.getcwd())
             param_init = f1.read().splitlines()
-            WorkDir=param_init[0]
-            default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation = param_init[1] == 'True', param_init[2] == 'True', param_init[3] == 'True' , param_init[4] == 'True', param_init[5] == 'True', float(param_init[6]), int(param_init[7])
+            WorkDir = param_init[0]
+            options['flag_display'] = param_init[1] == 'True'
+            options['save_fit'] = param_init[2] == 'True'
+            options['clahe_only'] = param_init[3] == 'True'
+            options['crop_width_square'] = param_init[4] == 'True'
+            options['transversalium'] = param_init[5] == 'True'
+            options['trans_strength'] = int(float(param_init[6])*100)
+            options['img_rotate'] = int(param_init[7])
+
     except:
         print('note: error reading .ini file - using default parameters')
         WorkDir=''
-        default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation = False, False, False, False, True, 3, 0
-    return WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation
+
+    return WorkDir, options['flag_display'], options['save_fit'], options['clahe_only'], options['crop_width_square'], options['transversalium'], options['trans_strength']/100, options['img_rotate']
 
 def interpret_UI_values(ui_values):
     try:
@@ -227,8 +239,6 @@ def inputUI():
     serfiles, options = UI_SerBrowse(WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation) #TODO as options is defined as global, only serfiles could be returned
     return options, serfiles, WorkDir
 
-
-
 """
 -------------------------------------------------------------------------------------------
 le programme commence ici !
@@ -261,7 +271,7 @@ flag_dictionnary = {
     'w' : 'shift',
     's' : 'crop_width_square', # True / False
     't' : 'transversalium', # True / False
-    'm' : 'flip_x' # True / False
+    'm' : 'flip_x' # True / False,
     }
 
 # list of files to process
@@ -275,7 +285,7 @@ if len(sys.argv)>1 :
                 serfiles.append(argument)
     print('theses files are going to be processed : ', serfiles)
 
-def do_work():
+def do_work(cli = False):
     global options, WorkDir
     if len(serfiles)==1:
         options['tempo']=60000 #4000 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
@@ -287,11 +297,16 @@ def do_work():
         if serfile=='':
             sys.exit()
         print('file %s is processing'%serfile)
-        WorkDir=os.path.dirname(serfile)+"/"
+        WorkDir = os.path.dirname(serfile)+"/"
         os.chdir(WorkDir)
-        base=os.path.basename(serfile)
-        basefich=os.path.splitext(base)[0]
-        if base=='':
+        ####SPECIAL NEED FOR INI FILES FROM CLI###
+        if cli:
+            WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation = read_ini(cli=True)
+
+
+        base = os.path.basename(serfile)
+        basefich = os.path.splitext(base)[0]
+        if base == '':
             print('filename ERROR : ',serfile)
             sys.exit()
 
@@ -305,13 +320,16 @@ def do_work():
 
         # save parameters to .ini file
         try:
-            mydir_ini=os.path.dirname(sys.argv[0])+'/SHG.ini'
+            print('Saving parameters in .ini file')
+            mydir_ini = os.path.join(os.path.dirname(sys.argv[0]),'SHG.ini')
             with open(mydir_ini, "w") as f1:
-                f1.write('\n'.join([WorkDir, str(options['flag_display']), str(options['save_fit']), str(options['clahe_only']), str(options['crop_width_square']), str(options['transversalium']), str(options['trans_strength']/100), str(options['img_rotate'])]))
+                options_to_write = [WorkDir,
+                                    str(options['flag_display']),  str(options['save_fit']),  str(options['clahe_only']), str(options['crop_width_square']), str(options['transversalium']), str(options['trans_strength']/100), str(options['img_rotate'])]
+                f1.writelines('\n'.join(options_to_write))
         except:
             traceback.print_exc()
-            print('ERROR: couldnt write file ' + mydir_ini)    
-        
+            print('ERROR: couldnt write file ' + mydir_ini)
+
         # appel au module d'extraction, reconstruction et correction
         #
         # basefich: nom du fichier ser sans extension et sans repertoire
@@ -334,4 +352,4 @@ else:
             options, serfiles, WorkDir = inputUI()
             do_work()
     else:
-        do_work() # use inputs from CLI
+        do_work(cli = True) # use inputs from CLI
