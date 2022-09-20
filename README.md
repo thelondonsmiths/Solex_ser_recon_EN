@@ -38,6 +38,7 @@ If the "Save clahe.png only" box is checked, then only the png image with Contra
 If the "Crop width square" box is checked, the width is cropped to be the same as the height, with the Sun centred.
 This feature is particularly helpful for stacking images (which typically require them all to be the same dimensions) and creating animations and mosaics.
 The crop feature is really only useful for full disk images.
+If the width is smaller than the height, the Sun is centred and some dark space is added on each side to make the image square.
 
 If "Mirror X" is checked, the image is reversed after the geometric correction to compensate for scanning in the reverse direction. This applies to all files (png and fits).
 The choice of "Mirror X" is deliberately not remembered.
@@ -50,10 +51,11 @@ In this case, turning off the automated function may be helpful. The default sho
 
 The slider for "Transversalium correction strength" can be adjusted from low (weak) to high (strong).
 The number corresponds to the width of a window in hundreds of pixels for creation of a "flat".
-The middle range (around 3) is typically a good value for Hydrogen alpha. Very wide defects may require a higher value, while very "clean" images may retain more features with a lower setting.
+The middle range (around 2 to 3) is typically a good value for Hydrogen alpha. Very wide defects may require a higher value, while very "clean" images may retain more features with a lower setting.
 Calcium images (with very strong contrast) seem to work better with a low value (around 1).
 Hydrogen beta images (with typically low contrast) seem to work better with a higher value (around 4).
 Continuum images, because they have weaker features, can be done with a higher setting.
+For protuberance images, the ones with the black disc, turning off the transversalium is recommended. This because the transversalium filter effects the dark sky background but is useless if the surface is masked.
 
 Y/X ratio: enter a specific Y/X ratio, if this is known. Leave blank for auto-correction. Enter 1 if no correction desired.
 
@@ -69,6 +71,7 @@ Pixel offset: offset in pixels from the minimum of the line to reconstruct the i
 
 Protus adjustment: make the black circle larger or smaller in radius by inputting a positive or negative integer (typically between -10 and +10).
 If you want to turn off the black disk altogether, then enter a negative number greater than the radius (e.g. -9999).
+The proftus adjustment setting is remembered.
 
 Geometry correction may fail under certain circumstances. In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
 
@@ -76,7 +79,8 @@ For rapid processing during data acquisition, make sure "Show graphics" is off.
 If Y/X is set to 1, distortion due to inappropriate scanning speed vs frame rate can be recognised and optimised.
 Similarly, if Tilt is set to 0, instrument misalignment can be recognised and corrected.
 
-Geometry graphics window can be killed by killed by pushing 'X'.
-Composite results window should be killed by pushing any key on the keyboard.
+The composite results window should be killed by pushing any key on the keyboard.
 By default, the Processing GUI will reappear after each run.
 The prior file location and several other GUI states are saved in the SHG.ini file.
+
+Some changes were implemented due to a known bug in the update to a library: see https://github.com/PySimpleGUI/PySimpleGUI/issues/5410

@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 4 July 2022
+Version 21 September 2022
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER and AVI files
@@ -34,7 +34,7 @@ def usage():
     usage_ += "'c' : 'clahe_only',  only final clahe image is saved (False by default)\n"
     usage_ += "'f' : 'save_fit', save all fits files (False by default)\n"
     usage_ += "'m' : 'mirror flip', mirror flip in x-direction (False by default)\n"
-    usage_ += "'p' : 'disk_display' produce black disk with protuberance images (True by default)\n"
+    usage_ += "'p' : 'disk_display' turn off black disk with protuberance images (False by default)\n"
     usage_ += "'s' : 'crop_square_width', crop the width to equal the height (False by default)\n"
     usage_ += "'t' : 'disable transversalium', disable transversalium correction (False by default)\n"
     usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels.\n"
@@ -78,9 +78,6 @@ def treat_flag_at_cli(arguments):
         elif character=='t':
             options['transversalium'] = False
             i+=1
-        elif character=='c':
-            options['clahe_only'] = False
-            i+=1
         elif character=='p':
             options['disk_display'] = False
             i+=1
@@ -88,13 +85,13 @@ def treat_flag_at_cli(arguments):
             try : #all others
                 options[flag_dictionnary[character]]=True if flag_dictionnary.get(character) else False
                 i+=1
-            except KeyError : 
+            except KeyError: 
                 print('ERROR !!! At least one argument is not accepted')
                 print(usage())
                 i+=1
     print('options %s' % (options))
 
-def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation):
+def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation, default_protus_adjustment):
     sg.theme('Dark2')
     sg.theme_button_color(('white', '#500000'))
     
@@ -127,7 +124,7 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, d
     [sg.Text('Y/X ratio (blank for auto)', size=(25,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
     [sg.Text('Tilt angle (blank for auto)',size=(25,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
     [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
-    [sg.Text('Protus adjustment', size=(25,1)), sg.Input(default_text='0', size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='-delta_radius-')],
+    [sg.Text('Protus adjustment', size=(25,1)), sg.Input(default_text=str(default_protus_adjustment), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='-delta_radius-')],
     [sg.Button('OK'), sg.Cancel()]
     ] 
     
@@ -162,7 +159,7 @@ def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, d
 open SHG.ini and read parameters
 return parameters from file, or default if file not found or invalid
 '''
-def read_ini():
+def read_ini(cli = False):
     # check for .ini file for working directory
     global options, WorkDir
     print('Check if .ini file is present')
@@ -171,7 +168,7 @@ def read_ini():
         mydir_ini=os.path.join(os.path.dirname(sys.argv[0]),'SHG.ini')
 
         with open(mydir_ini, "r") as f1:
-            print('a SHG.ini is present. Read data from it', 'file : ',mydir_ini, 'in',  os.getcwd())
+            print('a SHG.ini is present. Reading data from it ...', 'file : ',mydir_ini, 'in',  os.getcwd())
             param_init = f1.read().splitlines()
             WorkDir = param_init[0]
             options['flag_display'] = param_init[1] == 'True'
@@ -181,12 +178,13 @@ def read_ini():
             options['transversalium'] = param_init[5] == 'True'
             options['trans_strength'] = int(float(param_init[6])*100)
             options['img_rotate'] = int(param_init[7])
+            options['delta_radius'] = int(param_init[8])
 
     except:
         print('note: error reading .ini file - using default parameters')
         WorkDir=''
 
-    return WorkDir, options['flag_display'], options['save_fit'], options['clahe_only'], options['crop_width_square'], options['transversalium'], options['trans_strength']/100, options['img_rotate']
+    return WorkDir, options['flag_display'], options['save_fit'], options['clahe_only'], options['crop_width_square'], options['transversalium'], options['trans_strength']/100, options['img_rotate'], options['delta_radius']
 
 def interpret_UI_values(ui_values):
     try:
@@ -235,8 +233,8 @@ def interpret_UI_values(ui_values):
 
 # get and return options and serfiles from user using GUI
 def inputUI():
-    WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation = read_ini()
-    serfiles, options = UI_SerBrowse(WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation) #TODO as options is defined as global, only serfiles could be returned
+    WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation, default_protus_adjustment = read_ini()
+    serfiles, options = UI_SerBrowse(WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation, default_protus_adjustment) #TODO as options is defined as global, only serfiles could be returned
     return options, serfiles, WorkDir
 
 """
@@ -253,7 +251,7 @@ options = {
 'ratio_fixe' : None,
 'slant_fix' : None ,
 'save_fit' : False,
-'clahe_only' : True,
+'clahe_only' : False,
 'disk_display' : True, #protus
 'delta_radius' : 0,
 'crop_width_square' : False,
@@ -302,7 +300,7 @@ def do_work(cli = False):
 
         ####SPECIAL NEED FOR INI FILES FROM CLI###
         if cli:
-            WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation = read_ini(cli=True)
+            WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation, default_protus_adjustment = read_ini(cli=True)
 
 
         base = os.path.basename(serfile)
@@ -325,7 +323,8 @@ def do_work(cli = False):
             mydir_ini = os.path.join(os.path.dirname(sys.argv[0]),'SHG.ini')
             with open(mydir_ini, "w") as f1:
                 options_to_write = [WorkDir,
-                                    str(options['flag_display']),  str(options['save_fit']),  str(options['clahe_only']), str(options['crop_width_square']), str(options['transversalium']), str(options['trans_strength']/100), str(options['img_rotate'])]
+                                    str(options['flag_display']),  str(options['save_fit']),  str(options['clahe_only']), str(options['crop_width_square']), \
+                                    str(options['transversalium']), str(options['trans_strength']/100), str(options['img_rotate']), str(options['delta_radius'])]
                 f1.writelines('\n'.join(options_to_write))
         except:
             traceback.print_exc()

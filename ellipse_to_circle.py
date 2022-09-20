@@ -1,7 +1,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet
-Version 30 June 2022
+Version 21 September 2022
 
 """
 from numpy import polynomial
