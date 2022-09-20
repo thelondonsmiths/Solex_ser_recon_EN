@@ -6,7 +6,8 @@ Version 4 July 2022
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib.figure
+import matplotlib.pyplot
 from astropy.io import fits
 from scipy.interpolate import interp1d
 import os
@@ -68,12 +69,6 @@ def read_video_improved(file, fit, options):
     print('reader num frames:', rdr.FrameCount)
     while rdr.has_frames():
         img = rdr.next_frame()
-        if options['flag_display'] and rdr.FrameIndex % 10 == 0:
-            cv2.imshow('image', img)
-            if cv2.waitKey(1) == 27:
-                cv2.destroyAllWindows()
-                sys.exit()
-
         for i in range(len(options['shift'])):
             ind_l, ind_r = col_indeces[i]
             left_col = img[np.arange(ih), ind_l]
@@ -83,6 +78,7 @@ def read_video_improved(file, fit, options):
 
         if options['flag_display'] and rdr.FrameIndex % 10 == 0:
             # disk_list[1] is always shift = 0
+            cv2.imshow('image', img)
             cv2.imshow('disk', disk_list[1])
             if cv2.waitKey(
                     1) == 27:                     # exit if Escape is hit
@@ -172,16 +168,16 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
     curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
     fit = [[math.floor(curve[y]), curve[y] - math.floor(curve[y]), y] for y in range(ih)]
     if not options['clahe_only']:
-        fig, ax = plt.subplots()
-        ax.imshow(mean_img, cmap=plt.cm.gray)
+        fig = matplotlib.figure.Figure()
+        ax = fig.add_subplot(1, 1, 1)
+        ax.imshow(mean_img, cmap=matplotlib.pyplot.cm.gray)
         s = (y2-y1)//20 + 1
         ax.plot(min_intensity[y1:y2:s], np.arange(y1, y2, s), 'rx', label='line detection')
         ax.plot(curve, np.arange(ih), label='polynomial fit')
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         ax.set_aspect(0.1)
-        plt.tight_layout()
-        plt.savefig(basefich0+'_spectral_line_data.png', dpi=400)
-        plt.close()
+        fig.tight_layout()
+        fig.savefig(basefich0+'_spectral_line_data.png', dpi=400)
     return fit, y1, y2
 
 '''
@@ -242,12 +238,12 @@ def correct_transversalium2(img, circle, borders, options, not_fake, basefich):
     c[y1:y2] = correction_t
     #c[c<1] = 1
     if not_fake and not options['clahe_only']:
-        plt.plot(c)
-        plt.xlabel('y')
-        plt.ylabel('transversalium correction factor')
-        plt.savefig(basefich+'_transversalium_correction.png')
-        plt.close()
-
+        fig = matplotlib.figure.Figure()
+        ax = fig.add_subplot(1, 1, 1)
+        ax.plot(c)
+        ax.set_xlabel('y')
+        ax.set_ylabel('transversalium correction factor')
+        fig.savefig(basefich+'_transversalium_correction.png')
     ret = (img.T * c).T # multiply each row in image by correction factor
     ret[ret > 65535] = 65535 # prevent overflow
     return np.array(ret, dtype='uint16') 

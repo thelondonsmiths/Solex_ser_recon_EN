@@ -74,7 +74,6 @@ def solex_proc(file, options):
             ratio = options['ratio_fixe'] if not options['ratio_fixe'] is None else 1.0
             phi = math.radians(options['slant_fix']) if not options['slant_fix'] is None else 0.0
             frame_circularized = correct_image(disk_list[i] / 65536, phi, ratio, np.array([-1.0, -1.0]), -1.0, print_log=i == 0)[0]  # Note that we assume 16-bit
-        cercle = cercle0
 
         if options['save_fit'] and i >= 2:  # first two shifts are not user specified
             DiskHDU = fits.PrimaryHDU(frame_circularized, header=hdr)
@@ -82,8 +81,8 @@ def solex_proc(file, options):
 
 
         if options['transversalium']:
-            if not cercle == (-1, -1, -1):
-                detransversaliumed = correct_transversalium2(frame_circularized, cercle, borders, options, i >= 2, basefich)
+            if not cercle0 == (-1, -1, -1):
+                detransversaliumed = correct_transversalium2(frame_circularized, cercle0, borders, options, i >= 2, basefich)
             else:
                 detransversaliumed = correct_transversalium2(frame_circularized, (0,0,99999), [0, backup_y1+20, frame_circularized.shape[1] -1, backup_y2-20], options, i >= 2, basefich)
         else:
@@ -93,11 +92,22 @@ def solex_proc(file, options):
             DiskHDU = fits.PrimaryHDU(detransversaliumed, header=hdr)
             DiskHDU.writeto(basefich + '_detransversaliumed.fits', overwrite='True')
 
+        cercle = cercle0
         if options['crop_width_square']:
-            if not cercle0 == (-1, -1, -1):
-                h2 = detransversaliumed.shape[0] // 2
-                detransversaliumed = detransversaliumed[:, max(0, int(cercle0[0]) - h2) : min(int(cercle0[0]) + h2, detransversaliumed.shape[1])]
-                cercle = (cercle0[0] - max(0, int(cercle0[0]) - h2), cercle0[1], cercle0[2])
+            if not cercle == (-1, -1, -1):
+                h, w = detransversaliumed.shape
+                h2 = h // 2
+                if h < w: # crop width
+                    detransversaliumed = detransversaliumed[:, max(0, int(cercle[0]) - h2) : min(int(cercle[0]) + h2, detransversaliumed.shape[1])]
+                    cercle = (cercle[0] - max(0, int(cercle[0]) - h2), cercle[1], cercle[2])
+                else: # expand width
+                    new_img = np.full((h, h), detransversaliumed[0, 0], dtype=detransversaliumed.dtype)
+                    new_cercle = (h2, cercle[1], cercle[2])
+                    tx = int(new_cercle[0] - cercle[0])
+                    new_img[:, :w] = detransversaliumed[:, :]
+                    new_img = np.roll(new_img, tx, axis = 1)    
+                    cercle = new_cercle
+                    detransversaliumed = new_img    
             else:
                 print('Error: cannot crop square without circle fit (crop-square cancelled)')
 

@@ -13,7 +13,8 @@ import sys
 
 import math
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib.figure
+import matplotlib.pyplot
 
 from skimage import data
 from skimage import transform
@@ -74,6 +75,16 @@ def two_step(points):
     values = np.linalg.norm(Xr, axis=0) - 1
     #print(np.mean(values), np.std(values), max(values), min(values))
     ratio = width / height
+    #try to get phi close to 0 (within pi/4) by swapping the semi-major and semi-minor axes labels
+    for _ in range(2):
+        if phi > math.pi / 4:
+            phi -= math.pi/2
+            ratio = 1/ratio
+            height = height / ratio
+        if phi < -math.pi / 4:
+            phi += math.pi/2
+            ratio = 1/ratio
+            height = height / ratio
     return np.array(
         center), height, phi, ratio, points_tresholded, ellipse_points
 
@@ -279,12 +290,15 @@ def ellipse_to_circle(image, options, basefich):
     borders = [np.min(X_f3_t[:, 0]), np.min(X_f3_t[:, 1]), np.max(X_f3_t[:, 0]), np.max(X_f3_t[:, 1])]
     print('sun borders found:' + str(borders))
     if not options['clahe_only']:
-        fig, ax = plt.subplots(ncols=2, nrows=2)
-        ax[0][0].imshow(image, cmap=plt.cm.gray)
+        fig = matplotlib.figure.Figure()
+        ax = [[fig.add_subplot(2, 2, 1), fig.add_subplot(2, 2, 2)], [fig.add_subplot(2, 2, 3), fig.add_subplot(2, 2, 4)]]
+        #fig, ax = plt.subplots(ncols=2, nrows=2)
+        fig.tight_layout()
+        ax[0][0].imshow(image, cmap=matplotlib.pyplot.cm.gray)
         ax[0][0].set_title('uncorrected image', fontsize=11)
         ax[0][0].set_aspect('equal')
         ax[0][1].set_aspect('equal')
-        ax[0][1].imshow(image, cmap=plt.cm.gray)
+        ax[0][1].imshow(image, cmap=matplotlib.pyplot.cm.gray)
         ax[0][1].plot(raw_X[:, 1], raw_X[:, 0], 'ro', label='edge detection')
         ax[0][1].legend()
         ax[1][1].set_aspect('equal')
@@ -294,25 +308,12 @@ def ellipse_to_circle(image, options, basefich):
         ax[1][1].set_ylim([image.shape[0], 0])  # make y-axis upside-down
         ax[1][1].legend()
         ax[1][0].set_aspect('equal')
-        ax[1][0].imshow(fix_img, cmap=plt.cm.gray)
+        ax[1][0].imshow(fix_img, cmap=matplotlib.pyplot.cm.gray)
         ax[1][0].axhline(y=borders[1])
         ax[1][0].axhline(y=borders[3])
         ax[1][0].axvline(x=borders[0])
         ax[1][0].axvline(x=borders[2])
-        ax[1][0].set_title('geometrically corrected image', fontsize=11)
-        ax[0][1].set_title(
-            'remember to close this window \n by pressing the "X"',
-            color='red')
-
-        plt.savefig(basefich + '_ellipse_fit.png', dpi=200)
-        if options['flag_display']:
-            # creating a timer object to auto-close plot after some time
-            def close_event():
-                plt.close()
-            timer = fig.canvas.new_timer(interval=options['tempo'])
-            timer.add_callback(close_event)
-            timer.start()
-            plt.show()
-        else:
-            plt.close()
+        ax[1][0].set_title('geometrically corrected image', fontsize=11)    
+        fig.savefig(basefich + '_ellipse_fit.png', dpi=300)
+  
     return fix_img, new_circle, ratio, phi, borders
