@@ -48,6 +48,7 @@ The "Rotate png images" silder applies only to the final png output images. Rota
 If "Correct transversalium lines" is not checked, then the program makes no attempt to fix line defects.
 The function for fixing line defects works well if they are small and well-defined. Wide lines may require a more manual process.
 In this case, turning off the automated function may be helpful. The default should be for this box to be checked.
+For protuberance images, the ones with the black disc, turning off the transversalium is recommended. This because the transversalium filter effects the dark sky background but is useless if the surface is masked.
 
 The slider for "Transversalium correction strength" can be adjusted from low (weak) to high (strong).
 The number corresponds to the width of a window in hundreds of pixels for creation of a "flat".
@@ -55,7 +56,7 @@ The middle range (around 2 to 3) is typically a good value for Hydrogen alpha. V
 Calcium images (with very strong contrast) seem to work better with a low value (around 1).
 Hydrogen beta images (with typically low contrast) seem to work better with a higher value (around 4).
 Continuum images, because they have weaker features, can be done with a higher setting.
-For protuberance images, the ones with the black disc, turning off the transversalium is recommended. This because the transversalium filter effects the dark sky background but is useless if the surface is masked.
+For stacking, it is recommended to use a lower correction strength than for a single frame. This is because the stacking itself will tend to average out the transversalium noise.
 
 Y/X ratio: enter a specific Y/X ratio, if this is known. Leave blank for auto-correction. Enter 1 if no correction desired.
 

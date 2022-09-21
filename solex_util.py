@@ -243,7 +243,7 @@ def correct_transversalium2(img, circle, borders, options, not_fake, basefich):
         ax.plot(c)
         ax.set_xlabel('y')
         ax.set_ylabel('transversalium correction factor')
-        fig.savefig(basefich+'_transversalium_correction.png')
+        fig.savefig(basefich+'_transversalium_correction.png', dpi=300)
     ret = (img.T * c).T # multiply each row in image by correction factor
     ret[ret > 65535] = 65535 # prevent overflow
     return np.array(ret, dtype='uint16') 
