@@ -82,6 +82,6 @@ Similarly, if Tilt is set to 0, instrument misalignment can be recognised and co
 
 The composite results window should be killed by pushing any key on the keyboard.
 By default, the Processing GUI will reappear after each run.
-The prior file location and several other GUI states are saved in the SHG.ini file.
+The prior file location and several other GUI states are now saved in the SHG_config file (previously in a SHG.ini file).
 
 Some changes were implemented due to a known bug in the update to a library: see https://github.com/PySimpleGUI/PySimpleGUI/issues/5410
