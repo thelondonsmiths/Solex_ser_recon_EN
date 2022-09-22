@@ -27,6 +27,39 @@ import cProfile
 import PySimpleGUI as sg
 import traceback
 import cv2
+import json
+
+serfiles = []
+
+options = {    
+    'shift':[0],
+    'flag_display':False,
+    'ratio_fixe' : None,
+    'slant_fix' : None ,
+    'save_fit' : False,
+    'clahe_only' : False,
+    'disk_display' : True, #protus
+    'delta_radius' : 0,
+    'crop_width_square' : False,
+    'transversalium' : True,
+    'trans_strength': 301,
+    'img_rotate': 0,
+    'flip_x': False,
+    'workDir': ''
+}
+
+flag_dictionnary = {
+    'd' : 'flag_display', #True False display all pictures
+    'c' : 'clahe_only',  #True/False
+    'f' : 'save_fit', #True/False
+    'p' : 'disk_display', #True/False protuberances 
+    'w' : 'shift',
+    's' : 'crop_width_square', # True / False
+    't' : 'transversalium', # True / False
+    'm' : 'flip_x' # True / False
+}
+
+
 
 def usage():
     usage_ = "SHG_MAIN.py [-dcfpstwm] [file(s) to treat, * allowed]\n"
@@ -43,7 +76,6 @@ def usage():
     
 def treat_flag_at_cli(arguments):
     """read cli arguments and produce options variable"""
-    global options
     #reading arguments
     i=0
     while i < len(argument[1:]): #there's a '-' at first)
@@ -91,101 +123,6 @@ def treat_flag_at_cli(arguments):
                 i+=1
     print('options %s' % (options))
 
-def UI_SerBrowse (WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation, default_protus_adjustment):
-    sg.theme('Dark2')
-    sg.theme_button_color(('white', '#500000'))
-    
-    layout = [
-    [sg.Text('File(s)', size=(5, 1)), sg.InputText(default_text='',size=(75,1),key='-FILE-'),
-     sg.FilesBrowse('Open',file_types=(("SER Files", "*.ser"),("AVI Files", "*.avi"),),initial_folder=WorkDir)],
-    [sg.Checkbox('Show graphics', default=default_graphics, key='-DISP-')],
-    [sg.Checkbox('Save fits files', default=default_fits, key='-FIT-')],
-    [sg.Checkbox('Save clahe.png only', default=default_clahe_only, key='-CLAHE_ONLY-')],
-    [sg.Checkbox('Crop square', default=default_crop_square, key='-crop_width_square-')],
-    [sg.Checkbox('Mirror X', default=False, key='-flip_x-')],
-    [sg.Text("Rotate png images:", key='img_rotate_slider')],
-    [sg.Slider(range=(0,270),
-         default_value=default_rotation,
-         resolution=90,     
-         size=(25,15),
-         orientation='horizontal',
-         font=('Helvetica', 12),
-         key='img_rotate')],
-    [sg.Checkbox('Correct transversalium lines', default=default_transversalium, key='-transversalium-', enable_events=True)],
-    [sg.Text("Transversalium correction strength (pixels x 100) :", key='text_trans', visible=default_transversalium)],
-    [sg.Slider(range=(0.5,7),
-         default_value=default_transversalium_strength,
-         resolution=0.5,     
-         size=(25,15),
-         orientation='horizontal',
-         font=('Helvetica', 12),
-         key='-trans_strength-',
-         visible=default_transversalium)],
-    [sg.Text('Y/X ratio (blank for auto)', size=(25,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
-    [sg.Text('Tilt angle (blank for auto)',size=(25,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
-    [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
-    [sg.Text('Protus adjustment', size=(25,1)), sg.Input(default_text=str(default_protus_adjustment), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='-delta_radius-')],
-    [sg.Button('OK'), sg.Cancel()]
-    ] 
-    
-    window = sg.Window('Processing', layout, finalize=True)
-    window['-FILE-'].update(WorkDir) 
-    window.BringToFront()
-    
-    
-    while True:
-        event, values = window.read()
-        if event==sg.WIN_CLOSED or event=='Cancel': 
-            sys.exit()
-        
-        if event=='OK':
-            if not values['-FILE-'] == WorkDir and not values['-FILE-'] == '':
-                try:
-                    serfiles, options = interpret_UI_values(values)
-                    window.close()
-                    return serfiles, options
-                except Exception as inst:
-                    sg.Popup('Error: ' + inst.args[0], keep_on_top=True)
-                    
-            else:
-                # display pop-up file not entered
-                sg.Popup('Error: file not entered! Please enter file(s)', keep_on_top=True)
-        window.Element('-trans_strength-').Update(visible = values['-transversalium-'])
-        window.Element('text_trans').Update(visible = values['-transversalium-'])    
-
-    
-
-'''
-open SHG.ini and read parameters
-return parameters from file, or default if file not found or invalid
-'''
-def read_ini(cli = False):
-    # check for .ini file for working directory
-    global options, WorkDir
-    print('Check if .ini file is present')
-
-    try:
-        mydir_ini=os.path.join(os.path.dirname(sys.argv[0]),'SHG.ini')
-
-        with open(mydir_ini, "r") as f1:
-            print('a SHG.ini is present. Reading data from it ...', 'file : ',mydir_ini, 'in',  os.getcwd())
-            param_init = f1.read().splitlines()
-            WorkDir = param_init[0]
-            options['flag_display'] = param_init[1] == 'True'
-            options['save_fit'] = param_init[2] == 'True'
-            options['clahe_only'] = param_init[3] == 'True'
-            options['crop_width_square'] = param_init[4] == 'True'
-            options['transversalium'] = param_init[5] == 'True'
-            options['trans_strength'] = int(float(param_init[6])*100)
-            options['img_rotate'] = int(param_init[7])
-            options['delta_radius'] = int(param_init[8])
-
-    except:
-        print('note: error reading .ini file - using default parameters')
-        WorkDir=''
-
-    return WorkDir, options['flag_display'], options['save_fit'], options['clahe_only'], options['crop_width_square'], options['transversalium'], options['trans_strength']/100, options['img_rotate'], options['delta_radius']
-
 def interpret_UI_values(ui_values):
     try:
         shift = ui_values['-DX-']
@@ -222,6 +159,7 @@ def interpret_UI_values(ui_values):
     options['trans_strength'] = int(ui_values['-trans_strength-']*100) + 1
     options['flip_x'] = ui_values['-flip_x-']
     options['img_rotate'] = int(ui_values['img_rotate'])
+    global serfiles
     serfiles=ui_values['-FILE-'].split(';')
     try:
         for serfile in serfiles:
@@ -229,48 +167,109 @@ def interpret_UI_values(ui_values):
             f.close()
     except:
         raise Exception('ERROR opening file :'+serfile+'!')
-    return serfiles, options
+
+def UI_SerBrowse ():
+    sg.theme('Dark2')
+    sg.theme_button_color(('white', '#500000'))
+    
+    layout = [
+    [sg.Text('File(s)', size=(5, 1)), sg.InputText(default_text=options['workDir'],size=(75,1),key='-FILE-'),
+     sg.FilesBrowse('Open',file_types=(("SER Files", "*.ser"),("AVI Files", "*.avi"),),initial_folder=options['workDir'])],
+    [sg.Checkbox('Show graphics', default=options['flag_display'], key='-DISP-')],
+    [sg.Checkbox('Save fits files', default=options['save_fit'], key='-FIT-')],
+    [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='-CLAHE_ONLY-')],
+    [sg.Checkbox('Crop square', default=options['crop_width_square'], key='-crop_width_square-')],
+    [sg.Checkbox('Mirror X', default=False, key='-flip_x-')],
+    [sg.Text("Rotate png images:", key='img_rotate_slider')],
+    [sg.Slider(range=(0,270),
+         default_value=options['img_rotate'],
+         resolution=90,     
+         size=(25,15),
+         orientation='horizontal',
+         font=('Helvetica', 12),
+         key='img_rotate')],
+    [sg.Checkbox('Correct transversalium lines', default=options['transversalium'], key='-transversalium-', enable_events=True)],
+    [sg.Text("Transversalium correction strength (pixels x 100) :", key='text_trans', visible=options['transversalium'])],
+    [sg.Slider(range=(0.5,7),
+         default_value=options['trans_strength']/100,
+         resolution=0.5,     
+         size=(25,15),
+         orientation='horizontal',
+         font=('Helvetica', 12),
+         key='-trans_strength-',
+         visible=options['transversalium'])],
+    [sg.Text('Y/X ratio (blank for auto)', size=(25,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
+    [sg.Text('Tilt angle (blank for auto)',size=(25,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
+    [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
+    [sg.Text('Protus adjustment', size=(25,1)), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='-delta_radius-')],
+    [sg.Button('OK'), sg.Cancel()]
+    ] 
+    
+    window = sg.Window('Processing', layout, finalize=True)
+    window.BringToFront()
+    
+    
+    while True:
+        event, values = window.read()
+        if event==sg.WIN_CLOSED or event=='Cancel':
+            window.close()
+            sys.exit()
+        
+        if event=='OK':
+            if not values['-FILE-'] == options['workDir'] and not values['-FILE-'] == '':
+                try:
+                    interpret_UI_values(values)
+                    window.close()
+                    return
+                except Exception as inst:
+                    sg.Popup('Error: ' + inst.args[0], keep_on_top=True)
+                    
+            else:
+                # display pop-up file not entered
+                sg.Popup('Error: file not entered! Please enter file(s)', keep_on_top=True)
+        window.Element('-trans_strength-').Update(visible = values['-transversalium-'])
+        window.Element('text_trans').Update(visible = values['-transversalium-'])    
+
+    
+
+'''
+open SHG.ini and read parameters
+return parameters from file, or default if file not found or invalid
+'''
+def read_ini():
+    # check for .ini file for working directory
+    print('loading config file...')
+
+    try:
+        mydir_ini=os.path.join(os.path.dirname(sys.argv[0]),'SHG_config.txt')
+        with open(mydir_ini, 'r') as fp:
+            global options
+            options = json.load(fp)   
+    except Exception:
+        traceback.print_exc()
+        print('note: error reading config file - using default parameters')
+
+
+def write_ini():
+    try:
+        print('saving config file ...')
+        mydir_ini = os.path.join(os.path.dirname(sys.argv[0]),'SHG_config.txt')
+        with open(mydir_ini, 'w') as fp:
+            json.dump(options, fp, sort_keys=True, indent=4)
+    except Exception:
+        traceback.print_exc()
+        print('ERROR: failed to write config file: ' + mydir_ini)
 
 # get and return options and serfiles from user using GUI
 def inputUI():
-    WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation, default_protus_adjustment = read_ini()
-    serfiles, options = UI_SerBrowse(WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation, default_protus_adjustment) #TODO as options is defined as global, only serfiles could be returned
-    return options, serfiles, WorkDir
+    read_ini()
+    UI_SerBrowse()
 
 """
 -------------------------------------------------------------------------------------------
 le programme commence ici !
 --------------------------------------------------------------------------------------------
 """
-serfiles = []
-WorkDir = ''
-
-options = {    
-'shift':[0],
-'flag_display':False,
-'ratio_fixe' : None,
-'slant_fix' : None ,
-'save_fit' : False,
-'clahe_only' : False,
-'disk_display' : True, #protus
-'delta_radius' : 0,
-'crop_width_square' : False,
-'transversalium' : True,
-'trans_strength': 301,
-'img_rotate': 0,
-'flip_x': False,
-}
-
-flag_dictionnary = {
-    'd' : 'flag_display', #True False display all pictures
-    'c' : 'clahe_only',  #True/False
-    'f' : 'save_fit', #True/False
-    'p' : 'disk_display', #True/False protuberances 
-    'w' : 'shift',
-    's' : 'crop_width_square', # True / False
-    't' : 'transversalium', # True / False
-    'm' : 'flip_x' # True / False
-    }
 
 # list of files to process
 ## add a command line argument.
@@ -284,7 +283,7 @@ if len(sys.argv)>1 :
     print('theses files are going to be processed : ', serfiles)
 
 def do_work(cli = False):
-    global options, WorkDir
+    print('in do work')
     if len(serfiles)==1:
         options['tempo']=60000 #4000 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
     else:
@@ -295,12 +294,12 @@ def do_work(cli = False):
         if serfile=='':
             sys.exit()
         print('file %s is processing'%serfile)
-        WorkDir = os.path.dirname(serfile)+"/"
-        os.chdir(WorkDir)
+        options['workDir'] = os.path.dirname(serfile)+"/"
+        os.chdir(options['workDir'])
 
         ####SPECIAL NEED FOR INI FILES FROM CLI###
         if cli:
-            WorkDir, default_graphics, default_fits, default_clahe_only, default_crop_square, default_transversalium, default_transversalium_strength, default_rotation, default_protus_adjustment = read_ini(cli=True)
+            read_ini()
 
 
         base = os.path.basename(serfile)
@@ -318,23 +317,7 @@ def do_work(cli = False):
             sys.exit()
 
         # save parameters to .ini file
-        try:
-            print('Saving parameters in .ini file')
-            mydir_ini = os.path.join(os.path.dirname(sys.argv[0]),'SHG.ini')
-            with open(mydir_ini, "w") as f1:
-                options_to_write = [WorkDir,
-                                    str(options['flag_display']),  str(options['save_fit']),  str(options['clahe_only']), str(options['crop_width_square']), \
-                                    str(options['transversalium']), str(options['trans_strength']/100), str(options['img_rotate']), str(options['delta_radius'])]
-                f1.writelines('\n'.join(options_to_write))
-        except:
-            traceback.print_exc()
-            print('ERROR: couldnt write file ' + mydir_ini)
-
-        # appel au module d'extraction, reconstruction et correction
-        #
-        # basefich: nom du fichier ser sans extension et sans repertoire
-        # dx: decalage en pixel par rapport au centre de la raie
-
+        write_ini()
         try : 
             sol.solex_proc(serfile,options.copy()) 
         except:
@@ -343,13 +326,13 @@ def do_work(cli = False):
             cv2.destroyAllWindows()
 
 if 0:
-    options, serfiles = inputUI()
+    inputUI()
     cProfile.run('do_work()', sort='cumtime')
 else:
     # if no command line arguments, open GUI interface
     if len(serfiles)==0:
         while True:
-            options, serfiles, WorkDir = inputUI()
+            inputUI()
             do_work()
     else:
         do_work(cli = True) # use inputs from CLI
