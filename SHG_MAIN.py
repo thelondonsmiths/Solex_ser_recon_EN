@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 21 September 2022
+Version 22 September 2022
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER and AVI files
