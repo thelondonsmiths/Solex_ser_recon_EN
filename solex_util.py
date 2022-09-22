@@ -44,12 +44,16 @@ def read_video_improved(file, fit, options):
                  for _ in options['shift']]
 
     if options['flag_display']:
+        screen = tk.Tk()
+        sw, sh = screen.winfo_screenwidth(), screen.winfo_screenheight()
+        scaling = sh/ih * 0.8
+        screen.destroy()
         cv2.namedWindow('disk', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('disk', FrameMax // 3, ih // 3)
+        cv2.resizeWindow('disk', int(FrameMax * scaling), int(ih * scaling))
         cv2.moveWindow('disk', 200, 0)
         cv2.namedWindow('image', cv2.WINDOW_NORMAL)
         cv2.moveWindow('image', 0, 0)
-        cv2.resizeWindow('image', int(iw), int(ih))
+        cv2.resizeWindow('image', int(iw * scaling), int(ih * scaling))
 
     col_indeces = []
 
@@ -149,8 +153,12 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
 
     # affiche image moyenne
     if flag_display:
+        screen = tk.Tk()
+        sw, sh = screen.winfo_screenwidth(), screen.winfo_screenheight()
+        scaling = sh/ih * 0.8
+        screen.destroy()
         cv2.namedWindow('Ser mean', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('Ser mean', iw, ih)
+        cv2.resizeWindow('Ser mean', int(iw*scaling), int(ih*scaling))
         cv2.moveWindow('Ser mean', 100, 0)
         cv2.imshow('Ser mean', mean_img)
         if cv2.waitKey(2000) == 27:                     # exit if Escape is hit
