@@ -327,17 +327,15 @@ def image_process(frame, cercle, options, header, basefich):
         # sauvegarde en png pour appliquer une colormap par autre script
         cv2.imwrite(basefich+'_protus.png',frame_contrasted3)
     
-    # Modification Jean-Francois: the 4 images are concatenated together in 1 image => 'Sun images'
+    # The 3 images are concatenated together in 1 image => 'Sun images'
     # The 'Sun images' is scaled for the monitor maximal dimension ... it is scaled to match the dimension of the monitor without 
     # changing the Y/X scale of the images 
     if flag_result_show:
-        im_1 = cv2.hconcat([frame_contrasted, frame_contrasted2])
-        im_2 = cv2.hconcat([frame_contrasted3, cc])
-        im_3 = cv2.vconcat([im_1, im_2])
+        im_3 = cv2.hconcat([cc, frame_contrasted2, frame_contrasted3])
         screen = tk.Tk()
         screensize = screen.winfo_screenwidth(), screen.winfo_screenheight()
         screen.destroy()
-        scale = min(screensize[0] / im_3.shape[1], screensize[1] / im_3.shape[0])
+        scale = min(screensize[0] / im_3.shape[1], screensize[1] / im_3.shape[0]) * 0.9
         cv2.namedWindow('Sun images', cv2.WINDOW_NORMAL)
         cv2.moveWindow('Sun images', 0, 0)
         cv2.resizeWindow('Sun images',int(im_3.shape[1] * scale), int(im_3.shape[0] * scale))
