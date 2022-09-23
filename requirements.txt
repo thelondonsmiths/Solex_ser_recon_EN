@@ -1,9 +1,9 @@
-python 3
-opencv-python==4.4.0.46
-numpy==1.19.2
-astropy==4.2
-PySimpleGUI==4.38.0
-scipy
-matplotlib
+Python 3
+NumPy
+SciPy
+Astropy
+Matplotlib
+PySimpleGUI
+OpenCV-python
 scikit-image
 lsq-ellipse

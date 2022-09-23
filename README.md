@@ -3,7 +3,8 @@ If no spectral line can recognised in the video file, the program will stop.
 
 Install the most recent version of Python from python.org. During Windows installation, check the box to update the PATH.
 
-For Windows, double click the windows_setup file to install the needed Python libraries.
+For Windows, double click the windows_setup batch file to install the needed Python libraries.
+If you are installing an update of this software, double click on window_update batch file to make sure you are using the most recent Python libraries.
 
 Usage:
 

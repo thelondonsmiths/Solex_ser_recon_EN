@@ -1,7 +1,7 @@
 pip install scipy
-pip install matplotlib
-pip install PySimpleGUI
 pip install astropy
+pip install matplotlib
+pip install pysimplegui
 pip install opencv-python
-pip install lsq-ellipse
 pip install scikit-image
+pip install lsq-ellipse
