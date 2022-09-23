@@ -47,7 +47,7 @@ def solex_proc(file, options):
         logme('transversalium disabled')
     logme('Mirror X : ' + str(options['flip_x']))
     logme('Post-rotation : ' + str(options['img_rotate']) + ' degrees')
-        
+    logme(f'Protus adjustment : {options["delta_radius"]}')
     borders = [0,0,0,0]
     cercle0 = (-1, -1, -1)
     frames_circularized = []
