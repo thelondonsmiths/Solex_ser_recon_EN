@@ -297,10 +297,10 @@ def do_work(cli = False):
         options['workDir'] = os.path.dirname(serfile)+"/"
         os.chdir(options['workDir'])
 
-        ####SPECIAL NEED FOR INI FILES FROM CLI###
+        #### TODO: SPECIAL NEED FOR INI FILES FROM CLI###
         if cli:
             read_ini()
-
+        ####
 
         base = os.path.basename(serfile)
         basefich = os.path.splitext(base)[0]
@@ -335,4 +335,4 @@ else:
             inputUI()
             do_work()
     else:
-        do_work(cli = True) # use inputs from CLI
+        do_work() # use inputs from CLI
