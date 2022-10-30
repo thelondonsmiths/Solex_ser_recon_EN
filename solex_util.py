@@ -70,7 +70,7 @@ def read_video_improved(file, fit, options):
     right_weights = np.ones(ih) - left_weights
 
     # lance la reconstruction du disk a partir des trames
-    print('reader num frames:', rdr.FrameCount)
+    logme('reader num frames: {}'.format(rdr.FrameCount))
     while rdr.has_frames():
         img = rdr.next_frame()
         for i in range(len(options['shift'])):
@@ -202,7 +202,7 @@ not_fake: true/false on if this was a user-requested image
 
 def correct_transversalium2(img, circle, borders, options, not_fake, basefich):
     if circle == (-1, -1, -1):
-        print('ERROR : no circle fit so no transversalium correction')
+        logme('ERROR : no circle fit so no transversalium correction')
         return img
     y_s = []
     y_mean = []
@@ -236,7 +236,7 @@ def correct_transversalium2(img, circle, borders, options, not_fake, basefich):
             return 1
         elif N/2 <= x <= N:
             return t(N - x)
-        print('error: weird input for taper function: ' + str(x))
+        logme('ERROR: weird input for taper function: ' + str(x))
         return 1
 
     taper = np.array([t(x) for x in range(N)])
@@ -274,8 +274,8 @@ def image_process(frame, cercle, options, header, basefich):
     frame1=np.copy(frame)
     Seuil_bas=np.percentile(frame, 25)
     Seuil_haut=np.percentile(frame,99.9999)
-    print('Seuil bas       :', np.floor(Seuil_bas))
-    print('Seuil haut      :', np.floor(Seuil_haut))
+    logme('Seuil bas       :{}'.format(np.floor(Seuil_bas)))
+    logme('Seuil haut      :{}'.format(np.floor(Seuil_haut)))
     fc=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
     fc[fc<0]=0
     fc[fc>65535] = 65535
@@ -285,8 +285,8 @@ def image_process(frame, cercle, options, header, basefich):
     frame1=np.copy(frame)
     Seuil_bas=(Seuil_haut*0.25)
     Seuil_haut=np.percentile(frame1,99.9999)
-    print('Seuil bas HC    :', np.floor(Seuil_bas))
-    print('Seuil haut HC   :', np.floor(Seuil_haut))
+    logme('Seuil bas HC    :{}'.format(np.floor(Seuil_bas)))
+    logme('Seuil haut HC   :{}'.format(np.floor(Seuil_haut)))
     fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
     fc2[fc2<0]=0
     fc2[fc2>65535] = 65535
@@ -296,8 +296,8 @@ def image_process(frame, cercle, options, header, basefich):
     frame1=np.copy(frame)
     Seuil_bas=0
     Seuil_haut=np.percentile(frame1,99.9999)*0.18        
-    print('Seuil bas protu :', np.floor(Seuil_bas))
-    print('Seuil haut protu:', np.floor(Seuil_haut))
+    logme('Seuil bas protu :{}'.format(np.floor(Seuil_bas)))
+    logme('Seuil haut protu:{}'.format(np.floor(Seuil_haut)))
     fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
     fc2[fc2<0]=0
     fc2[fc2>65535] = 65535
