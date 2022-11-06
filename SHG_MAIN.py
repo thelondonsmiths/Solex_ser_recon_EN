@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 22 September 2022
+Version 6 November 2022
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER and AVI files
@@ -63,7 +63,7 @@ flag_dictionnary = {
 
 
 def usage():
-    usage_ = "SHG_MAIN.py [-dcfpstwm] [file(s) to treat, * allowed]\n"
+    usage_ = "SHG_MAIN.py [-dcfmpstwr] [file(s) to treat, * allowed]\n"
     usage_ += "'d' : 'flag_display', display all graphics (False by default)\n"
     usage_ += "'c' : 'clahe_only',  only final clahe image is saved (False by default)\n"
     usage_ += "'f' : 'save_fit', save all fits files (False by default)\n"
