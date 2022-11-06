@@ -21,7 +21,8 @@ Command line options:
 - p : disables black disk on protuberance images
 - s : crop width to make square
 - t : disable transversalium correction
-- w: a,b,c will produce images at a, b and c ; x:y:w will produce images starting at x, finishing at y, every w pixels
+- w : a,b,c will produce images at a, b and c ; x:y:w will produce images starting at x, finishing at y, every w pixels
+- r : crop the width to a constant number of pixels
 
 Check the "Show graphics" box for a 'live view' reconstruction display, a graphic of the geometry correction and a quick view of the final images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
@@ -40,6 +41,10 @@ If the "Crop width square" box is checked, the width is cropped to be the same a
 This feature is particularly helpful for stacking images (which typically require them all to be the same dimensions) and creating animations and mosaics.
 The crop feature is really only useful for full disk images.
 If the width is smaller than the height, the Sun is centred and some dark space is added on each side to make the image square.
+
+If the "Fixed image width" box is specified, the width of the image is cropped to that number of pixels. 
+The "Fixed image width" overrides the "Crop square" function and works in the same way by centering and then cropping or filling with dark space.
+The value of the fixed width is remembered.
 
 If "Mirror X" is checked, the image is reversed after the geometric correction to compensate for scanning in the reverse direction. This applies to all files (png and fits).
 The choice of "Mirror X" is deliberately not remembered.
@@ -84,5 +89,6 @@ Similarly, if Tilt is set to 0, instrument misalignment can be recognised and co
 The composite results window should be killed by pushing any key on the keyboard.
 By default, the Processing GUI will reappear after each run.
 The prior file location and several other GUI states are now saved in the SHG_config file (previously in a SHG.ini file).
+In CLI mode, the parameters in the SHG_config file are ignored.
 
 Some changes were implemented due to a known bug in the update to a library: see https://github.com/PySimpleGUI/PySimpleGUI/issues/5410
