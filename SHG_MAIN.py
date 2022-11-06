@@ -45,7 +45,8 @@ options = {
     'trans_strength': 301,
     'img_rotate': 0,
     'flip_x': False,
-    'workDir': ''
+    'workDir': '',
+    'fixed_width': None,
 }
 
 flag_dictionnary = {
@@ -72,6 +73,7 @@ def usage():
     usage_ += "'t' : 'disable transversalium', disable transversalium correction (False by default)\n"
     usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels.\n"
     usage_ += "'w' : 'x:y:w'  produce images starting at x, finishing at y, every w pixels."
+    usage_ += "'r' : 'w'  crop width to a constant no. of pixels."
     return usage_
     
 def treat_flag_at_cli(arguments):
@@ -113,6 +115,16 @@ def treat_flag_at_cli(arguments):
         elif character=='p':
             options['disk_display'] = False
             i+=1
+        elif character=='r':
+            fw = ''
+            try:
+                while argument[1:][i+1].isdigit():
+                    fw += argument[1:][i+1]
+                    i += 1
+                i += 1
+            except IndexError:
+                i+=1 #the reach the end of arguments.    
+            options['fixed_width'] = int(fw)
         else : 
             try : #all others
                 options[flag_dictionnary[character]]=True if flag_dictionnary.get(character) else False
@@ -148,6 +160,10 @@ def interpret_UI_values(ui_values):
         options['slant_fix'] = float(ui_values['-SLANT-']) if ui_values['-SLANT-'] else None
     except ValueError : 
         raise Exception('invalid tilt angle value!')
+    try : 
+        options['fixed_width'] = int(ui_values['fixed_width']) if ui_values['fixed_width'] else None
+    except ValueError : 
+        raise Exception('invalid fixed width value!')
     try:
         options['delta_radius'] = int(ui_values['-delta_radius-'])
     except ValueError:
@@ -168,7 +184,7 @@ def interpret_UI_values(ui_values):
     except:
         raise Exception('ERROR opening file :'+serfile+'!')
 
-def UI_SerBrowse ():
+def inputUI():
     sg.theme('Dark2')
     sg.theme_button_color(('white', '#500000'))
     
@@ -179,6 +195,7 @@ def UI_SerBrowse ():
     [sg.Checkbox('Save fits files', default=options['save_fit'], key='-FIT-')],
     [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='-CLAHE_ONLY-')],
     [sg.Checkbox('Crop square', default=options['crop_width_square'], key='-crop_width_square-')],
+    [sg.Text('Fixed image width (blank for none)', size=(25,1)), sg.Input(default_text=options['fixed_width'], size=(8,1),key='fixed_width')],
     [sg.Checkbox('Mirror X', default=False, key='-flip_x-')],
     [sg.Text("Rotate png images:", key='img_rotate_slider')],
     [sg.Slider(range=(0,270),
@@ -190,9 +207,9 @@ def UI_SerBrowse ():
          key='img_rotate')],
     [sg.Checkbox('Correct transversalium lines', default=options['transversalium'], key='-transversalium-', enable_events=True)],
     [sg.Text("Transversalium correction strength (pixels x 100) :", key='text_trans', visible=options['transversalium'])],
-    [sg.Slider(range=(0.5,7),
+    [sg.Slider(range=(0.25,7),
          default_value=options['trans_strength']/100,
-         resolution=0.5,     
+         resolution=0.25,     
          size=(25,15),
          orientation='horizontal',
          font=('Helvetica', 12),
@@ -260,29 +277,7 @@ def write_ini():
         traceback.print_exc()
         print('ERROR: failed to write config file: ' + mydir_ini)
 
-# get and return options and serfiles from user using GUI
-def inputUI():
-    read_ini()
-    UI_SerBrowse()
-
-"""
--------------------------------------------------------------------------------------------
-le programme commence ici !
---------------------------------------------------------------------------------------------
-"""
-
-# list of files to process
-## add a command line argument.
-if len(sys.argv)>1 : 
-    for argument in sys.argv[1:]:
-        if '-' == argument[0]: #it's flag options
-            treat_flag_at_cli(argument)
-        else : #it's a file or some files
-            if argument.split('.')[-1].upper()=='SER' or argument.split('.')[-1].upper()=='AVI': 
-                serfiles.append(argument)
-    print('theses files are going to be processed : ', serfiles)
-
-def do_work(cli = False):
+def do_work(serfiles, options, cli = False):
     print('in do work')
     if len(serfiles)==1:
         options['tempo']=60000 #4000 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
@@ -292,29 +287,24 @@ def do_work(cli = False):
     # boucle sur la liste des fichers
     for serfile in serfiles:
         if serfile=='':
-            sys.exit()
+            logme("ERROR filename empty")
+            return
         print('file %s is processing'%serfile)
         options['workDir'] = os.path.dirname(serfile)+"/"
         os.chdir(options['workDir'])
-
-        ####SPECIAL NEED FOR INI FILES FROM CLI###
-        if cli:
-            read_ini()
-
-
         base = os.path.basename(serfile)
         basefich = os.path.splitext(base)[0]
         if base == '':
-            print('filename ERROR : ',serfile)
-            sys.exit()
+            logme('filename ERROR : ',serfile)
+            return
 
         # ouverture du fichier ser
         try:
             f=open(serfile, "rb")
             f.close()
         except:
-            print('ERROR opening file : ',serfile)
-            sys.exit()
+            logme('ERROR opening file : ',serfile)
+            return
 
         # save parameters to .ini file
         write_ini()
@@ -325,14 +315,33 @@ def do_work(cli = False):
             traceback.print_exc()
             cv2.destroyAllWindows()
 
-if 0:
-    inputUI()
-    cProfile.run('do_work()', sort='cumtime')
-else:
-    # if no command line arguments, open GUI interface
-    if len(serfiles)==0:
-        while True:
-            inputUI()
-            do_work()
+"""
+-------------------------------------------------------------------------------------------
+le programme commence ici !
+--------------------------------------------------------------------------------------------
+"""
+if __name__ == '__main__':
+    # check for CLI input
+    if len(sys.argv)>1: 
+        for argument in sys.argv[1:]:
+            if '-' == argument[0]: #it's flag options
+                treat_flag_at_cli(argument)
+            else : #it's a file or some files
+                if argument.split('.')[-1].upper()=='SER' or argument.split('.')[-1].upper()=='AVI': 
+                    serfiles.append(argument)
+        print('theses files are going to be processed : ', serfiles)
+
+    if 0: #test code for performance test
+        inputUI()
+        cProfile.run('do_work(serfiles, options)', sort='cumtime')
     else:
-        do_work(cli = True) # use inputs from CLI
+        # if no command line arguments, open GUI interface
+        if len(serfiles)==0:
+            # read initial parameters from .ini file
+            read_ini()
+            while True:
+                inputUI()
+                do_work(serfiles, options)
+        else:
+            do_work(serfiles, options, cli = True) # use inputs from CLI
+

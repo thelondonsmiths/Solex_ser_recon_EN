@@ -93,23 +93,24 @@ def solex_proc(file, options):
             DiskHDU.writeto(basefich + '_detransversaliumed.fits', overwrite='True')
 
         cercle = cercle0
-        if options['crop_width_square']:
+        if not options['fixed_width'] == None or options['crop_width_square']:
+            h, w = detransversaliumed.shape
+            nw = h if options['fixed_width'] == None else options['fixed_width'] # new width
+            nw2 = nw // 2
+            cx = w // 2 if cercle == (-1, -1, -1) else int(cercle[0])
+            tx = nw2 - cx
+            new_img = np.full((h, nw), detransversaliumed[0, 0], dtype=detransversaliumed.dtype)
+
+            new_img[:, :min(cx + nw2, detransversaliumed.shape[1]) - max(0, cx - nw2)] = detransversaliumed[:, max(0, cx - nw2) : min(cx + nw2, detransversaliumed.shape[1])]
+            
+            if tx > 0:
+                new_img = np.roll(new_img, tx, axis = 1)
+                new_img[:, :tx] = detransversaliumed[0, 0]
+
             if not cercle == (-1, -1, -1):
-                h, w = detransversaliumed.shape
-                h2 = h // 2
-                if h < w: # crop width
-                    detransversaliumed = detransversaliumed[:, max(0, int(cercle[0]) - h2) : min(int(cercle[0]) + h2, detransversaliumed.shape[1])]
-                    cercle = (cercle[0] - max(0, int(cercle[0]) - h2), cercle[1], cercle[2])
-                else: # expand width
-                    new_img = np.full((h, h), detransversaliumed[0, 0], dtype=detransversaliumed.dtype)
-                    new_cercle = (h2, cercle[1], cercle[2])
-                    tx = int(new_cercle[0] - cercle[0])
-                    new_img[:, :w] = detransversaliumed[:, :]
-                    new_img = np.roll(new_img, tx, axis = 1)    
-                    cercle = new_cercle
-                    detransversaliumed = new_img    
-            else:
-                print('Error: cannot crop square without circle fit (crop-square cancelled)')
+                cercle = (nw2, cercle[1], cercle[2])
+            detransversaliumed = new_img    
+       
 
         if i >= 2:
             image_process(detransversaliumed, cercle, options, hdr, basefich)
