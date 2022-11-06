@@ -172,7 +172,12 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
     logme('Vertical limits y1, y2 : ' + str(y1) + ' ' + str(y2))
     min_intensity = np.argmin(mean_img, axis = 1) # use mean image to detect spectral line
     p = np.flip(np.asarray(np.polyfit(np.arange(y1, y2), min_intensity[y1:y2], 3), dtype='d'))
-    logme('Spectral line polynomial fit : ' + str(p))
+    # remove outlier points and get new line fit
+    delta = polyval(np.asarray(np.arange(y1,y2), dtype='d'), p) - min_intensity[y1:y2]
+    stdv = np.std(delta)
+    keep = np.abs(delta/stdv) < 3
+    p = np.flip(np.asarray(np.polyfit(np.arange(y1, y2)[keep], min_intensity[y1:y2][keep], 3), dtype='d'))
+    logme('Spectral line polynomial fit: ' + str(p))
     curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
     fit = [[math.floor(curve[y]), curve[y] - math.floor(curve[y]), y] for y in range(ih)]
     if not options['clahe_only']:
@@ -303,7 +308,7 @@ def image_process(frame, cercle, options, header, basefich):
         r=int(cercle[2]) + options['delta_radius']
         if r > 0:
             frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)            
-    Seuil_bas=np.percentile(cl1, 25)
+    Seuil_bas=np.percentile(cl1, 10)
     Seuil_haut=np.percentile(cl1,99.9999)*1.05
     cc=(cl1-Seuil_bas)*(65535/(Seuil_haut-Seuil_bas))
     cc[cc<0]=0
