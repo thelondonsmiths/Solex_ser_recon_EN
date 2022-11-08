@@ -27,7 +27,7 @@ In the Python GUI window, enter the name of the video file(s) to be processed. B
 - w : a,b,c will produce images at a, b and c ; x:y:w will produce images starting at x, finishing at y, every w pixels
 - r : crop the width to a constant number of pixels
 
-Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek of the final png images.
+Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek at the final png images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
 
 If the "Save fits files" box is checked, the following files will be stored in the same directory as the video file:
@@ -39,14 +39,16 @@ If the "Save fits files" box is checked, the following files will be stored in t
 - xx_clahe.fits: final image, with Contrast Limited Adaptive Histogram Equalization
 
 If the "Save clahe.png only" box is checked, then only the png image with Contrast Limited Adaptive Histogram Equalization will be saved.
+This is the most useful output file for stacking purposes.
 
 If the "Crop width square" box is checked, the width is cropped to be the same as the height, with the Sun centred.
-This feature is particularly helpful for stacking images (which typically require them all to be the same dimensions) and creating animations and mosaics.
-The crop square feature is only useful for full disk images.
+This feature is particularly helpful for stacking frames (which typically require them all to be the same dimensions) and creating animations and mosaics.
+The crop square feature is only useful for full-disk images.
 If the width is smaller than the height, the Sun is centred and some dark space is added on each side to make the image square.
 
 If the "Fixed image width" box is specified, the width of the image is cropped to that number of pixels. 
 The "Fixed image width" overrides the "Crop square" function and works in the same way by centering and then cropping or filling with dark space.
+This feature is particularly useful for stacking frames of partial (non-full-disk) scans and creating animations and mosaics.
 The value of the fixed width is remembered.
 
 If "Mirror X" is checked, the image is reversed after the geometric correction to compensate for scanning in the reverse direction. This applies to all files (png and fits).
