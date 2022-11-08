@@ -1,9 +1,9 @@
 Solar disk reconstruction from SHG (spectroheliography) video files. Both 16bit and 8bit files are accepted. SER and AVI files are accepted.
 If no spectral line can recognised in the video file, the program will stop.
 
-Install the most recent version of Python from python.org. During Windows installation, check the box to update the PATH.
+- Install the most recent version of Python from python.org. During Windows installation, check the box to update the PATH.
 
-For Windows, double click the windows_setup batch file to install the needed Python libraries.
+- For Windows, double click the windows_setup batch file to install the needed Python libraries.
 If you are installing an update of this software, double click on window_update batch file to make sure you are using the most recent Python libraries.
 
 Usage:
@@ -80,7 +80,7 @@ Protus adjustment: make the black circle larger or smaller in radius by inputtin
 If you want to turn off the black disk altogether, then enter a negative number greater than the radius (e.g. -9999).
 The proftus adjustment setting is remembered.
 
-Geometry correction may fail under certain circumstances. In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
+Geometry correction may fail under certain circumstances (one example being a partial eclipse). In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
 
 For rapid processing during data acquisition, make sure "Show graphics" is off.
 If Y/X is set to 1, distortion due to inappropriate scanning speed vs frame rate can be recognised and optimised.
