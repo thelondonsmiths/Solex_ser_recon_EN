@@ -9,14 +9,14 @@ It is important that the PIP package manager itself is up to date for some of th
 This is particularly the case if using an older (unmaintained) version of Python (e.g. Windows 7). 
 In this case, run `pip install -U pip` in a Command Prompt window and follow the specific instructions.
 
-## **Usage**
+### **Usage**
 
 **Graphical user interface**: launch SHG_MAIN (by double clicking under Windows). A Windows Desktop shortcut can also be created.
 In the Python GUI window, enter the name of the video file(s) to be processed. Batch processing is possible but will halt if a file is unsuitable.
 
 **Command line interface example**: `python SHG_MAIN.py my_file1.SER` [my_file2.SER ... if batch processing]
 
-Command line options:
+**Command line options**:
 - d : display all graphics
 - c : only the CLAHE image is saved
 - f : all FITS files are saved
@@ -27,7 +27,7 @@ Command line options:
 - w : a,b,c will produce images at a, b and c ; x:y:w will produce images starting at x, finishing at y, every w pixels
 - r : crop the width to a constant number of pixels
 
-Check the "Show graphics" box for a 'live view' reconstruction display, a graphic of the geometry correction and a quick view of the final images.
+Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek of the final png images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
 
 If the "Save fits files" box is checked, the following files will be stored in the same directory as the video file:
@@ -42,7 +42,7 @@ If the "Save clahe.png only" box is checked, then only the png image with Contra
 
 If the "Crop width square" box is checked, the width is cropped to be the same as the height, with the Sun centred.
 This feature is particularly helpful for stacking images (which typically require them all to be the same dimensions) and creating animations and mosaics.
-The crop feature is really only useful for full disk images.
+The crop square feature is only useful for full disk images.
 If the width is smaller than the height, the Sun is centred and some dark space is added on each side to make the image square.
 
 If the "Fixed image width" box is specified, the width of the image is cropped to that number of pixels. 
