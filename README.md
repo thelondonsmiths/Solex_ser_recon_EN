@@ -30,13 +30,15 @@ In the Python GUI window, enter the name of the video file(s) to be processed. B
 Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek at the final png images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
 
-If the "Save fits files" box is checked, the following files will be stored in the same directory as the video file:
+Note that all output files will be saved in the same directory as the video file. If the program is run a second time, it will overwrite the original output files.
 
-- _serfilename_mean.fits_: average image of all the frames in the video of the spectral line
-- _serfilename_raw.fits_: raw image reconstruction
-- _serfilename_circular.fits_: geometrically corrected image
-- _serfilename_detransversaliumed.fits_: image corrected for line defects
-- _serfilename_clahe.fits_: final image, with Contrast Limited Adaptive Histogram Equalization
+If the "Save fits files" box is checked, the following files will be stored:
+
+- _filename_mean.fits_: average image of all the frames in the video of the spectral line
+- _filename_raw.fits_: raw image reconstruction
+- _filename_circular.fits_: geometrically corrected image
+- _filename_detransversaliumed.fits_: image corrected for line defects
+- _filename_clahe.fits_: final image, with Contrast Limited Adaptive Histogram Equalization
 
 If the "Save clahe.png only" box is checked, then only the png image with Contrast Limited Adaptive Histogram Equalization will be saved.
 This is the most useful output file for stacking purposes.
@@ -96,7 +98,7 @@ By default, the Processing GUI will reappear after each run.
 The prior file location and several other GUI states are now saved in the _SHG_config_ file (previously in a _SHG.ini_ file).
 In CLI mode, the parameters in the _SHG_config_ file are ignored.
 
-A file _serfilename_log_ is generated with a number of useful parameters. In particular:
+A file _serfile_log_ is generated with a number of useful parameters. In particular:
 - Y/X ratio: in general, this should be close to 1. If it is larger than 1.1, then the data is likely being undersampled and so a higher FPS or slower scan speed may be helpful.
 If it is smaller than 0.9, then oversampling is probably occurring and the scan speed could be increased.
 - Unrotation: this approximately corresponds to the misorientation of the SHG instrument with the scan direction (i.e. RA or DEC).
