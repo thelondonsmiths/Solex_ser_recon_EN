@@ -20,12 +20,12 @@ In the Python GUI window, enter the name of the video file(s) to be processed. B
 - d : display all graphics
 - c : only the CLAHE image is saved
 - f : all FITS files are saved
-- m : mirror flip in the x-direction
-- p : disables black disk on protuberance images
-- s : crop width to make square
-- t : disable transversalium correction
 - w : a,b,c will produce images at a, b and c ; x:y:w will produce images starting at x, finishing at y, every w pixels
-- r : crop the width to a constant number of pixels
+- p : disable black disk on protuberance images
+- t : disable transversalium correction
+- m : mirror flip in the x-direction
+- s : crop width to make square
+- r : crop width to a constant number of pixels
 
 Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek at the final png images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
