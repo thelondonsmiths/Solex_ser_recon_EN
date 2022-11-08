@@ -14,7 +14,7 @@ In this case, run `pip install -U pip` in a Command Prompt window and follow the
 **Graphical user interface**: launch SHG_MAIN (by double clicking under Windows). A Windows Desktop shortcut can also be created.
 In the Python GUI window, enter the name of the video file(s) to be processed. Batch processing is possible but will halt if a file is unsuitable.
 
-**Command line interface example**: `python SHG_MAIN.py my_file1.SER` [my_file2.SER ... if batch processing]
+**Command line interface example**: `python SHG_MAIN.py serfile1.SER` [serfile2.SER ... if batch processing]
 
 **Command line options**:
 - d : display all graphics
@@ -32,11 +32,11 @@ This will increase processing time significantly. This feature is not recommende
 
 If the "Save fits files" box is checked, the following files will be stored in the same directory as the video file:
 
-- xx_mean.fits: average image of all the frames in the video of the spectral line
-- xx_raw.fits: raw image reconstruction
-- xx_circular.fits: geometrically corrected image
-- xx_detransversaliumed.fits: image corrected for line defects
-- xx_clahe.fits: final image, with Contrast Limited Adaptive Histogram Equalization
+- _serfilename_mean.fits_: average image of all the frames in the video of the spectral line
+- _serfilename_raw.fits_: raw image reconstruction
+- _serfilename_circular.fits_: geometrically corrected image
+- _serfilename_detransversaliumed.fits_: image corrected for line defects
+- _serfilename_clahe.fits_: final image, with Contrast Limited Adaptive Histogram Equalization
 
 If the "Save clahe.png only" box is checked, then only the png image with Contrast Limited Adaptive Histogram Equalization will be saved.
 This is the most useful output file for stacking purposes.
