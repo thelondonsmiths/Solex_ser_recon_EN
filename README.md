@@ -9,12 +9,12 @@ It is important that the PIP package manager itself is up to date for some of th
 This is particularly the case if using an older (unmaintained) version of Python (e.g. Windows 7). 
 In this case, run `pip install -U pip` in a Command Prompt window and follow the specific instructions.
 
-**Usage**
+## **Usage**
 
-_Graphical user interface_: launch SHG_MAIN (by double clicking under Windows). A Windows Desktop shortcut can also be created.
+**Graphical user interface**: launch SHG_MAIN (by double clicking under Windows). A Windows Desktop shortcut can also be created.
 In the Python GUI window, enter the name of the video file(s) to be processed. Batch processing is possible but will halt if a file is unsuitable.
 
-_Command line interface example_: `python SHG_MAIN.py my_file1.SER` [my_file2.SER ... if batch processing]
+**Command line interface example**: `python SHG_MAIN.py my_file1.SER` [my_file2.SER ... if batch processing]
 
 Command line options:
 - d : display all graphics
