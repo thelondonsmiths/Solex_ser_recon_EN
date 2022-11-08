@@ -91,4 +91,9 @@ By default, the Processing GUI will reappear after each run.
 The prior file location and several other GUI states are now saved in the SHG_config file (previously in a SHG.ini file).
 In CLI mode, the parameters in the SHG_config file are ignored.
 
-Some changes were implemented due to a known bug in the update to a library: see https://github.com/PySimpleGUI/PySimpleGUI/issues/5410
+A file serfilename_log is generated with a number of useful parameters. In particular:
+- Y/X ratio: in general, this should be close to 1. If it is larger than 1.1, then the data is likely being undersampled and so a higher FPS or slower scan speed may be helpful.
+If it is smaller than 0.9, then oversampling is probably occurring and the scan speed could be increased.
+- Unrotation: this approximately corresponds to the misorientation of the SHG instrument with the scan direction (i.e. RA or DEC).
+It should be possible to reduce this to around 0.5 degrees without too much difficulty, at which point the raw scan will show very little instrument tilt.
+- Disk radius: this figure is useful for a number of post-processing steps. If doing a "fixed image width" crop, then chose a value at least 2.2 times the radius.
