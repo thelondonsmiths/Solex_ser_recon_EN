@@ -93,10 +93,10 @@ Similarly, if Tilt is set to 0, instrument misalignment can be recognised and co
 
 The composite results window should be killed by pushing any key on the keyboard.
 By default, the Processing GUI will reappear after each run.
-The prior file location and several other GUI states are now saved in the SHG_config file (previously in a SHG.ini file).
-In CLI mode, the parameters in the SHG_config file are ignored.
+The prior file location and several other GUI states are now saved in the _SHG_config_ file (previously in a _SHG.ini_ file).
+In CLI mode, the parameters in the _SHG_config_ file are ignored.
 
-A file serfilename_log is generated with a number of useful parameters. In particular:
+A file _serfilename_log_ is generated with a number of useful parameters. In particular:
 - Y/X ratio: in general, this should be close to 1. If it is larger than 1.1, then the data is likely being undersampled and so a higher FPS or slower scan speed may be helpful.
 If it is smaller than 0.9, then oversampling is probably occurring and the scan speed could be increased.
 - Unrotation: this approximately corresponds to the misorientation of the SHG instrument with the scan direction (i.e. RA or DEC).
