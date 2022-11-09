@@ -29,7 +29,7 @@ In the Python GUI window, enter the name of the video file(s) to be processed. B
 
 Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek at the final png images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
-The composite png peek window can be killed early by pushing any key on the keyboard.
+The composite png peek window can be killed early by pushing any key on the keyboard (default is 60 sec in single file mode and 5 sec in batch mode).
 
 Note that all output files will be saved in the same directory as the video file. If the program is run a second time, it will overwrite the original output files.
 
