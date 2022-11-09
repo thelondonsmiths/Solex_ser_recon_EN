@@ -29,6 +29,7 @@ In the Python GUI window, enter the name of the video file(s) to be processed. B
 
 Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek at the final png images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
+The composite png peek window can be killed early by pushing any key on the keyboard.
 
 Note that all output files will be saved in the same directory as the video file. If the program is run a second time, it will overwrite the original output files.
 
@@ -93,7 +94,6 @@ For rapid processing during data acquisition, make sure "Show graphics" is off.
 If Y/X is set to 1, distortion due to inappropriate scanning speed vs frame rate can be recognised and optimised.
 Similarly, if Tilt is set to 0, instrument misalignment can be recognised and corrected.
 
-The composite results window should be killed by pushing any key on the keyboard.
 By default, the Processing GUI will reappear after each run.
 The prior file location and several other GUI states are now saved in the _SHG_config_ file (previously in a _SHG.ini_ file).
 In CLI mode, the parameters in the _SHG_config_ file are ignored.
