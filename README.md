@@ -96,7 +96,7 @@ Similarly, if Tilt is set to 0, instrument misalignment can be recognised and co
 
 By default, the Processing GUI will reappear after each run.
 The prior file location and several other GUI states are saved in the _SHG_config_ file (previously in a _SHG.ini_ file).
-In CLI mode, the parameters in the _SHG_config_ file are ignored.
+In CLI mode, the GUI parameters in the _SHG_config_ file are ignored.
 
 A file _serfile_log_ is generated with a number of useful parameters. In particular:
 - **Y/X ratio**: in general, this should be close to 1. If it is larger than 1.1, then the data is likely being undersampled and so a higher FPS or slower scan speed may be helpful.
