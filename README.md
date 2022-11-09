@@ -95,7 +95,7 @@ If Y/X is set to 1, distortion due to inappropriate scanning speed vs frame rate
 Similarly, if Tilt is set to 0, instrument misalignment can be recognised and corrected.
 
 By default, the Processing GUI will reappear after each run.
-The prior file location and several other GUI states are now saved in the _SHG_config_ file (previously in a _SHG.ini_ file).
+The prior file location and several other GUI states are saved in the _SHG_config_ file (previously in a _SHG.ini_ file).
 In CLI mode, the parameters in the _SHG_config_ file are ignored.
 
 A file _serfile_log_ is generated with a number of useful parameters. In particular:
