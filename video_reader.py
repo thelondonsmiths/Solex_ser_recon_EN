@@ -52,10 +52,10 @@ class video_reader:
             self.FrameCount=FrameCount[0]
             offset=offset+4
 
-            self.Observer= np.fromfile(file, dtype='int8', count=40,offset=offset).tostring().decode()
+            self.Observer= np.fromfile(file, dtype='int8', count=40,offset=offset).tobytes().decode()
             offset=offset+40
 
-            self.Instrument= np.fromfile(file, dtype='int8', count=40,offset=offset).tostring().decode().strip()
+            self.Instrument= np.fromfile(file, dtype='int8', count=40,offset=offset).tobytes().decode().strip()
 
 
             if self.PixelDepthPerPlane==8:
@@ -121,3 +121,12 @@ class video_reader:
 
     def has_frames(self):
         return self.FrameIndex + 1 < self.FrameCount
+
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv)==2 :
+        file_ = sys.argv[1]
+        rdr = video_reader(file_)
+        print(f'Instrument found :"{rdr.Instrument}"')
+    else:
+        print('need only a ser filename')

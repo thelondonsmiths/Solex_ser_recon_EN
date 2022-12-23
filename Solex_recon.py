@@ -34,7 +34,7 @@ def solex_proc(file, options):
     fit, backup_y1, backup_y2 = compute_mean_return_fit(file, options, hdr, iw, ih, basefich0)
 
     ####adding binning information###
-
+    for
 
     disk_list, ih, iw, FrameCount = read_video_improved(file, fit, options)
     
