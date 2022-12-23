@@ -29,7 +29,11 @@ def solex_proc(file, options):
     ih = rdr.ih
     iw = rdr.iw
 
+
+
     fit, backup_y1, backup_y2 = compute_mean_return_fit(file, options, hdr, iw, ih, basefich0)
+
+    ####adding binning information###
 
 
     disk_list, ih, iw, FrameCount = read_video_improved(file, fit, options)

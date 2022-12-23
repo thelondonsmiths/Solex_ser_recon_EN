@@ -47,10 +47,17 @@ class video_reader:
             PixelDepthPerPlane=np.fromfile(file, dtype='uint32', count=1,offset=offset)
             self.PixelDepthPerPlane=PixelDepthPerPlane[0]
             offset=offset+4
-        
+
             FrameCount=np.fromfile(file, dtype='uint32', count=1,offset=offset)
             self.FrameCount=FrameCount[0]
-        
+            offset=offset+4
+
+            self.Observer= np.fromfile(file, dtype='int8', count=40,offset=offset).tostring().decode()
+            offset=offset+40
+
+            self.Instrument= np.fromfile(file, dtype='int8', count=40,offset=offset).tostring().decode().strip()
+
+
             if self.PixelDepthPerPlane==8:
                 self.infiledatatype='uint8'
                 self.count=self.Width*self.Height       # Nombre d'octet d'une trame
