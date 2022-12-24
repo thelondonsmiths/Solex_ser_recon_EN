@@ -46,9 +46,10 @@ options = {
     'img_rotate': 0,
     'flip_x': False,
     'workDir': '',
-    'poly_fit':None,
-    'doppler':None,
-    'doppler_picture':None,
+    'fixed_width': None,
+    'poly_fit': None,
+    'doppler': None,
+    'doppler_picture': None,
 
 }
 
@@ -60,7 +61,7 @@ flag_dictionnary = { #add True/False flag here. Managed near line 147
     'w' : 'shift',
     's' : 'crop_width_square', # True / False
     't' : 'transversalium', # True / False
-    'm' : 'flip_x'
+    'm' : 'flip_x' # True / False
 
 }
 
@@ -79,6 +80,7 @@ def usage():
     usage_ += "'w' : 'x:y:w'  produce images starting at x, finishing at y, every w pixels from minima\n"
     usage_ += "'P' : 'a,b,c'  using polynome a*x²+b*x+c or a*x³+b*x²+c*x+d as fitting\n"
     usage_ += "'D' : 'n'      produce 3 pictures, from -n pixels, n pixel from minimum and a mean of 2.\n"
+    usage_ += "'r' : 'w'  crop width to a constant no. of pixels."
     usage_ += "'g' : DOESN'T WORK ->  Dopplergram using base polynome, compute and display difference between minima \n"
     return usage_
 
@@ -144,6 +146,16 @@ def treat_flag_at_cli(arguments):
         elif character=='p':
             options['disk_display'] = False
             i+=1
+        elif character=='r':
+            fw = ''
+            try:
+                while argument[1:][i+1].isdigit():
+                    fw += argument[1:][i+1]
+                    i += 1
+                i += 1
+            except IndexError:
+                i+=1 #the reach the end of arguments.
+            options['fixed_width'] = int(fw)
         elif character=='g':
             options['doppler'] = True
             i+=1
@@ -196,20 +208,20 @@ def interpret_UI_values(ui_values):
             raise Exception('invalid offset input!')
         if len(options['shift']) == 0:
             raise Exception('Error: pixel offset input lower bound greater than upper bound!')
-    except ValueError : 
-        raise Exception('invalid pixel offset value!')        
+    except ValueError :
+        raise Exception('invalid pixel offset value!')
     options['flag_display'] = ui_values['-DISP-']
-    try : 
+    try :
         options['ratio_fixe'] = float(ui_values['-RATIO-']) if ui_values['-RATIO-'] else None
-    except ValueError : 
+    except ValueError :
         raise Exception('invalid Y/X ratio value')
-    try : 
+    try :
         options['slant_fix'] = float(ui_values['-SLANT-']) if ui_values['-SLANT-'] else None
-    except ValueError : 
+    except ValueError :
         raise Exception('invalid tilt angle value!')
-    try : 
-        options['fixed_width'] = int(ui_values['fixed_width']) if ui_values['fixed_width'] else None
-    except ValueError : 
+    try :
+        options['fixed_width'] = int(ui_values['-fixed_width-']) if ui_values['-fixed_width-'] else None
+    except ValueError :
         raise Exception('invalid fixed width value!')
     try:
         options['delta_radius'] = int(ui_values['-delta_radius-'])
@@ -242,7 +254,7 @@ def inputUI():
     [sg.Checkbox('Save fits files', default=options['save_fit'], key='-FIT-')],
     [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='-CLAHE_ONLY-')],
     [sg.Checkbox('Crop square', default=options['crop_width_square'], key='-crop_width_square-')],
-    [sg.Text('Fixed image width (blank for none)', size=(25,1)), sg.Input(default_text=options['fixed_width'], size=(8,1),key='fixed_width')],
+    [sg.Text('Fixed image width (blank for none)', size=(25,1)), sg.Input(default_text=options['fixed_width'], size=(8,1),key='-fixed_width-')],
     [sg.Checkbox('Mirror X', default=False, key='-flip_x-')],
     [sg.Text("Rotate png images:", key='img_rotate_slider')],
     [sg.Slider(range=(0,270),
@@ -308,7 +320,8 @@ def read_ini():
         mydir_ini=os.path.join(os.path.dirname(sys.argv[0]),'SHG_config.txt')
         with open(mydir_ini, 'r') as fp:
             global options
-            options = json.load(fp)   
+            options_ = json.load(fp)
+            options.update(options)
     except Exception:
         traceback.print_exc()
         print('note: error reading config file - using default parameters')
@@ -370,7 +383,8 @@ le programme commence ici !
 """
 if __name__ == '__main__':
     # check for CLI input
-    if len(sys.argv)>1: 
+
+    if len(sys.argv)>1:
         for argument in sys.argv[1:]:
             if '-' == argument[0]: #it's flag options
                 treat_flag_at_cli(argument)
@@ -387,6 +401,7 @@ if __name__ == '__main__':
         if len(serfiles)==0:
             # read initial parameters from .ini file
             read_ini()
+            print(options)
             while True:
                 inputUI()
                 do_work(serfiles, options)
