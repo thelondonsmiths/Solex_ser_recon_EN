@@ -29,8 +29,6 @@ def solex_proc(file, options):
     ih = rdr.ih
     iw = rdr.iw
 
-
-
     fit, backup_y1, backup_y2 = compute_mean_return_fit(file, options, hdr, iw, ih, basefich0)
 
     ####adding binning information###
@@ -40,14 +38,16 @@ def solex_proc(file, options):
             for key in cameras.keys():
                 if key in rdr.Observer or key in rdr.Telescope or key in rdr.Instrument :
                     logme(f'camera information found, your camera is a {key}')
-                    bin_text = 'bin'+str(round(int(cameras[key])//rdr.Width,0))
+                    bin_text = '_bin'+str(round(int(cameras[key])//rdr.Width,0))
                     break
-            if bin_text == '0' :
+            if bin_text == '0':
                 logme('camera information not found. If width is <2000, bin2 is guessing')
                 if rdr.Width <2000 :
-                    bin_text = 'bin2'
+                    bin_text = '_bin2'
                 else :
-                    bin_text = 'bin1'
+                    bin_text = '_bin1'
+    basefich0+=bin_text
+    ##################################
 
     disk_list, ih, iw, FrameCount = read_video_improved(file, fit, options)
     
