@@ -107,9 +107,12 @@ def treat_flag_at_cli(arguments):
                         stop = True
             except IndexError:
                 i += 1 #the reach the end of arguments.
-            poly_choices = poly_choices.split(',')
+            poly_choices = poly.split(',')
             try:
-                a, b, c = shift_choice
+                if len(poly_choices)==3 :
+                    a, b, c = poly_choices
+                elif len(poly_choices)==4 :
+                    a, b, c, d = poly_choices
             except ValueError:
                 print('invalid polynome fitting input : ', shift_choice)
                 print('USAGE : python3 SHG_MAIN.py -P1.45881927e+02,-2.16219665e-01,9.45250257e-05 files')
@@ -165,7 +168,6 @@ def treat_flag_at_cli(arguments):
             stop = False
             try :
                 while not stop :
-                    print(i)
                     if argument[1:][i+1].isdigit():
                         decal+=argument[1:][i+1]
                         i+=1
@@ -192,7 +194,7 @@ def treat_flag_at_cli(arguments):
         print('ERROR !!! g option need a polynome provided by P option.')
         print('USAGE : python3 SHG_MAIN.py -gP1.45881927e+02,-2.16219665e-01,9.45250257e-05 files')
         sys.exit()
-    print('options %s' % (options))
+    print('options :  %s' % (options))
 
 def interpret_UI_values(ui_values):
     try:
@@ -338,7 +340,7 @@ def write_ini():
         print('ERROR: failed to write config file: ' + mydir_ini)
 
 def do_work(serfiles, options, cli = False):
-    print('in do work')
+    print('Processing')
     if len(serfiles)==1:
         options['tempo']=60000 #4000 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
     else:
@@ -347,16 +349,18 @@ def do_work(serfiles, options, cli = False):
     # boucle sur la liste des fichers
     for serfile in serfiles:
         if serfile=='':
-            logme("ERROR filename empty")
+            print("ERROR filename empty")
             return
         print('file %s is processing'%serfile)
-        options['workDir'] = os.path.dirname(serfile)+"/"
-        os.chdir(options['workDir'])
-
+        options['workDir'] = os.path.dirname(serfile)
+        try :
+            os.chdir(options['workDir'])
+        except :
+            os.chdir('.')
         base = os.path.basename(serfile)
         basefich = os.path.splitext(base)[0]
         if base == '':
-            logme('filename ERROR : ',serfile)
+            print('filename ERROR : ',serfile)
             return
 
         # ouverture du fichier ser
@@ -364,7 +368,7 @@ def do_work(serfiles, options, cli = False):
             f=open(serfile, "rb")
             f.close()
         except:
-            logme('ERROR opening file : ',serfile)
+            print('ERROR opening file : ',serfile)
             return
 
         # save parameters to .ini file
@@ -390,7 +394,8 @@ if __name__ == '__main__':
                 treat_flag_at_cli(argument)
             else : #it's a file or some files
                 if argument.split('.')[-1].upper()=='SER' or argument.split('.')[-1].upper()=='AVI': 
-                    serfiles.append(argument)
+                    dirname = os.path.dirname(os.path.abspath(argument))
+                    serfiles.append(os.path.join(dirname,argument))
         print('theses files are going to be processed : ', serfiles)
 
     if 0: #test code for performance test
@@ -401,7 +406,6 @@ if __name__ == '__main__':
         if len(serfiles)==0:
             # read initial parameters from .ini file
             read_ini()
-            print(options)
             while True:
                 inputUI()
                 do_work(serfiles, options)

@@ -9,56 +9,56 @@ import cv2 #MattC
 
 class video_reader:
 
-    def __init__(self, file):
+    def __init__(self, file_):
         # ouverture et lecture de l'entete du fichier ser
-        self.file = file
+        self.file_ = file_
         
-        if self.file.upper().endswith('.SER'): #MattC 20210726
+        if self.file_.upper().endswith('.SER'): #MattC 20210726
             self.SER_flag=True
             self.AVI_flag=False
-        elif self.file.upper().endswith('.AVI'):
+        elif self.file_.upper().endswith('.AVI'):
             self.SER_flag=False
             self.AVI_flag=True
             self.infiledatatype='uint8'
         else:
-            raise Exception('error input file ' + file + 'neither is SER nor AVI')
+            raise Exception('error input file ' + file_ + 'neither is SER nor AVI')
         
         #ouverture et lecture de l'entete du fichier ser
 
         if self.SER_flag: #MattC
-            self.FileID=np.fromfile(file, dtype='int8',count=14)
+            self.FileID=np.fromfile(file_, dtype='int8',count=14)
             offset=14
 
-            self.LuID=np.fromfile(file, dtype=np.uint32, count=1, offset=offset)
+            self.LuID=np.fromfile(file_, dtype=np.uint32, count=1, offset=offset)
             offset=offset+4
         
-            self.ColorID=np.fromfile(file, dtype='uint32', count=1, offset=offset)
+            self.ColorID=np.fromfile(file_, dtype='uint32', count=1, offset=offset)
             offset=offset+4
         
-            self.littleEndian=np.fromfile(file, dtype='uint32', count=1,offset=offset)
+            self.littleEndian=np.fromfile(file_, dtype='uint32', count=1,offset=offset)
             offset=offset+4
         
-            self.Width=np.fromfile(file, dtype='uint32', count=1,offset=offset)[0]
+            self.Width=np.fromfile(file_, dtype='uint32', count=1,offset=offset)[0]
             offset=offset+4
         
-            self.Height=np.fromfile(file, dtype='uint32', count=1,offset=offset)[0]
+            self.Height=np.fromfile(file_, dtype='uint32', count=1,offset=offset)[0]
             offset=offset+4
         
-            PixelDepthPerPlane=np.fromfile(file, dtype='uint32', count=1,offset=offset)
+            PixelDepthPerPlane=np.fromfile(file_, dtype='uint32', count=1,offset=offset)
             self.PixelDepthPerPlane=PixelDepthPerPlane[0]
             offset=offset+4
 
-            FrameCount=np.fromfile(file, dtype='uint32', count=1,offset=offset)
+            FrameCount=np.fromfile(file_, dtype='uint32', count=1,offset=offset)
             self.FrameCount=FrameCount[0]
             offset=offset+4
 
-            self.Observer= np.fromfile(file, dtype='int8', count=40,offset=offset).tobytes().decode().strip()
+            self.Observer= np.fromfile(file_, dtype='int8', count=40,offset=offset).tobytes().decode().strip()
             offset=offset+40
 
-            self.Instrument= np.fromfile(file, dtype='int8', count=40,offset=offset).tobytes().decode().strip()
+            self.Instrument= np.fromfile(file_, dtype='int8', count=40,offset=offset).tobytes().decode().strip()
             offset=offset+40
 
-            self.Telescope= np.fromfile(file, dtype='int8', count=40,offset=offset).tobytes().decode().strip()
+            self.Telescope= np.fromfile(file_, dtype='int8', count=40,offset=offset).tobytes().decode().strip()
 
             if self.PixelDepthPerPlane==8:
                 self.infiledatatype='uint8'
@@ -74,12 +74,12 @@ class video_reader:
             
         elif self.AVI_flag: #MattC 
     	    #deal with avi file
-            self.file = cv2.VideoCapture(file)
+            self.file_ = cv2.VideoCapture(file_)
 
             self.Width = int(self.file.get(cv2.CAP_PROP_FRAME_WIDTH))
             self.Height = int(self.file.get(cv2.CAP_PROP_FRAME_HEIGHT))
             self.PixelDepthPerPlane=1*8
-            self.FrameCount = int(self.file.get(cv2.CAP_PROP_FRAME_COUNT))
+            self.FrameCount = int(self.file_.get(cv2.CAP_PROP_FRAME_COUNT))
             self.count=self.Width*self.Height
             self.infilebytes=1            
             self.FrameIndex=-1
@@ -103,12 +103,12 @@ class video_reader:
       
         if self.SER_flag: #MattC
             img = np.fromfile(
-                self.file,
+                self.file_,
                 dtype = self.infiledatatype,
                 count = self.count,
                 offset=self.offset)
         elif self.AVI_flag:
-            ret, img = self.file.read()
+            ret, img = self.file_.read()
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         else:
             raise Exception('error input file is neither is SER nor AVI')

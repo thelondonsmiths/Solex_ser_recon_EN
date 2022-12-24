@@ -24,6 +24,7 @@ def solex_proc(file_, options):
     os.chdir(WorkDir)
     base = os.path.basename(file_)
     basefich0 = os.path.splitext(base)[0]
+    print('file', file_)
     rdr = video_reader(file_)
     hdr = make_header(rdr)
     ih = rdr.ih
