@@ -39,12 +39,11 @@ def solex_proc(file, options):
             bin_text = '0'
             for key in cameras.keys():
                 if key in rdr.Observer or key in rdr.Telescope or key in rdr.Instrument :
-                    print(f'camera information found, your camera is a {key}')
+                    logme(f'camera information found, your camera is a {key}')
                     bin_text = 'bin'+str(round(int(cameras[key])//rdr.Width,0))
-                    print('bin_text', bin_text, int(cameras[key])//rdr.Width)
                     break
             if bin_text == '0' :
-                print('camera information is not found. If width is <2000, bin2 is guessing')
+                logme('camera information not found. If width is <2000, bin2 is guessing')
                 if rdr.Width <2000 :
                     bin_text = 'bin2'
                 else :
