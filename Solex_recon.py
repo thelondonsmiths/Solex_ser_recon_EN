@@ -16,20 +16,20 @@ from ellipse_to_circle import ellipse_to_circle, correct_image
 import json
 
 
-def solex_proc(file, options):
+def solex_proc(file_, options):
     clearlog()
     logme('Pixel shift : ' + str(options['shift']))
     options['shift'] = [10, 0] + options['shift']  # 10, 0 are "fake"
-    WorkDir = os.path.dirname(file) + "/"
+    WorkDir = os.path.dirname(file_) + "/"
     os.chdir(WorkDir)
-    base = os.path.basename(file)
+    base = os.path.basename(file_)
     basefich0 = os.path.splitext(base)[0]
-    rdr = video_reader(file)
+    rdr = video_reader(file_)
     hdr = make_header(rdr)
     ih = rdr.ih
     iw = rdr.iw
 
-    fit, backup_y1, backup_y2 = compute_mean_return_fit(file, options, hdr, iw, ih, basefich0)
+    fit, backup_y1, backup_y2 = compute_mean_return_fit(file_, options, hdr, iw, ih, basefich0)
 
     ####adding binning information###
     with open('camera_list.json') as json_file:
@@ -49,7 +49,7 @@ def solex_proc(file, options):
     basefich0+=bin_text
     ##################################
 
-    disk_list, ih, iw, FrameCount = read_video_improved(file, fit, options)
+    disk_list, ih, iw, FrameCount = read_video_improved(file_, fit, options)
     
     hdr['NAXIS1'] = iw  # note: slightly dodgy, new width
 
