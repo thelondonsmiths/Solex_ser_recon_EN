@@ -31,7 +31,7 @@ import json
 
 serfiles = []
 
-options = {    
+options = {
     'shift':[0],
     'flag_display':False,
     'ratio_fixe' : None,
@@ -46,24 +46,28 @@ options = {
     'img_rotate': 0,
     'flip_x': False,
     'workDir': '',
-    'fixed_width': None,
+    'poly_fit':None,
+    'doppler':None,
+    'doppler_picture':None,
+
 }
 
-flag_dictionnary = {
+flag_dictionnary = { #add True/False flag here. Managed near line 147
     'd' : 'flag_display', #True False display all pictures
     'c' : 'clahe_only',  #True/False
     'f' : 'save_fit', #True/False
-    'p' : 'disk_display', #True/False protuberances 
+    'p' : 'disk_display', #True/False protuberances
     'w' : 'shift',
     's' : 'crop_width_square', # True / False
     't' : 'transversalium', # True / False
-    'm' : 'flip_x' # True / False
+    'm' : 'flip_x'
+
 }
 
 
 
 def usage():
-    usage_ = "SHG_MAIN.py [-dcfmpstwr] [file(s) to treat, * allowed]\n"
+    usage_ = "SHG_MAIN.py [-dcfpstwmpf] [file(s) to treat, * allowed]\n"
     usage_ += "'d' : 'flag_display', display all graphics (False by default)\n"
     usage_ += "'c' : 'clahe_only',  only final clahe image is saved (False by default)\n"
     usage_ += "'f' : 'save_fit', save all fits files (False by default)\n"
@@ -71,11 +75,13 @@ def usage():
     usage_ += "'p' : 'disk_display' turn off black disk with protuberance images (False by default)\n"
     usage_ += "'s' : 'crop_square_width', crop the width to equal the height (False by default)\n"
     usage_ += "'t' : 'disable transversalium', disable transversalium correction (False by default)\n"
-    usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels.\n"
-    usage_ += "'w' : 'x:y:w'  produce images starting at x, finishing at y, every w pixels."
-    usage_ += "'r' : 'w'  crop width to a constant no. of pixels."
+    usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels from minima\n"
+    usage_ += "'w' : 'x:y:w'  produce images starting at x, finishing at y, every w pixels from minima\n"
+    usage_ += "'P' : 'a,b,c'  using polynome a*x²+b*x+c as fitting\n"
+    usage_ += "'D' : 'n'      produce 3 pictures, from -n pixels, n pixel from minimum and a mean of 2.\n"
+    usage_ += "'g' : DOESN'T WORK ->  Dopplergram using base polynome, compute and display difference between minima \n"
     return usage_
-    
+
 def treat_flag_at_cli(arguments):
     """read cli arguments and produce options variable"""
     #reading arguments
@@ -85,16 +91,39 @@ def treat_flag_at_cli(arguments):
         if character=='h': #asking help menu
             print(usage())
             sys.exit()
-        elif character=='w' :
+        elif character=='P':
             #find characters for shifting
-            shift=''
+            poly = ''
             stop = False
-            try : 
-                while not stop : 
-                    if argument[1:][i+1].isdigit() or argument[1:][i+1]==':' or argument[1:][i+1]==',' or argument[1:][i+1]=='-': 
+            try :
+                while not stop:
+                    if argument[1:][i+1].isdigit() or argument[1:][i+1]==',' or argument[1:][i+1]=='.' or argument[1:][i+1]=='e' or argument[1:][i+1]=='+' or argument[1:][i+1]=='-':
+                        poly += argument[1:][i+1]
+                        i += 1
+                    else :
+                        i += 1
+                        stop = True
+            except IndexError:
+                i += 1 #the reach the end of arguments.
+            poly_choices = poly_choices.split(',')
+            try:
+                a, b, c = shift_choice
+            except ValueError:
+                print('invalid polynome fitting input : ', shift_choice)
+                print('USAGE : python3 SHG_MAIN.py -P1.45881927e+02,-2.16219665e-01,9.45250257e-05 files')
+                sys.exit()
+            options['poly_fit'] = [float(a),float(b),float(c)]
+
+        elif character == 'w':
+            #find characters for shifting
+            shift = ''
+            stop = False
+            try :
+                while not stop :
+                    if argument[1:][i+1].isdigit() or argument[1:][i+1]==':' or argument[1:][i+1]==',' or argument[1:][i+1]=='-':
                         shift+=argument[1:][i+1]
                         i+=1
-                    else : 
+                    else :
                         i+=1
                         stop=True
             except IndexError :
@@ -115,24 +144,42 @@ def treat_flag_at_cli(arguments):
         elif character=='p':
             options['disk_display'] = False
             i+=1
-        elif character=='r':
-            fw = ''
-            try:
-                while argument[1:][i+1].isdigit():
-                    fw += argument[1:][i+1]
-                    i += 1
-                i += 1
-            except IndexError:
-                i+=1 #the reach the end of arguments.    
-            options['fixed_width'] = int(fw)
-        else : 
+        elif character=='g':
+            options['doppler'] = True
+            i+=1
+        elif character=='D':
+            #find characters for shifting
+            decal = ''
+            stop = False
+            try :
+                while not stop :
+                    print(i)
+                    if argument[1:][i+1].isdigit():
+                        decal+=argument[1:][i+1]
+                        i+=1
+                    else :
+                        i+=1
+                        stop=True
+
+            except IndexError :
+                i+=1 #the reach the end of arguments
+                options['doppler_picture'] = int(decal)
+                options['shift'] = [-int(decal), 0, int(decal)]
+            except:
+                print('Generating doppler picture need one integer')
+                sys.exit()
+        else :
             try : #all others
                 options[flag_dictionnary[character]]=True if flag_dictionnary.get(character) else False
                 i+=1
-            except KeyError: 
+            except KeyError:
                 print('ERROR !!! At least one argument is not accepted')
                 print(usage())
                 i+=1
+    if options['doppler'] and options['poly_fit'] is None:
+        print('ERROR !!! g option need a polynome provided by P option.')
+        print('USAGE : python3 SHG_MAIN.py -gP1.45881927e+02,-2.16219665e-01,9.45250257e-05 files')
+        sys.exit()
     print('options %s' % (options))
 
 def interpret_UI_values(ui_values):
