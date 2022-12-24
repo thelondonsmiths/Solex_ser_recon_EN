@@ -52,11 +52,13 @@ class video_reader:
             self.FrameCount=FrameCount[0]
             offset=offset+4
 
-            self.Observer= np.fromfile(file, dtype='int8', count=40,offset=offset).tobytes().decode()
+            self.Observer= np.fromfile(file, dtype='int8', count=40,offset=offset).tobytes().decode().strip()
             offset=offset+40
 
             self.Instrument= np.fromfile(file, dtype='int8', count=40,offset=offset).tobytes().decode().strip()
+            offset=offset+40
 
+            self.Telescope= np.fromfile(file, dtype='int8', count=40,offset=offset).tobytes().decode().strip()
 
             if self.PixelDepthPerPlane==8:
                 self.infiledatatype='uint8'
@@ -127,6 +129,6 @@ if __name__ == '__main__':
     if len(sys.argv)==2 :
         file_ = sys.argv[1]
         rdr = video_reader(file_)
-        print(f'Instrument found :"{rdr.Instrument}"')
+        print(f'Telescope: {rdr.Telescope}, Observer : {rdr.Observer},  Instrument found :"{rdr.Instrument}", width : "{rdr.Width}", height : "{rdr.Height}"')
     else:
         print('need only a ser filename')

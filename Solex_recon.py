@@ -13,7 +13,7 @@ Reconstruction of an image from the deviations between the minimum of the line a
 from solex_util import *
 from video_reader import *
 from ellipse_to_circle import ellipse_to_circle, correct_image
-
+import json
 
 
 def solex_proc(file, options):
@@ -34,7 +34,21 @@ def solex_proc(file, options):
     fit, backup_y1, backup_y2 = compute_mean_return_fit(file, options, hdr, iw, ih, basefich0)
 
     ####adding binning information###
-    for
+    with open('camera_list.json') as json_file:
+            cameras = json.load(json_file)
+            bin_text = '0'
+            for key in cameras.keys():
+                if key in rdr.Observer or key in rdr.Telescope or key in rdr.Instrument :
+                    print(f'camera information found, your camera is a {key}')
+                    bin_text = 'bin'+str(round(int(cameras[key])//rdr.Width,0))
+                    print('bin_text', bin_text, int(cameras[key])//rdr.Width)
+                    break
+            if bin_text == '0' :
+                print('camera information is not found. If width is <2000, bin2 is guessing')
+                if rdr.Width <2000 :
+                    bin_text = 'bin2'
+                else :
+                    bin_text = 'bin1'
 
     disk_list, ih, iw, FrameCount = read_video_improved(file, fit, options)
     
