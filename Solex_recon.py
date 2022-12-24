@@ -2,7 +2,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 6 November 2022
+Version 21 September 2022
 
 ------------------------------------------------------------------------
 Reconstruction of an image from the deviations between the minimum of the line and a reference line
@@ -50,7 +50,7 @@ def solex_proc(file_, options):
     ##################################
 
     disk_list, ih, iw, FrameCount = read_video_improved(file_, fit, options)
-    
+
     hdr['NAXIS1'] = iw  # note: slightly dodgy, new width
 
     # sauve fichier disque reconstruit
@@ -76,6 +76,9 @@ def solex_proc(file_, options):
             DiskHDU = fits.PrimaryHDU(disk_list[i], header=hdr)
             DiskHDU.writeto(basefich + '_raw.fits', overwrite='True')
 
+
+
+
         """
         We now apply ellipse_fit to apply the geometric correction
 
@@ -97,12 +100,13 @@ def solex_proc(file_, options):
             DiskHDU.writeto(basefich + '_circular.fits', overwrite='True')
 
 
-        if options['transversalium']:
+        if options['transversalium'] and options['doppler'] is None:
             if not cercle0 == (-1, -1, -1):
                 detransversaliumed = correct_transversalium2(frame_circularized, cercle0, borders, options, i >= 2, basefich)
             else:
                 detransversaliumed = correct_transversalium2(frame_circularized, (0,0,99999), [0, backup_y1+20, frame_circularized.shape[1] -1, backup_y2-20], options, i >= 2, basefich)
         else:
+
             detransversaliumed = frame_circularized
 
         if options['save_fit'] and i >= 2 and options['transversalium']:  # first two shifts are not user specified
@@ -110,29 +114,39 @@ def solex_proc(file_, options):
             DiskHDU.writeto(basefich + '_detransversaliumed.fits', overwrite='True')
 
         cercle = cercle0
-        if not options['fixed_width'] == None or options['crop_width_square']:
-            h, w = detransversaliumed.shape
-            nw = h if options['fixed_width'] == None else options['fixed_width'] # new width
-            nw2 = nw // 2
-            cx = w // 2 if cercle == (-1, -1, -1) else int(cercle[0])
-            tx = nw2 - cx
-            new_img = np.full((h, nw), detransversaliumed[0, 0], dtype=detransversaliumed.dtype)
-
-            new_img[:, :min(cx + nw2, detransversaliumed.shape[1]) - max(0, cx - nw2)] = detransversaliumed[:, max(0, cx - nw2) : min(cx + nw2, detransversaliumed.shape[1])]
-            
-            if tx > 0:
-                new_img = np.roll(new_img, tx, axis = 1)
-                new_img[:, :tx] = detransversaliumed[0, 0]
-
+        if options['crop_width_square']:
             if not cercle == (-1, -1, -1):
-                cercle = (nw2, cercle[1], cercle[2])
-            detransversaliumed = new_img    
-       
+                h, w = detransversaliumed.shape
+                h2 = h // 2
+                if h < w: # crop width
+                    detransversaliumed = detransversaliumed[:, max(0, int(cercle[0]) - h2) : min(int(cercle[0]) + h2, detransversaliumed.shape[1])]
+                    cercle = (cercle[0] - max(0, int(cercle[0]) - h2), cercle[1], cercle[2])
+                else: # expand width
+                    new_img = np.full((h, h), detransversaliumed[0, 0], dtype=detransversaliumed.dtype)
+                    new_cercle = (h2, cercle[1], cercle[2])
+                    tx = int(new_cercle[0] - cercle[0])
+                    new_img[:, :w] = detransversaliumed[:, :]
+                    new_img = np.roll(new_img, tx, axis = 1)
+                    cercle = new_cercle
+                    detransversaliumed = new_img
+            else:
+                logme('Error: cannot crop square without circle fit (crop-square cancelled)')
 
         if i >= 2:
             image_process(detransversaliumed, cercle, options, hdr, basefich)
-        
-        
+    if options['doppler_picture'] is not None:
+        basefich = basefich0 + '_doppler_decal=' + str(options['doppler_picture'])
+        DiskHDU1 = fits.PrimaryHDU(disk_list[0], header=hdr)
+        DiskHDU1.writeto(basefich + '_neg.fits', overwrite='True')
+
+        #DiskHDU2 = fits.PrimaryHDU((disk_list[0]+disk_list[2])/2, header=hdr)
+        DiskHDU2 = fits.PrimaryHDU((disk_list[0]+disk_list[2])/2, header=hdr)
+        DiskHDU2.writeto(basefich + '_mean.fits', overwrite='True')
+
+        DiskHDU3 = fits.PrimaryHDU(disk_list[2], header=hdr)
+        DiskHDU3.writeto(basefich + '_pos.fits', overwrite='True')
+
+
     with open(basefich0 + '_log.txt', "w") as logfile:
         logfile.writelines(mylog)
 
