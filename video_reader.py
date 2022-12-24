@@ -79,7 +79,7 @@ class video_reader:
             self.Width = int(self.file.get(cv2.CAP_PROP_FRAME_WIDTH))
             self.Height = int(self.file.get(cv2.CAP_PROP_FRAME_HEIGHT))
             self.PixelDepthPerPlane=1*8
-            self.FrameCount = int(self.file.get(cv2.CAP_PROP_FRAME_COUNT))            
+            self.FrameC)ount = int(self.file.get(cv2.CAP_PROP_FRAME_COUNT))
             self.count=self.Width*self.Height
             self.infilebytes=1            
             self.FrameIndex=-1
