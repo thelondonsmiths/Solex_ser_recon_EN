@@ -292,6 +292,7 @@ def do_work(serfiles, options, cli = False):
         print('file %s is processing'%serfile)
         options['workDir'] = os.path.dirname(serfile)+"/"
         os.chdir(options['workDir'])
+
         base = os.path.basename(serfile)
         basefich = os.path.splitext(base)[0]
         if base == '':
@@ -343,5 +344,6 @@ if __name__ == '__main__':
                 inputUI()
                 do_work(serfiles, options)
         else:
-            do_work(serfiles, options, cli = True) # use inputs from CLI
+            do_work(serfiles, options) # use inputs from CLI
+
 
