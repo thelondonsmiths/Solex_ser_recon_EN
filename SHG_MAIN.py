@@ -241,6 +241,11 @@ def interpret_UI_values(ui_values):
     options['save_fit'] = ui_values['-FIT-']
     options['clahe_only'] = ui_values['-CLAHE_ONLY-']
     options['crop_width_square'] = ui_values['-crop_width_square-']
+    options['doppler_picture'] = int(ui_values['-dopplergram-'])
+    if options['doppler_picture'] > 0:
+        decal = options['doppler_picture']
+        options['shift'] = [-int(decal), 0, int(decal)]
+
     options['transversalium'] = ui_values['-transversalium-']
     options['trans_strength'] = int(ui_values['-trans_strength-']*100) + 1
     options['flip_x'] = ui_values['-flip_x-']
@@ -265,7 +270,7 @@ def inputUI():
     [sg.Checkbox('Save fits files', default=options['save_fit'], key='-FIT-')],
     [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='-CLAHE_ONLY-')],
     [sg.Checkbox('Crop square', default=options['crop_width_square'], key='-crop_width_square-')],
-    [sg.Text('Fixed image width (blank for none)', size=(25,1)), sg.Input(default_text=options['fixed_width'], size=(8,1),key='-fixed_width-')],
+    [sg.Text('Fixed image width (blank for none)', size=(35,1)), sg.Input(default_text=options['fixed_width'], size=(8,1),key='-fixed_width-')],
     [sg.Checkbox('Mirror X', default=False, key='-flip_x-')],
     [sg.Text("Rotate png images:", key='img_rotate_slider')],
     [sg.Slider(range=(0,270),
@@ -289,6 +294,8 @@ def inputUI():
     [sg.Text('Tilt angle (blank for auto)',size=(25,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
     [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
     [sg.Text('Protus adjustment', size=(25,1)), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='-delta_radius-')],
+
+    [sg.Text('Dopplergram with shift \n(blanck for none): ', size=(25,2)), sg.Input(default_text=options['fixed_width'], size=(8,1),key='-dopplergram-')],
     [sg.Button('OK'), sg.Cancel()]
     ] 
     

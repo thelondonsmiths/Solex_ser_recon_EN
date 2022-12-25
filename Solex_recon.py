@@ -43,13 +43,12 @@ def solex_proc(file_, options):
                     bin_text = '_bin'+str(round(int(cameras[key])//rdr.Width,0))
                     break
             if bin_text == '0':
-                logme('camera information not found. If width is <2000, bin2 is guessed')
+                logme('WARNING : camera information not found. If width is <2000, bin2 is guessed')
                 if rdr.Width <2000 :
                     bin_text = '_bin2'
                 else :
                     bin_text = '_bin1'
     basefich0+=bin_text
-    ##################################
 
     disk_list, ih, iw, FrameCount = read_video_improved(file_, fit, options)
 
@@ -99,14 +98,12 @@ def solex_proc(file_, options):
             DiskHDU = fits.PrimaryHDU(frame_circularized, header=hdr)
             DiskHDU.writeto(basefich + '_circular.fits', overwrite='True')
 
-
         if options['transversalium']:
             if not cercle0 == (-1, -1, -1):
                 detransversaliumed = correct_transversalium2(frame_circularized, cercle0, borders, options, i >= 2, basefich)
             else:
                 detransversaliumed = correct_transversalium2(frame_circularized, (0,0,99999), [0, backup_y1+20, frame_circularized.shape[1] -1, backup_y2-20], options, i >= 2, basefich)
         else:
-
             detransversaliumed = frame_circularized
 
         if options['save_fit'] and i >= 2 and options['transversalium']:  # first two shifts are not user specified
@@ -137,12 +134,11 @@ def solex_proc(file_, options):
                 cercle = (nw2, nh//2, cercle[2])
             detransversaliumed = new_img
 
-
         if i >= 2:
             image_process(detransversaliumed, cercle, options, hdr, basefich)
             doppler_list.append(detransversaliumed)
-    if options['doppler_picture'] is not None:
 
+    if isinstance(options['doppler_picture'],int) and options['doppler_picture']>0:
         basefich = basefich0 + '_doppler_shift=' + str(options['doppler_picture'])
         if not options['clahe_only'] :
             DiskHDU1 = fits.PrimaryHDU(disk_list[0], header=hdr)
@@ -155,12 +151,16 @@ def solex_proc(file_, options):
             DiskHDU3 = fits.PrimaryHDU(disk_list[2], header=hdr)
             DiskHDU3.writeto(basefich + '_pos.fits', overwrite='True')
 
-        #DOPPLERGRAM
+        #######DOPPLERGRAM########
         frame1, frame2 = doppler_list[0],doppler_list[2]
         # mean picture creation
         img_doppler=np.zeros([ih, frame1.shape[1], 3],dtype='uint16')
         mean=np.array(((frame1+frame2)/2), dtype='uint16')
+
+        #compute contrast on mean picture
         picture_mean,sb,sh=return_frame_contrasted(mean, 'strong')
+
+        #apply the same constast on pictures
         picture_3=apply_contrast(frame2,sb,sh)
         picture_1=apply_contrast(frame1,sb,sh)
 
@@ -168,7 +168,6 @@ def solex_proc(file_, options):
         img_doppler[:,:,1] = picture_mean
         img_doppler[:,:,2] = picture_3
         cv2.imwrite(basefich+'.png',img_doppler)
-
 
     with open(basefich0 + '_log.txt', "w") as logfile:
         logfile.writelines(mylog)
