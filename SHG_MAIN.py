@@ -73,7 +73,7 @@ def usage():
     usage_ += "'c' : 'clahe_only',  only final clahe image is saved (False by default)\n"
     usage_ += "'f' : 'save_fit', save all fits files (False by default)\n"
     usage_ += "'m' : 'mirror flip', mirror flip in x-direction (False by default)\n"
-    usage_ += "'p' : 'disk_display' turn off black disk with protuberance images (False by default)\n"
+    usage_ += "'p' : 'no disk_display' turn off black disk with protuberance images (False by default)\n"
     usage_ += "'s' : 'crop_square_width', crop the width to equal the height (False by default)\n"
     usage_ += "'t' : 'disable transversalium', disable transversalium correction (False by default)\n"
     usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels from minima\n"
