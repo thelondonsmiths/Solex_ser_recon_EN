@@ -65,8 +65,6 @@ def read_video_improved(file_, fit, options):
     col_indeces = []
 
     for shift in options['shift']:
-
-
         ind_l = (np.asarray(fit)[:, 0] + np.ones(ih)*shift).astype(int)
         #shift based only ;
         ind_l[ind_l < 0] = 0
@@ -84,7 +82,6 @@ def read_video_improved(file_, fit, options):
         img = rdr.next_frame()
 
         for i in range(len(options['shift'])):
-
             ind_l, ind_r = col_indeces[i]
             left_col = img[np.arange(ih), ind_l]
             right_col = img[np.arange(ih), ind_r]
@@ -274,28 +271,23 @@ def correct_transversalium2(img, circle, borders, options, not_fake, basefich):
     ret[ret > 65535] = 65535 # prevent overflow
     return np.array(ret, dtype='uint16')
 
-
-def image_process(frame, cercle, options, header, basefich):
-    if options['doppler'] is None:
-        # create a CLAHE object (Arguments are optional)
-        # clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(5,5))
-        clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(2,2))
-        cl1 = clahe.apply(frame)
-
-        #if options.get('doppler') is None:
-        # image leger seuils
-        frame1=np.copy(frame)
-        Seuil_bas=np.percentile(frame, 25)
-        Seuil_haut=np.percentile(frame,99.9999)
-        logme('Seuil bas       :{}'.format(np.floor(Seuil_bas)))
-        logme('Seuil haut      :{}'.format(np.floor(Seuil_haut)))
+def return_frame_contrasted(frame, strength):
+    """
+    IN : np array, str
+    OUT : np array, int, int
+    """
+    frame1=np.copy(frame)
+    Seuil_bas=np.percentile(frame, 25)
+    Seuil_haut=np.percentile(frame,99.9999)
+    if strength=='light':
         fc=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
         fc[fc<0]=0
         fc[fc>65535] = 65535
-        frame_contrasted=np.array(fc, dtype='uint16')
-
+        logme('Seuil bas       :{}'.format(np.floor(Seuil_bas)))
+        logme('Seuil haut      :{}'.format(np.floor(Seuil_haut)))
+        return np.array(fc, dtype='uint16')
+    else :
         # image seuils serres
-        frame1=np.copy(frame)
         Seuil_bas=(Seuil_haut*0.25)
         Seuil_haut=np.percentile(frame1,99.9999)
         logme('Seuil bas HC    :{}'.format(np.floor(Seuil_bas)))
@@ -303,80 +295,102 @@ def image_process(frame, cercle, options, header, basefich):
         fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
         fc2[fc2<0]=0
         fc2[fc2>65535] = 65535
-        frame_contrasted2=np.array(fc2, dtype='uint16')
+        return np.array(fc2, dtype='uint16')
 
-        # image seuils protus
-        frame1=np.copy(frame)
-        Seuil_bas=0
-        Seuil_haut=np.percentile(frame1,99.9999)*0.18
-        logme('Seuil bas protu :{}'.format(np.floor(Seuil_bas)))
-        logme('Seuil haut protu:{}'.format(np.floor(Seuil_haut)))
-        fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
-        fc2[fc2<0]=0
-        fc2[fc2>65535] = 65535
-        frame_contrasted3=np.array(fc2, dtype='uint16')
-        if not cercle == (-1, -1, -1) and options['disk_display']:
-            x0=int(cercle[0])
-            y0=int(cercle[1])
-            r=int(cercle[2]) + options['delta_radius']
-            if r > 0:
-                frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)
-        Seuil_bas=np.percentile(cl1, 25)
-        Seuil_haut=np.percentile(cl1,99.9999)*1.05
-        cc=(cl1-Seuil_bas)*(65535/(Seuil_haut-Seuil_bas))
-        cc[cc<0]=0
-        cc[cc>65535] = 65535
-        cc=np.array(cc, dtype='uint16')
 
-        # handle rotations
-        cc = np.rot90(cc, options['img_rotate']//90, axes=(0,1))
-        frame_contrasted = np.rot90(frame_contrasted, options['img_rotate']//90, axes=(0,1))
-        frame_contrasted2 = np.rot90(frame_contrasted2, options['img_rotate']//90, axes=(0,1))
-        frame_contrasted3 = np.rot90(frame_contrasted3, options['img_rotate']//90, axes=(0,1))
-        frame = np.rot90(frame, options['img_rotate']//90, axes=(0,1))
 
-        # sauvegarde en png de clahe
-        cv2.imwrite(basefich+'_clahe.png',cc)   # Modification Jean-Francois: placed before the IF for clear reading
 
-        if not options['clahe_only']:
-            # sauvegarde en png pour appliquer une colormap par autre script
 
-            #cv2.imwrite(basefich+'_disk.png',frame_contrasted)
-            # sauvegarde en png pour appliquer une colormap par autre script
-            cv2.imwrite(basefich+'_diskHC.png',frame_contrasted2)
-            # sauvegarde en png pour appliquer une colormap par autre script
-            cv2.imwrite(basefich+'_protus.png',frame_contrasted3)
-        # The 3 images are concatenated together in 1 image => 'Sun images'
-        # The 'Sun images' is scaled for the monitor maximal dimension ... it is scaled to match the dimension of the monitor without
-        # changing the Y/X scale of the images
-        if options['flag_display']:
-            im_3 = cv2.hconcat([cc, frame_contrasted2, frame_contrasted3])
-            screen = tk.Tk()
-            screensize = screen.winfo_screenwidth(), screen.winfo_screenheight()
-            screen.destroy()
-            scale = min(screensize[0] / im_3.shape[1], screensize[1] / im_3.shape[0]) * 0.9
-            cv2.namedWindow('Sun images', cv2.WINDOW_NORMAL)
-            cv2.moveWindow('Sun images', 0, 0)
-            cv2.resizeWindow('Sun images',int(im_3.shape[1] * scale), int(im_3.shape[0] * scale))
-            cv2.imshow('Sun images',im_3)
-            cv2.waitKey(options['tempo'])  # affiche et continue
-            cv2.destroyAllWindows()
+def image_process(frame, cercle, options, header, basefich):
+    # create a CLAHE object (Arguments are optional)
+    # clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(5,5))
+    clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(2,2))
+    cl1 = clahe.apply(frame)
 
-        # sauvegarde le fits
-        if options['save_fit']:
-            frame2=np.copy(frame)
-            frame2=np.array(cl1, dtype='uint16')
-            DiskHDU=fits.PrimaryHDU(frame2,header)
-            DiskHDU.writeto(basefich+ '_clahe.fits', overwrite='True')
-    elif options['doppler']: #dopplergram
+
+    frame_contrasted=return_frame_contrasted(frame, "light")
+
+
+    frame_contrasted2=return_frame_contrasted(frame, "high")
+
+
+    # image seuils protus
+    frame1=np.copy(frame)
+    Seuil_bas=0
+    Seuil_haut=np.percentile(frame1,99.9999)*0.18
+    logme('Seuil bas protu :{}'.format(np.floor(Seuil_bas)))
+    logme('Seuil haut protu:{}'.format(np.floor(Seuil_haut)))
+    fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
+    fc2[fc2<0]=0
+    fc2[fc2>65535] = 65535
+    frame_contrasted3=np.array(fc2, dtype='uint16')
+    if not cercle == (-1, -1, -1) and options['disk_display']:
+        x0=int(cercle[0])
+        y0=int(cercle[1])
+        r=int(cercle[2]) + options['delta_radius']
+        if r > 0:
+            frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)
+    Seuil_bas=np.percentile(cl1, 25)
+    Seuil_haut=np.percentile(cl1,99.9999)*1.05
+    cc=(cl1-Seuil_bas)*(65535/(Seuil_haut-Seuil_bas))
+    cc[cc<0]=0
+    cc[cc>65535] = 65535
+    cc=np.array(cc, dtype='uint16')
+
+    # handle rotations
+    cc = np.rot90(cc, options['img_rotate']//90, axes=(0,1))
+    frame_contrasted = np.rot90(frame_contrasted, options['img_rotate']//90, axes=(0,1))
+    frame_contrasted2 = np.rot90(frame_contrasted2, options['img_rotate']//90, axes=(0,1))
+    frame_contrasted3 = np.rot90(frame_contrasted3, options['img_rotate']//90, axes=(0,1))
+    frame = np.rot90(frame, options['img_rotate']//90, axes=(0,1))
+
+    # sauvegarde en png de clahe
+    cv2.imwrite(basefich+'_clahe.png',cc)   # Modification Jean-Francois: placed before the IF for clear reading
+
+    if not options['clahe_only']:
+        # sauvegarde en png pour appliquer une colormap par autre script
+
+        #cv2.imwrite(basefich+'_disk.png',frame_contrasted)
+        # sauvegarde en png pour appliquer une colormap par autre script
+        cv2.imwrite(basefich+'_diskHC.png',frame_contrasted2)
+        # sauvegarde en png pour appliquer une colormap par autre script
+        cv2.imwrite(basefich+'_protus.png',frame_contrasted3)
+    # The 3 images are concatenated together in 1 image => 'Sun images'
+    # The 'Sun images' is scaled for the monitor maximal dimension ... it is scaled to match the dimension of the monitor without
+    # changing the Y/X scale of the images
+    if options['flag_display']:
+        im_3 = cv2.hconcat([cc, frame_contrasted2, frame_contrasted3])
+        screen = tk.Tk()
+        screensize = screen.winfo_screenwidth(), screen.winfo_screenheight()
+        screen.destroy()
+        scale = min(screensize[0] / im_3.shape[1], screensize[1] / im_3.shape[0]) * 0.9
+        cv2.namedWindow('Sun images', cv2.WINDOW_NORMAL)
+        cv2.moveWindow('Sun images', 0, 0)
+        cv2.resizeWindow('Sun images',int(im_3.shape[1] * scale), int(im_3.shape[0] * scale))
+        cv2.imshow('Sun images',im_3)
+        cv2.waitKey(options['tempo'])  # affiche et continue
+        cv2.destroyAllWindows()
+
+    # sauvegarde le fits
+    if options['save_fit']:
+        frame2=np.copy(frame)
+        frame2=np.array(cl1, dtype='uint16')
+        DiskHDU=fits.PrimaryHDU(frame2,header)
+        DiskHDU.writeto(basefich+ '_clahe.fits', overwrite='True')
+
+    if options['doppler']: #dopplergram
         #TODO : this doesn't work
-        #inverse l'image
-        frame1=np.copy(frame)
-        frame2 = np.array(((2**16-1)-frame1), dtype='uint16')
-
-        mean = np.mean(np.where(frame2<np.mean(frame2)//2, 0, frame2))
-        #frame3 = np.array(np.where(frame2-int(mean)<=0,0,  frame2-int(mean)),dtype='uint16')
-        frame3 = frame2-30000
-        cv2.imwrite(basefich+'_doppler3.png',frame3)
-        cv2.imwrite(basefich+'_doppler2.png',frame2)
+        frame1, frame2 = disk_list[0],disk_list[2]
+        # mean picture creation
+        #img_doppler=np.zeros([ih, frame1.shape[1], 3],dtype='uint16')
+        #mean=np.array(((frame1+frame2)/2), dtype='uint16')
+        #i2,Seuil_haut, Seuil_bas=seuil_image(moy)
+        #i3=seuil_image_force(frames[2],Seuil_haut, Seuil_bas)
+        #i1=seuil_image_force (frames[1],Seuil_haut, Seuil_bas)
+        ##i1,Seuil_haut, Seuil_bas=seuil_image(frames[1])
+        ##i3,Seuil_haut, Seuil_bas=seuil_image(frames[2])
+        #img_doppler[:,:,0] = i1
+        #img_doppler[:,:,1] = i2
+        #img_doppler[:,:,2] = i3
+        #cv2.imshow('doppler',img_doppler)
 
