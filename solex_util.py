@@ -35,8 +35,16 @@ def logme(s):
 
 
 # read video and return constructed image of sun using fit
-def read_video_improved(file, fit, options):
-    rdr = video_reader(file)
+def read_video_improved(file_, fit, options):
+    """take a path, a fit curve, and an dictionnary and compute everery frames asked.
+
+    OUT :
+    Return a list containing each frame asked
+    2 integers : shape
+    1 integer : framecount
+
+    """
+    rdr = video_reader(file_)
     ih, iw = rdr.ih, rdr.iw
     FrameMax = rdr.FrameCount
     disk_list = [np.zeros((ih, FrameMax), dtype='uint16')
@@ -55,41 +63,18 @@ def read_video_improved(file, fit, options):
         cv2.resizeWindow('image', int(iw * scaling), int(ih * scaling))
 
     col_indeces = []
-    if options.get('doppler'):
-        col_indeces_references = []
 
     for shift in options['shift']:
-        if options.get('poly_fit')is not None and options.get('doppler') is None :
-            #user wants to use is proper dispersion polynome
-            p = options.get('poly_fit')
-            curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
-            fit = [[math.floor(curve[y]), curve[y] - math.floor(curve[y]), y] for y in range(ih)]
 
-        if options.get('doppler'):
-            #for doppler we need 2 values.
-            #One with fit computed on picture from sky for example(ind_l_reference), one with measuring minima on each frame.
-            p = options.get('poly_fit')
-            curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
-            fit_reference = [[math.floor(curve[y]), curve[y] - math.floor(curve[y]), y] for y in range(ih)]
-            ind_l_reference = (np.asarray(fit_reference)[:, 0] + np.ones(ih)*shift).astype(int)
-            # CLEAN if fitting goes too far
-            ind_l_reference[ind_l_reference < 0] = 0
-            ind_l_reference[ind_l_reference > iw - 2] = iw - 2
-            ind_r_reference = (ind_l_reference + np.ones(ih)).astype(int)
-            col_indeces_references.append((ind_l_reference, ind_r_reference))
-        else:
-            ind_l = (np.asarray(fit)[:, 0] + np.ones(ih)*shift).astype(int)
-            #shift based only ;
-            ind_l[ind_l < 0] = 0
-            ind_l[ind_l > iw - 2] = iw - 2
-            ind_r = (ind_l + np.ones(ih)).astype(int)
-            col_indeces.append((ind_l, ind_r))
 
-    if options.get('doppler'):
-        left_weights_reference = np.ones(ih) - np.asarray(fit_reference)[:, 1]
-        right_weights_reference = np.ones(ih) - left_weights_reference
-    else :
+        ind_l = (np.asarray(fit)[:, 0] + np.ones(ih)*shift).astype(int)
+        #shift based only ;
+        ind_l[ind_l < 0] = 0
+        ind_l[ind_l > iw - 2] = iw - 2
+        ind_r = (ind_l + np.ones(ih)).astype(int)
+        col_indeces.append((ind_l, ind_r))
         #col_indeces are list of indeces of pixels of minima (or shifted)
+
         left_weights = np.ones(ih) - np.asarray(fit)[:, 1]
         right_weights = np.ones(ih) - left_weights
 
@@ -99,23 +84,11 @@ def read_video_improved(file, fit, options):
         img = rdr.next_frame()
 
         for i in range(len(options['shift'])):
-            #extract column
 
-            if options.get('doppler') is not None: #compute difference between actual and reference
-
-                ind_l_reference, ind_r_reference = col_indeces_references[i]
-                left_col_reference = img[np.arange(ih), ind_l_reference]
-                right_col_reference = img[np.arange(ih), ind_r_reference]
-                #find minimum of each line and remove reference
-                IntensiteRaie = np.argmin(img, axis=1)\
-                    - (left_col_reference * left_weights_reference\
-                        + right_col_reference * right_weights_reference)
-            else:
-                ind_l, ind_r = col_indeces[i]
-                left_col = img[np.arange(ih), ind_l]
-                right_col = img[np.arange(ih), ind_r]
-                IntensiteRaie = left_col * left_weights + right_col * right_weights
-
+            ind_l, ind_r = col_indeces[i]
+            left_col = img[np.arange(ih), ind_l]
+            right_col = img[np.arange(ih), ind_r]
+            IntensiteRaie = left_col * left_weights + right_col * right_weights
             disk_list[i][:, rdr.FrameIndex] = IntensiteRaie
 
         if options['flag_display'] and rdr.FrameIndex % 10 == 0:
