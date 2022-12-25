@@ -78,10 +78,10 @@ def usage():
     usage_ += "'t' : 'disable transversalium', disable transversalium correction (False by default)\n"
     usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels from minima\n"
     usage_ += "'w' : 'x:y:w'  produce images starting at x, finishing at y, every w pixels from minima\n"
-    usage_ += "'P' : 'a,b,c'  using polynome a*x²+b*x+c or a*x³+b*x²+c*x+d as fitting\n"
+    #usage_ += "'P' : 'a,b,c'  using polynome a*x²+b*x+c or a*x³+b*x²+c*x+d as fitting\n"
     usage_ += "'D' : 'n'      produce 4 pictures, from -n pixels, n pixel from minimum and a mean of 2 and a dopplergram\n"
     usage_ += "'r' : 'w'  crop width to a constant no. of pixels."
-    usage_ += "'g' : DOESN'T WORK ->  Dopplergram using base polynome, compute and display difference between minima \n"
+    #usage_ += "'g' : DOESN'T WORK ->  Dopplergram using base polynome, compute and display difference between minima \n"
     return usage_
 
 def treat_flag_at_cli(arguments):

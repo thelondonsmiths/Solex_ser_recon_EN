@@ -15,6 +15,7 @@ from video_reader import *
 from ellipse_to_circle import ellipse_to_circle, correct_image
 import json
 import numpy as np
+import cv2
 
 
 def solex_proc(file_, options):
@@ -101,7 +102,7 @@ def solex_proc(file_, options):
             DiskHDU.writeto(basefich + '_circular.fits', overwrite='True')
 
 
-        if options['transversalium'] and options['doppler'] is None:
+        if options['transversalium']:
             if not cercle0 == (-1, -1, -1):
                 detransversaliumed = correct_transversalium2(frame_circularized, cercle0, borders, options, i >= 2, basefich)
             else:
@@ -152,6 +153,21 @@ def solex_proc(file_, options):
 
         DiskHDU3 = fits.PrimaryHDU(disk_list[2], header=hdr)
         DiskHDU3.writeto(basefich + '_pos.fits', overwrite='True')
+
+        print('doppler', len(disk_list))
+        frame1, frame2 = disk_list[2],disk_list[4]
+        # mean picture creation
+
+        img_doppler=np.zeros([ih, frame1.shape[1], 3],dtype='uint16')
+        mean=np.array(((frame1+frame2)/2), dtype='uint16')
+        picture_mean,sb,sh=return_frame_contrasted(mean, 'strong')
+        picture_3=apply_contrast(frame2,sb,sh)
+        picture_1=apply_contrast(frame1,sb,sh)
+
+        img_doppler[:,:,0] = picture_1
+        img_doppler[:,:,1] = picture_mean
+        img_doppler[:,:,2] = picture_3
+        cv2.imwrite(basefich+'_doppler'+str(options['shift'])+'.png',img_doppler)
 
 
     with open(basefich0 + '_log.txt', "w") as logfile:

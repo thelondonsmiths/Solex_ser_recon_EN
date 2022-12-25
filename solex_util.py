@@ -271,7 +271,17 @@ def correct_transversalium2(img, circle, borders, options, not_fake, basefich):
     ret[ret > 65535] = 65535 # prevent overflow
     return np.array(ret, dtype='uint16')
 
-def return_frame_contrasted(frame, strength):
+
+
+def apply_contrast(frame, Seuil_bas, Seuil_haut):
+    fc=(frame-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
+    fc[fc<0]=0
+    fc[fc>65535] = 65535
+    logme('Seuil bas       :{}'.format(np.floor(Seuil_bas)))
+    logme('Seuil haut      :{}'.format(np.floor(Seuil_haut)))
+    return np.array(fc, dtype='uint16')
+
+def return_frame_contrasted(frame, method):
     """
     IN : np array, str
     OUT : np array, int, int
@@ -279,24 +289,30 @@ def return_frame_contrasted(frame, strength):
     frame1=np.copy(frame)
     Seuil_bas=np.percentile(frame, 25)
     Seuil_haut=np.percentile(frame,99.9999)
-    if strength=='light':
-        fc=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
-        fc[fc<0]=0
-        fc[fc>65535] = 65535
-        logme('Seuil bas       :{}'.format(np.floor(Seuil_bas)))
-        logme('Seuil haut      :{}'.format(np.floor(Seuil_haut)))
-        return np.array(fc, dtype='uint16')
-    else :
+    if method=='light':
+        logme('Seuil bas HC    :{}'.format(np.floor(Seuil_bas)))
+        logme('Seuil haut HC   :{}'.format(np.floor(Seuil_haut)))
+        return apply_contrast(frame1, Seuil_bas, Seuil_haut), Seuil_bas, Seuil_haut
+
+    elif method=='strong' :
         # image seuils serres
         Seuil_bas=(Seuil_haut*0.25)
         Seuil_haut=np.percentile(frame1,99.9999)
         logme('Seuil bas HC    :{}'.format(np.floor(Seuil_bas)))
         logme('Seuil haut HC   :{}'.format(np.floor(Seuil_haut)))
-        fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
-        fc2[fc2<0]=0
-        fc2[fc2>65535] = 65535
-        return np.array(fc2, dtype='uint16')
+        return apply_contrast(frame1, Seuil_bas, Seuil_haut), Seuil_bas, Seuil_haut
 
+    elif method=='protu' :
+        Seuil_bas=0
+        Seuil_haut=np.percentile(frame1,99.9999)*0.18
+        logme('Seuil bas protu :{}'.format(np.floor(Seuil_bas)))
+        logme('Seuil haut protu:{}'.format(np.floor(Seuil_haut)))
+        return apply_contrast(frame1, Seuil_bas, Seuil_haut), Seuil_bas, Seuil_haut
+
+    elif method=='clahe':
+        Seuil_bas=np.percentile(frame1, 25)
+        Seuil_haut=np.percentile(frame1,99.9999)*1.05
+        return apply_contrast(frame1, Seuil_bas, Seuil_haut), Seuil_bas, Seuil_haut
 
 
 
@@ -307,35 +323,23 @@ def image_process(frame, cercle, options, header, basefich):
     clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(2,2))
     cl1 = clahe.apply(frame)
 
+    #light contrast
+    frame_contrasted,sb,sh=return_frame_contrasted(frame, "light")
 
-    frame_contrasted=return_frame_contrasted(frame, "light")
-
-
-    frame_contrasted2=return_frame_contrasted(frame, "high")
-
+    #high contrast
+    frame_contrasted2,sb,sh=return_frame_contrasted(frame, "strong")
 
     # image seuils protus
-    frame1=np.copy(frame)
-    Seuil_bas=0
-    Seuil_haut=np.percentile(frame1,99.9999)*0.18
-    logme('Seuil bas protu :{}'.format(np.floor(Seuil_bas)))
-    logme('Seuil haut protu:{}'.format(np.floor(Seuil_haut)))
-    fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
-    fc2[fc2<0]=0
-    fc2[fc2>65535] = 65535
-    frame_contrasted3=np.array(fc2, dtype='uint16')
+    frame_contrasted3,sb,sh=return_frame_contrasted(frame, "protu")
+
     if not cercle == (-1, -1, -1) and options['disk_display']:
         x0=int(cercle[0])
         y0=int(cercle[1])
         r=int(cercle[2]) + options['delta_radius']
         if r > 0:
             frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)
-    Seuil_bas=np.percentile(cl1, 25)
-    Seuil_haut=np.percentile(cl1,99.9999)*1.05
-    cc=(cl1-Seuil_bas)*(65535/(Seuil_haut-Seuil_bas))
-    cc[cc<0]=0
-    cc[cc>65535] = 65535
-    cc=np.array(cc, dtype='uint16')
+
+    cc,sb,sh=return_frame_contrasted(cl1, 'clahe')
 
     # handle rotations
     cc = np.rot90(cc, options['img_rotate']//90, axes=(0,1))
@@ -378,19 +382,4 @@ def image_process(frame, cercle, options, header, basefich):
         DiskHDU=fits.PrimaryHDU(frame2,header)
         DiskHDU.writeto(basefich+ '_clahe.fits', overwrite='True')
 
-    if options['doppler']: #dopplergram
-        #TODO : this doesn't work
-        frame1, frame2 = disk_list[0],disk_list[2]
-        # mean picture creation
-        #img_doppler=np.zeros([ih, frame1.shape[1], 3],dtype='uint16')
-        #mean=np.array(((frame1+frame2)/2), dtype='uint16')
-        #i2,Seuil_haut, Seuil_bas=seuil_image(moy)
-        #i3=seuil_image_force(frames[2],Seuil_haut, Seuil_bas)
-        #i1=seuil_image_force (frames[1],Seuil_haut, Seuil_bas)
-        ##i1,Seuil_haut, Seuil_bas=seuil_image(frames[1])
-        ##i3,Seuil_haut, Seuil_bas=seuil_image(frames[2])
-        #img_doppler[:,:,0] = i1
-        #img_doppler[:,:,1] = i2
-        #img_doppler[:,:,2] = i3
-        #cv2.imshow('doppler',img_doppler)
 
