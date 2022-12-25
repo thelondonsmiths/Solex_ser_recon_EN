@@ -70,6 +70,7 @@ def solex_proc(file_, options):
     borders = [0,0,0,0]
     cercle0 = (-1, -1, -1)
     frames_circularized = []
+    doppler_list=[]
     for i in range(len(disk_list)):
         if options['flip_x']:
             disk_list[i] = np.flip(disk_list[i], axis = 1)
@@ -77,9 +78,6 @@ def solex_proc(file_, options):
         if options['save_fit'] and i >= 2:
             DiskHDU = fits.PrimaryHDU(disk_list[i], header=hdr)
             DiskHDU.writeto(basefich + '_raw.fits', overwrite='True')
-
-
-
 
         """
         We now apply ellipse_fit to apply the geometric correction
@@ -142,21 +140,24 @@ def solex_proc(file_, options):
 
         if i >= 2:
             image_process(detransversaliumed, cercle, options, hdr, basefich)
+            doppler_list.append(detransversaliumed)
     if options['doppler_picture'] is not None:
-        basefich = basefich0 + '_doppler_decal=' + str(options['doppler_picture'])
-        DiskHDU1 = fits.PrimaryHDU(disk_list[0], header=hdr)
-        DiskHDU1.writeto(basefich + '_neg.fits', overwrite='True')
 
-        #DiskHDU2 = fits.PrimaryHDU((disk_list[0]+disk_list[2])/2, header=hdr)
-        DiskHDU2 = fits.PrimaryHDU((disk_list[0]+disk_list[2])/2, header=hdr)
-        DiskHDU2.writeto(basefich + '_mean.fits', overwrite='True')
+        basefich = basefich0 + '_doppler_shift=' + str(options['doppler_picture'])
+        if not options['clahe_only'] :
+            DiskHDU1 = fits.PrimaryHDU(disk_list[0], header=hdr)
+            DiskHDU1.writeto(basefich + '_neg.fits', overwrite='True')
 
-        DiskHDU3 = fits.PrimaryHDU(disk_list[2], header=hdr)
-        DiskHDU3.writeto(basefich + '_pos.fits', overwrite='True')
+            #DiskHDU2 = fits.PrimaryHDU((disk_list[0]+disk_list[2])/2, header=hdr)
+            DiskHDU2 = fits.PrimaryHDU((disk_list[0]+disk_list[2])/2, header=hdr)
+            DiskHDU2.writeto(basefich + '_mean.fits', overwrite='True')
 
-        frame1, frame2 = disk_list[2],disk_list[4]
+            DiskHDU3 = fits.PrimaryHDU(disk_list[2], header=hdr)
+            DiskHDU3.writeto(basefich + '_pos.fits', overwrite='True')
+
+        #DOPPLERGRAM
+        frame1, frame2 = doppler_list[0],doppler_list[2]
         # mean picture creation
-
         img_doppler=np.zeros([ih, frame1.shape[1], 3],dtype='uint16')
         mean=np.array(((frame1+frame2)/2), dtype='uint16')
         picture_mean,sb,sh=return_frame_contrasted(mean, 'strong')
@@ -166,7 +167,7 @@ def solex_proc(file_, options):
         img_doppler[:,:,0] = picture_1
         img_doppler[:,:,1] = picture_mean
         img_doppler[:,:,2] = picture_3
-        cv2.imwrite(basefich+'_doppler_shift='+str(options['doppler_picture'])+'.png',img_doppler)
+        cv2.imwrite(basefich+'.png',img_doppler)
 
 
     with open(basefich0 + '_log.txt', "w") as logfile:

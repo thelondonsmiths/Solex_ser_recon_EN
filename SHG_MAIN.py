@@ -114,7 +114,7 @@ def treat_flag_at_cli(arguments):
                 elif len(poly_choices)==4 :
                     a, b, c, d = poly_choices
             except ValueError:
-                print('invalid polynome fitting input : ', shift_choice)
+                print('ERROR : invalid polynome fitting input : ', shift_choice)
                 print('USAGE : python3 SHG_MAIN.py -P1.45881927e+02,-2.16219665e-01,9.45250257e-05 files')
                 sys.exit()
             options['poly_fit'] = [float(a),float(b),float(c)]
@@ -141,7 +141,8 @@ def treat_flag_at_cli(arguments):
             elif len(shift_choice) == 3:
                 options['shift'] = list(range(int(shift_choice[0].strip()), int(shift_choice[1].strip())+1, int(shift_choice[2].strip())))
             else:
-                print('invalid shift input')
+                print('ERROR : invalid shift input')
+                print(usage())
                 sys.exit()
         elif character=='t':
             options['transversalium'] = False
@@ -177,10 +178,17 @@ def treat_flag_at_cli(arguments):
 
             except IndexError :
                 i+=1 #the reach the end of arguments
-                options['doppler_picture'] = int(decal)
-                options['shift'] = [-int(decal), 0, int(decal)]
+                try :
+                    options['doppler_picture'] = int(decal)
+                    options['shift'] = [-int(decal), 0, int(decal)]
+                except ValueError :
+                    print('ERROR : Generating doppler picture need one integer')
+                    print(usage())
+                    sys.exit()
+
             except:
-                print('Generating doppler picture need one integer')
+                print('ERROR : Generating doppler picture need one integer')
+                print(usage())
                 sys.exit()
         else :
             try : #all others
@@ -193,6 +201,7 @@ def treat_flag_at_cli(arguments):
     if options['doppler'] and options['poly_fit'] is None:
         print('ERROR !!! g option need a polynome provided by P option.')
         print('USAGE : python3 SHG_MAIN.py -gP1.45881927e+02,-2.16219665e-01,9.45250257e-05 files')
+        print(usage())
         sys.exit()
     print('options :  %s' % (options))
 
