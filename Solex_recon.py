@@ -135,7 +135,6 @@ def solex_proc(file_, options):
                 new_img[:, :tx] = detransversaliumed[0, 0]
 
             if not cercle == (-1, -1, -1):
-                print('ee', cercle)
                 cercle = (nw2, nh//2, cercle[2])
             detransversaliumed = new_img
 
