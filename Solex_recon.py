@@ -42,7 +42,7 @@ def solex_proc(file_, options):
                     bin_text = '_bin'+str(round(int(cameras[key])//rdr.Width,0))
                     break
             if bin_text == '0':
-                logme('camera information not found. If width is <2000, bin2 is guessing')
+                logme('camera information not found. If width is <2000, bin2 is guessed')
                 if rdr.Width <2000 :
                     bin_text = '_bin2'
                 else :
