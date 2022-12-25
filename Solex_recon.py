@@ -14,6 +14,7 @@ from solex_util import *
 from video_reader import *
 from ellipse_to_circle import ellipse_to_circle, correct_image
 import json
+import numpy as np
 
 
 def solex_proc(file_, options):
@@ -116,20 +117,26 @@ def solex_proc(file_, options):
         cercle = cercle0
         if options['fixed_width'] is not None or options['crop_width_square']:
             h, w = detransversaliumed.shape
+
             nw = h if options['fixed_width'] is None else options['fixed_width'] # new width
+            nh=h
+            if options['crop_width_square']:
+                nh= nw
+
             nw2 = nw // 2
             cx = w // 2 if cercle == (-1, -1, -1) else int(cercle[0])
             tx = nw2 - cx
-            new_img = np.full((h, nw), detransversaliumed[0, 0], dtype=detransversaliumed.dtype)
 
-            new_img[:, :min(cx + nw2, detransversaliumed.shape[1]) - max(0, cx - nw2)] = detransversaliumed[:, max(0, cx - nw2) : min(cx + nw2, detransversaliumed.shape[1])]
+            new_img = np.full((nh, nw), detransversaliumed[0, 0], dtype=detransversaliumed.dtype)
+            new_img[:, :min(cx + nw2, detransversaliumed.shape[1]) - max(0, cx - nw2)] = detransversaliumed[(h-nh)//2:(h+nh)//2, max(0, cx - nw2) : min(cx + nw2, detransversaliumed.shape[1])]
 
             if tx > 0:
                 new_img = np.roll(new_img, tx, axis = 1)
                 new_img[:, :tx] = detransversaliumed[0, 0]
 
             if not cercle == (-1, -1, -1):
-                cercle = (nw2, cercle[1], cercle[2])
+                print('ee', cercle)
+                cercle = (nw2, nh//2, cercle[2])
             detransversaliumed = new_img
 
 
