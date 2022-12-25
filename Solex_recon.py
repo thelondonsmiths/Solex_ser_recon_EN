@@ -154,7 +154,6 @@ def solex_proc(file_, options):
         DiskHDU3 = fits.PrimaryHDU(disk_list[2], header=hdr)
         DiskHDU3.writeto(basefich + '_pos.fits', overwrite='True')
 
-        print('doppler', len(disk_list))
         frame1, frame2 = disk_list[2],disk_list[4]
         # mean picture creation
 
@@ -167,7 +166,7 @@ def solex_proc(file_, options):
         img_doppler[:,:,0] = picture_1
         img_doppler[:,:,1] = picture_mean
         img_doppler[:,:,2] = picture_3
-        cv2.imwrite(basefich+'_doppler'+str(options['shift'])+'.png',img_doppler)
+        cv2.imwrite(basefich+'_doppler_shift='+str(options['doppler_picture'])+'.png',img_doppler)
 
 
     with open(basefich0 + '_log.txt', "w") as logfile:
