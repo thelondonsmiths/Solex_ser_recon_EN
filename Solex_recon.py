@@ -145,7 +145,7 @@ def solex_proc(file_, options):
                 doppler_list.append(detransversaliumed)
 
     if isinstance(options['doppler_picture'],int) and options['doppler_picture']>0:
-        basefich = basefich0 + '_doppler_shift=' + str(options['doppler_picture'])
+        basefich = f"{basefich0}_shift={options['doppler_picture']}_DOPPLERGRAM"
         if not options['clahe_only'] :
             DiskHDU1 = fits.PrimaryHDU(disk_list[0], header=hdr)
             DiskHDU1.writeto(basefich + '_neg.fits', overwrite='True')
