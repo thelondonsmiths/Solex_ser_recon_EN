@@ -34,7 +34,9 @@ def solex_proc(file_, options):
     fit, backup_y1, backup_y2 = compute_mean_return_fit(file_, options, hdr, iw, ih, basefich0)
 
     ####adding binning information###
-    with open('camera_list.json') as json_file:
+    absFilePath = os.path.abspath(__file__)
+    path, filename = os.path.split(absFilePath)
+    with open(os.path.join(path, 'camera_list.json')) as json_file:
             cameras = json.load(json_file)
             bin_text = '0'
             for key in cameras.keys():
