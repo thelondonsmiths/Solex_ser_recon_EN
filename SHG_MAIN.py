@@ -170,7 +170,7 @@ def treat_flag_at_cli(arguments):
             options['fixed_width'] = int(fw)
         elif character=='g':
             if not pil_module :
-                print('ERROR : Generating doppler picture need PIL module. Please install it')
+                print('ERROR : Generating animated GIF need PIL module. Please install it')
                 sys.exit()
             gif = ''
             try:
@@ -185,7 +185,6 @@ def treat_flag_at_cli(arguments):
                 options['gif'] = int(gif)
                 options['shift'] = [i for i in range(-options['gif'], options['gif']+1)]
                 options['crop_width_square']=True
-                options['fixed_width']=2000
             except ValueError :
                 print('ERROR : Generating doppler picture need one integer')
                 print(usage())
@@ -211,7 +210,6 @@ def treat_flag_at_cli(arguments):
                     options['doppler_picture'] = int(decal)
                     options['shift'] = [-int(decal), 0, int(decal)]
                     options['crop_width_square']=True
-                    options['fixed_width']=2000
                 except ValueError :
                     print('ERROR : Generating doppler picture need one integer')
                     print(usage())
@@ -280,7 +278,6 @@ def interpret_UI_values(ui_values):
     if options['gif'] > 0:
         options['shift'] = [i for i in range(-options['gif'], options['gif']+1)]
         options['crop_width_square']=True
-        options['fixed_width']=2000
 
     options['transversalium'] = ui_values['-transversalium-']
     options['trans_strength'] = int(ui_values['-trans_strength-']*100) + 1
@@ -332,7 +329,7 @@ def inputUI():
 
     tab_doppler_layout = [[sg.Text('Dopplergram with shift \n(0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-dopplergram-')]]
 
-    tab_gif_layout = [[sg.Text('Generate a GIF from -n to n pixel \naside ray center (0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-gif-')]]
+    tab_gif_layout = [[sg.Text('Generate a GIF from -n to n pixel aside ray center \n(0 for none): ', size=(25,3)), sg.Input(default_text=0, size=(8,1),key='-gif-')]]
 
     layout = [
     [sg.Text('File(s)', size=(5, 1)), sg.InputText(default_text=options['workDir'],size=(75,1),key='-FILE-'),
