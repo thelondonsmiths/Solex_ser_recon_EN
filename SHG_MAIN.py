@@ -28,6 +28,13 @@ import PySimpleGUI as sg
 import traceback
 import cv2
 import json
+try :
+    from PIL import Image, ImageMath
+    pil_module=True
+except ModuleNotFoundError:
+    print("No module named PIL found. If you want generate GIF picture, you will need it. \n https://pillow.readthedocs.io/en/stable/installation.html")
+    pil_module=False
+
 
 serfiles = []
 
@@ -49,7 +56,8 @@ options = {
     'fixed_width': None,
     'poly_fit': None,
     'doppler': None,
-    'doppler_picture': None,
+    'doppler_picture': 0,
+    'gif': 0,
 
 }
 
@@ -76,12 +84,12 @@ def usage():
     usage_ += "'p' : 'no disk_display' turn off black disk with protuberance images (False by default)\n"
     usage_ += "'s' : 'crop_square_width', crop the width to equal the height (False by default)\n"
     usage_ += "'t' : 'disable transversalium', disable transversalium correction (False by default)\n"
-    usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels from minima\n"
-    usage_ += "'w' : 'x:y:w'  produce images starting at x, finishing at y, every w pixels from minima\n"
+    usage_ += "'w' : 'int a,int b,int c'  produce images at a, b and c pixels from minima\n"
+    usage_ += "'w' : 'int x:int y:int w'  produce images starting at x, finishing at y, every w pixels from minima\n"
     #usage_ += "'P' : 'a,b,c'  using polynome a*x²+b*x+c or a*x³+b*x²+c*x+d as fitting\n"
-    usage_ += "'D' : 'n'      produce 4 pictures, from -n pixels, n pixel from minimum and a mean of 2 and a dopplergram\n"
-    usage_ += "'r' : 'w'  crop width to a constant no. of pixels."
-    #usage_ += "'g' : DOESN'T WORK ->  Dopplergram using base polynome, compute and display difference between minima \n"
+    usage_ += "'D' : int 'n'      produce 4 pictures, from -n pixels, n pixel from minimum and a mean of 2 and a dopplergram. CAREFUL ! INCOMPATIBLE with 'w' or 'g' option\n"
+    usage_ += "'r' : int 'w'  crop width to a constant no. of pixels."
+    usage_ += "'g' : int 'n' Make a animated GIF from -n pixels to n pixels aside absorption ray. Crop to 2000 pixels width."
     return usage_
 
 def treat_flag_at_cli(arguments):
@@ -161,7 +169,28 @@ def treat_flag_at_cli(arguments):
                 i+=1 #the reach the end of arguments.
             options['fixed_width'] = int(fw)
         elif character=='g':
-            options['doppler'] = True
+            if not pil_module :
+                print('ERROR : Generating doppler picture need PIL module. Please install it')
+                sys.exit()
+            gif = ''
+            try:
+                while argument[1:][i+1].isdigit():
+                    gif += argument[1:][i+1]
+                    i += 1
+                i += 1
+            except IndexError:
+                i+=1 #the reach the end of arguments.
+
+            try :
+                options['gif'] = int(gif)
+                options['shift'] = [i for i in range(-options['gif'], options['gif']+1)]
+                options['crop_width_square']=True
+                options['fixedd_width']=2000
+            except ValueError :
+                print('ERROR : Generating doppler picture need one integer')
+                print(usage())
+                sys.exit()
+
             i+=1
         elif character=='D':
             #find characters for shifting
@@ -245,6 +274,11 @@ def interpret_UI_values(ui_values):
     if options['doppler_picture'] > 0:
         decal = options['doppler_picture']
         options['shift'] = [-int(decal), 0, int(decal)]
+    options['gif'] = int(ui_values['-gif-'])
+    if options['gif'] > 0:
+        options['shift'] = [i for i in range(-options['gif'], options['gif']+1)]
+        options['crop_width_square']=True
+        options['fixedd_width']=2000
 
     options['transversalium'] = ui_values['-transversalium-']
     options['trans_strength'] = int(ui_values['-trans_strength-']*100) + 1
@@ -296,6 +330,7 @@ def inputUI():
     [sg.Text('Protus adjustment', size=(25,1)), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='-delta_radius-')],
 
     [sg.Text('Dopplergram with shift \n(0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-dopplergram-')],
+    [sg.Text('Generate a GIF from -n to n pixel aside ray center (0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-gif-')],
     [sg.Button('OK'), sg.Cancel()]
     ] 
     

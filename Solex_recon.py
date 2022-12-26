@@ -18,6 +18,8 @@ import numpy as np
 import cv2
 
 
+
+
 def solex_proc(file_, options):
     clearlog()
     logme('Pixel shift : ' + str(options['shift']))
@@ -72,6 +74,7 @@ def solex_proc(file_, options):
     cercle0 = (-1, -1, -1)
     frames_circularized = []
     doppler_list=[]
+    gif_list = []
 
     #DOC : disk_list[0] is shift=10, disk_list[1] is shift=0. if existing other shifts are after.
     for i in range(len(disk_list)):
@@ -141,10 +144,13 @@ def solex_proc(file_, options):
 
         if i >= 2: #other shifts, if existing
             image_process(detransversaliumed, cercle, options, hdr, basefich)
-            if options['doppler_picture']>0 :
+            if options['doppler_picture']>0:
                 doppler_list.append(detransversaliumed)
+            if options['gif'] > 0:
+                #create list of file to animate
+                gif_list.append(f"{basefich}_clahe.png")
 
-    if isinstance(options['doppler_picture'],int) and options['doppler_picture']>0:
+    if options['doppler_picture']>0:
         basefich = f"{basefich0}_shift={options['doppler_picture']}_DOPPLERGRAM"
         if not options['clahe_only'] :
             DiskHDU1 = fits.PrimaryHDU(disk_list[0], header=hdr)
@@ -174,6 +180,21 @@ def solex_proc(file_, options):
         img_doppler[:,:,1] = picture_mean
         img_doppler[:,:,2] = picture_3
         cv2.imwrite(basefich+'.png',img_doppler)
+
+    if options['gif'] > 0:
+        frames = []
+        for i in gif_list:
+            im = Image.open(i)
+            im2 = ImageMath.eval('im/256', {'im':im}).convert('L')
+            frames.append(im2)
+            os.remove(i)
+
+        # Save into a GIF file that loops forever
+        frames[0].save('ANIMATION.gif', format='GIF',
+                append_images=frames[1:],
+                save_all=True,
+                duration=100, loop=0)
+
 
     with open(basefich0 + '_log.txt', "w") as logfile:
         logfile.writelines(mylog)
