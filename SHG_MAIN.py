@@ -185,7 +185,7 @@ def treat_flag_at_cli(arguments):
                 options['gif'] = int(gif)
                 options['shift'] = [i for i in range(-options['gif'], options['gif']+1)]
                 options['crop_width_square']=True
-                options['fixedd_width']=2000
+                options['fixed_width']=2000
             except ValueError :
                 print('ERROR : Generating doppler picture need one integer')
                 print(usage())
@@ -210,6 +210,8 @@ def treat_flag_at_cli(arguments):
                 try :
                     options['doppler_picture'] = int(decal)
                     options['shift'] = [-int(decal), 0, int(decal)]
+                    options['crop_width_square']=True
+                    options['fixed_width']=2000
                 except ValueError :
                     print('ERROR : Generating doppler picture need one integer')
                     print(usage())
@@ -296,43 +298,53 @@ def interpret_UI_values(ui_values):
 def inputUI():
     sg.theme('Dark2')
     sg.theme_button_color(('white', '#500000'))
-    
+
+    tab_ser_layout = [
+        [sg.Checkbox('Show graphics', default=options['flag_display'], key='-DISP-')],
+        [sg.Checkbox('Save fits files', default=options['save_fit'], key='-FIT-')],
+        [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='-CLAHE_ONLY-')],
+        [sg.Checkbox('Crop square', default=options['crop_width_square'], key='-crop_width_square-')],
+        [sg.Text('Fixed image width (blank for none)', size=(35,1)), sg.Input(default_text=options['fixed_width'], size=(8,1),key='-fixed_width-')],
+        [sg.Checkbox('Mirror X', default=False, key='-flip_x-')],
+        [sg.Text("Rotate png images:", key='img_rotate_slider')],
+        [sg.Slider(range=(0,270),
+            default_value=options['img_rotate'],
+            resolution=90,
+            size=(25,15),
+            orientation='horizontal',
+            font=('Helvetica', 12),
+            key='img_rotate')],
+        [sg.Checkbox('Correct transversalium lines', default=options['transversalium'], key='-transversalium-', enable_events=True)],
+        [sg.Text("Transversalium correction strength (pixels x 100) :", key='text_trans', visible=options['transversalium'])],
+        [sg.Slider(range=(0.25,7),
+            default_value=options['trans_strength']/100,
+            resolution=0.25,
+            size=(25,15),
+            orientation='horizontal',
+            font=('Helvetica', 12),
+            key='-trans_strength-',
+            visible=options['transversalium'])],
+        [sg.Text('Y/X ratio (blank for auto)', size=(25,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
+        [sg.Text('Tilt angle (blank for auto)',size=(25,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
+        [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
+        [sg.Text('Protus adjustment', size=(25,1)), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='-delta_radius-')]
+        ]
+
+    tab_doppler_layout = [[sg.Text('Dopplergram with shift \n(0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-dopplergram-')]]
+
+    tab_gif_layout = [[sg.Text('Generate a GIF from -n to n pixel aside ray center (0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-gif-')]]
+
     layout = [
     [sg.Text('File(s)', size=(5, 1)), sg.InputText(default_text=options['workDir'],size=(75,1),key='-FILE-'),
      sg.FilesBrowse('Open',file_types=(("SER Files", "*.ser"),("AVI Files", "*.avi"),),initial_folder=options['workDir'])],
-    [sg.Checkbox('Show graphics', default=options['flag_display'], key='-DISP-')],
-    [sg.Checkbox('Save fits files', default=options['save_fit'], key='-FIT-')],
-    [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='-CLAHE_ONLY-')],
-    [sg.Checkbox('Crop square', default=options['crop_width_square'], key='-crop_width_square-')],
-    [sg.Text('Fixed image width (blank for none)', size=(35,1)), sg.Input(default_text=options['fixed_width'], size=(8,1),key='-fixed_width-')],
-    [sg.Checkbox('Mirror X', default=False, key='-flip_x-')],
-    [sg.Text("Rotate png images:", key='img_rotate_slider')],
-    [sg.Slider(range=(0,270),
-         default_value=options['img_rotate'],
-         resolution=90,     
-         size=(25,15),
-         orientation='horizontal',
-         font=('Helvetica', 12),
-         key='img_rotate')],
-    [sg.Checkbox('Correct transversalium lines', default=options['transversalium'], key='-transversalium-', enable_events=True)],
-    [sg.Text("Transversalium correction strength (pixels x 100) :", key='text_trans', visible=options['transversalium'])],
-    [sg.Slider(range=(0.25,7),
-         default_value=options['trans_strength']/100,
-         resolution=0.25,     
-         size=(25,15),
-         orientation='horizontal',
-         font=('Helvetica', 12),
-         key='-trans_strength-',
-         visible=options['transversalium'])],
-    [sg.Text('Y/X ratio (blank for auto)', size=(25,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
-    [sg.Text('Tilt angle (blank for auto)',size=(25,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
-    [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
-    [sg.Text('Protus adjustment', size=(25,1)), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='-delta_radius-')],
 
-    [sg.Text('Dopplergram with shift \n(0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-dopplergram-')],
-    [sg.Text('Generate a GIF from -n to n pixel aside ray center (0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-gif-')],
+    [sg.TabGroup([
+        [sg.Tab('Ser Processing', tab_ser_layout, tooltip='Processing a SER file'), sg.Tab('Dopplergram', tab_doppler_layout, tooltip='Make a dopplergram'),
+        sg.Tab('Animated GIF', tab_gif_layout, tooltip='Make a animated GIF')
+        ]])],
+
     [sg.Button('OK'), sg.Cancel()]
-    ] 
+    ]
     
     window = sg.Window('Processing', layout, finalize=True)
     window.BringToFront()

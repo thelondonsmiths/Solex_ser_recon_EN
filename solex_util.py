@@ -190,7 +190,7 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
     curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
     np.save('curve.dat', curve)
     fit = [[math.floor(curve[y]), curve[y] - math.floor(curve[y]), y] for y in range(ih)]
-    if not options['clahe_only'] and options['gif']<1:
+    if not options['clahe_only'] and options['gif']<1 and options['doppler_picture']<1:
         fig = matplotlib.figure.Figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.imshow(mean_img, cmap=matplotlib.pyplot.cm.gray)
@@ -260,7 +260,7 @@ def correct_transversalium2(img, circle, borders, options, not_fake, basefich):
     c = np.ones(img.shape[0])
     c[y1:y2] = correction_t
     #c[c<1] = 1
-    if not_fake and not options['clahe_only'] and options['gif']<1:
+    if not_fake and not options['clahe_only'] and options['gif']<1 and options['doppler_picture']<1:
         fig = matplotlib.figure.Figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.plot(c)
@@ -351,7 +351,7 @@ def image_process(frame, cercle, options, header, basefich):
     # sauvegarde en png de clahe
     cv2.imwrite(basefich+'_clahe.png',cc)   # Modification Jean-Francois: placed before the IF for clear reading
 
-    if not options['clahe_only'] and options['gif']<1:
+    if not options['clahe_only'] and options['gif']<1 and options['doppler_picture']<1:
         # sauvegarde en png pour appliquer une colormap par autre script
 
         #cv2.imwrite(basefich+'_disk.png',frame_contrasted)

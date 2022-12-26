@@ -23,9 +23,6 @@ except ModuleNotFoundError:
     print("No module named PIL found. If you want generate GIF picture, you will need it. \n https://pillow.readthedocs.io/en/stable/installation.html")
     pil_module=False
 
-
-
-
 def solex_proc(file_, options):
     clearlog()
     logme('Pixel shift : ' + str(options['shift']))
@@ -172,7 +169,7 @@ def solex_proc(file_, options):
         #######DOPPLERGRAM########
         frame1, frame2 = doppler_list[0],doppler_list[2]
         # mean picture creation
-        img_doppler=np.zeros([ih, frame1.shape[1], 3],dtype='uint16')
+        img_doppler=np.zeros([frame1.shape[0], frame1.shape[1], 3],dtype='uint16')
         mean=np.array(((frame1+frame2)/2), dtype='uint16')
 
         #compute contrast on mean picture

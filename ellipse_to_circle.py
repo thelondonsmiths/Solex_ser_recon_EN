@@ -289,7 +289,7 @@ def ellipse_to_circle(image, options, basefich):
     X_f3_t = (np.linalg.inv(mat3) @ X_f3.T).T
     borders = [np.min(X_f3_t[:, 0]), np.min(X_f3_t[:, 1]), np.max(X_f3_t[:, 0]), np.max(X_f3_t[:, 1])]
     print('sun borders found:' + str(borders))
-    if not options['clahe_only'] and options['gif']<1:
+    if not options['clahe_only'] and options['gif']<1 and options['doppler_picture']<1:
         fig = matplotlib.figure.Figure()
         ax = [[fig.add_subplot(2, 2, 1), fig.add_subplot(2, 2, 2)], [fig.add_subplot(2, 2, 3), fig.add_subplot(2, 2, 4)]]
         #fig, ax = plt.subplots(ncols=2, nrows=2)
