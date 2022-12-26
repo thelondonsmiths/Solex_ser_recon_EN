@@ -72,7 +72,10 @@ def solex_proc(file_, options):
     cercle0 = (-1, -1, -1)
     frames_circularized = []
     doppler_list=[]
+
+    #DOC : disk_list[0] is shift=10, disk_list[1] is shift=0. if existing other shifts are after.
     for i in range(len(disk_list)):
+
         if options['flip_x']:
             disk_list[i] = np.flip(disk_list[i], axis = 1)
         basefich = basefich0 + '_shift=' + str(options['shift'][i])
@@ -136,9 +139,10 @@ def solex_proc(file_, options):
                 cercle = (nw2, nh//2, cercle[2])
             detransversaliumed = new_img
 
-        if i >= 2:
+        if i >= 2: #other shifts, if existing
             image_process(detransversaliumed, cercle, options, hdr, basefich)
-            doppler_list.append(detransversaliumed)
+            if options['doppler_picture']>0 :
+                doppler_list.append(detransversaliumed)
 
     if isinstance(options['doppler_picture'],int) and options['doppler_picture']>0:
         basefich = basefich0 + '_doppler_shift=' + str(options['doppler_picture'])
