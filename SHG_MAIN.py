@@ -280,7 +280,7 @@ def interpret_UI_values(ui_values):
     if options['gif'] > 0:
         options['shift'] = [i for i in range(-options['gif'], options['gif']+1)]
         options['crop_width_square']=True
-        options['fixedd_width']=2000
+        options['fixed_width']=2000
 
     options['transversalium'] = ui_values['-transversalium-']
     options['trans_strength'] = int(ui_values['-trans_strength-']*100) + 1
@@ -332,7 +332,7 @@ def inputUI():
 
     tab_doppler_layout = [[sg.Text('Dopplergram with shift \n(0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-dopplergram-')]]
 
-    tab_gif_layout = [[sg.Text('Generate a GIF from -n to n pixel aside ray center (0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-gif-')]]
+    tab_gif_layout = [[sg.Text('Generate a GIF from -n to n pixel \naside ray center (0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-gif-')]]
 
     layout = [
     [sg.Text('File(s)', size=(5, 1)), sg.InputText(default_text=options['workDir'],size=(75,1),key='-FILE-'),
