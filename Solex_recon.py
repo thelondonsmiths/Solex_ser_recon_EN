@@ -16,6 +16,12 @@ from ellipse_to_circle import ellipse_to_circle, correct_image
 import json
 import numpy as np
 import cv2
+try :
+    from PIL import Image, ImageMath
+    pil_module=True
+except ModuleNotFoundError:
+    print("No module named PIL found. If you want generate GIF picture, you will need it. \n https://pillow.readthedocs.io/en/stable/installation.html")
+    pil_module=False
 
 
 

@@ -1,0 +1,9 @@
+#Python 3
+NumPy
+SciPy
+Astropy
+Matplotlib
+PySimpleGUI
+OpenCV-python
+scikit-image
+lsq-ellipse
