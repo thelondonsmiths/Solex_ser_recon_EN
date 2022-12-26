@@ -295,7 +295,7 @@ def inputUI():
     [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
     [sg.Text('Protus adjustment', size=(25,1)), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='-delta_radius-')],
 
-    [sg.Text('Dopplergram with shift \n(blanck for none): ', size=(25,2)), sg.Input(default_text=options['fixed_width'], size=(8,1),key='-dopplergram-')],
+    [sg.Text('Dopplergram with shift \n(0 for none): ', size=(25,2)), sg.Input(default_text=0, size=(8,1),key='-dopplergram-')],
     [sg.Button('OK'), sg.Cancel()]
     ] 
     
