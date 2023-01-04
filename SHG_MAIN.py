@@ -89,7 +89,7 @@ def usage():
     #usage_ += "'P' : 'a,b,c'  using polynome a*x²+b*x+c or a*x³+b*x²+c*x+d as fitting\n"
     usage_ += "'D' : int 'n'      produce 4 pictures, from -n pixels, n pixel from minimum and a mean of 2 and a dopplergram. CAREFUL ! INCOMPATIBLE with 'w' or 'g' option\n"
     usage_ += "'r' : int 'w'  crop width to a constant no. of pixels."
-    usage_ += "'g' : int 'n' Make a animated GIF from -n pixels to n pixels aside absorption ray. Crop to 2000 pixels width."
+    usage_ += "'g' : int 'n' Make a animated GIF from -n pixels to n pixels aside absorption ray. "
     return usage_
 
 def treat_flag_at_cli(arguments):
@@ -184,7 +184,7 @@ def treat_flag_at_cli(arguments):
             try :
                 options['gif'] = int(gif)
                 options['shift'] = [i for i in range(-options['gif'], options['gif']+1)]
-                options['crop_width_square']=True
+
             except ValueError :
                 print('ERROR : Generating doppler picture need one integer')
                 print(usage())
@@ -209,7 +209,7 @@ def treat_flag_at_cli(arguments):
                 try :
                     options['doppler_picture'] = int(decal)
                     options['shift'] = [-int(decal), 0, int(decal)]
-                    options['crop_width_square']=True
+
                 except ValueError :
                     print('ERROR : Generating doppler picture need one integer')
                     print(usage())
@@ -277,7 +277,7 @@ def interpret_UI_values(ui_values):
     options['gif'] = int(ui_values['-gif-'])
     if options['gif'] > 0:
         options['shift'] = [i for i in range(-options['gif'], options['gif']+1)]
-        options['crop_width_square']=True
+
 
     options['transversalium'] = ui_values['-transversalium-']
     options['trans_strength'] = int(ui_values['-trans_strength-']*100) + 1
