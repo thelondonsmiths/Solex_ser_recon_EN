@@ -1,7 +1,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 6 November 2022
+Version 18 June 2023
 
 """
 
@@ -167,25 +167,51 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
 
         cv2.destroyAllWindows()
     y1, y2 = detect_bord(max_img, axis=1) # use maximum image to detect borders
-    y1 = min(max_img.shape[0]-1, y1+10)
-    y2 = max(0, y2-10)
+    clip = int((y2 - y1) * 0.05)
+    y1 = min(max_img.shape[0]-1, y1+clip)
+    y2 = max(0, y2-clip)
     logme('Vertical limits y1, y2 : ' + str(y1) + ' ' + str(y2))
-    min_intensity = np.argmin(mean_img, axis = 1) # use mean image to detect spectral line
+    blur_width_x = 25
+    blur_width_y = int((y2 - y1) * 0.01)
+    blur = cv2.blur(mean_img, ksize=(blur_width_x,blur_width_y))
+    min_intensity = blur_width_x//2 + np.argmin(blur[:, blur_width_x//2:-blur_width_x//2], axis = 1) # use blurred mean image to detect spectral line
+    
     p = np.flip(np.asarray(np.polyfit(np.arange(y1, y2), min_intensity[y1:y2], 3), dtype='d'))
     # remove outlier points and get new line fit
     delta = polyval(np.asarray(np.arange(y1,y2), dtype='d'), p) - min_intensity[y1:y2]
     stdv = np.std(delta)
     keep = np.abs(delta/stdv) < 3
     p = np.flip(np.asarray(np.polyfit(np.arange(y1, y2)[keep], min_intensity[y1:y2][keep], 3), dtype='d'))
+    #logme('Spectral line polynomial fit: ' + str(p))
+
+    # find shift to non-blurred minimum
+    min_intensity_sharp = np.argmin(mean_img, axis = 1) # use original mean image to detect spectral line
+    delta_sharp = polyval(np.asarray(np.arange(y1,y2), dtype='d'), p) - min_intensity_sharp[y1:y2]
+    
+    values, counts = np.unique(np.around(delta_sharp, 1),  return_counts=True)
+    ind = np.argpartition(-counts, kth=2)[:2] 
+    shift = values[ind[0]] # find mode
+    #logme(f'shift correction : {shift}')
+    
+    #matplotlib.pyplot.hist(delta_sharp, np.linspace(-20, 20, 400))
+    #matplotlib.pyplot.show()
+
+    tol_line_fit = 5
+    mask_good = np.abs(delta_sharp - shift) < tol_line_fit
+    p = np.flip(np.asarray(np.polyfit(np.arange(y1, y2)[mask_good], min_intensity_sharp[y1:y2][mask_good], 3), dtype='d'))
     logme('Spectral line polynomial fit: ' + str(p))
+    
     curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
     fit = [[math.floor(curve[y]), curve[y] - math.floor(curve[y]), y] for y in range(ih)]
+
+    
+    
     if not options['clahe_only']:
         fig = matplotlib.figure.Figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.imshow(mean_img, cmap=matplotlib.pyplot.cm.gray)
         s = (y2-y1)//20 + 1
-        ax.plot(min_intensity[y1:y2:s], np.arange(y1, y2, s), 'rx', label='line detection')
+        ax.plot(min_intensity_sharp[y1:y2][mask_good][::s], np.arange(y1, y2)[mask_good][::s], 'rx', label='line detection')
         ax.plot(curve, np.arange(ih), label='polynomial fit')
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         ax.set_aspect(0.1)
