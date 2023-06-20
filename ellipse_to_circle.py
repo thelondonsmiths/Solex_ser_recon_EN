@@ -1,7 +1,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet
-Version 21 September 2022
+Version 18 June 2023
 
 """
 from numpy import polynomial
@@ -25,6 +25,7 @@ import cv2
 import scipy
 from ellipse import LsqEllipse
 from matplotlib.patches import Ellipse
+from scipy.spatial import ConvexHull
 
 NUM_REG = 2  # 6 # include biggest NUM_REG regions in fit
              # for multiple full-disk scans this must be changed to 1
@@ -154,7 +155,9 @@ def get_flood_image(image):
 
     thresh = 0.9 * np.sum(image) / (image.shape[0] * image.shape[1])
     print('thresh=', thresh)
-    img_blurred = cv2.blur(image, ksize=(5, 5))
+    print(image.shape[1])
+    blur_width = int(image.shape[0] * 0.01)
+    img_blurred = cv2.blur(image, ksize=(blur_width, blur_width))
     n, bins = np.histogram(img_blurred.flatten(), bins=20)
     '''
     plt.hist(img_blurred.flatten(), bins=20)
@@ -248,7 +251,16 @@ def get_edge_list(image, sigma=2):
         filt[labelled == region_sizes.index(label)] = 1
 
     X = np.argwhere(filt)  # find the non-zero pixels
-
+    Xc = X[ConvexHull(X).vertices] # convex hull
+    Xd = np.zeros(edges.shape)
+    Xd[Xc[:, 0], Xc[:, 1]] = 1
+    filt = np.zeros(edges.shape)
+    
+    for label in sorted(region_sizes, reverse=True)[:min(nf, NUM_REG)]:
+        if np.any(np.logical_and(labelled == region_sizes.index(label), Xd)):
+            filt[labelled == region_sizes.index(label)] = 1
+    
+        
     x_min, y_min, x_max, y_max = np.min(X[:, 0]), np.min(
         X[:, 1]), np.max(X[:, 0]), np.max(X[:, 1])
     dx = x_max - x_min
@@ -264,6 +276,9 @@ def get_edge_list(image, sigma=2):
         X[:, 1]), np.max(X[:, 0]), np.max(X[:, 1])
 
     X = np.array(X, dtype='float')
+    
+    
+    
     return np.array([X, raw_X], dtype=object)
 
 
@@ -300,13 +315,13 @@ def ellipse_to_circle(image, options, basefich):
         ax[0][1].set_aspect('equal')
         ax[0][1].imshow(image, cmap=matplotlib.pyplot.cm.gray)
         ax[0][1].plot(raw_X[:, 1], raw_X[:, 0], 'ro', label='edge detection')
-        ax[0][1].legend()
+        ax[0][1].legend(prop={'size': 6})
         ax[1][1].set_aspect('equal')
         ax[1][1].plot(X_f[:, 1], X_f[:, 0], 'ro', label='filtered edges')
         ax[1][1].plot(ellipse_points[:, 1], ellipse_points[:, 0],
                       color='b', label='ellipse fit')
         ax[1][1].set_ylim([image.shape[0], 0])  # make y-axis upside-down
-        ax[1][1].legend()
+        ax[1][1].legend(prop={'size': 6})
         ax[1][0].set_aspect('equal')
         ax[1][0].imshow(fix_img, cmap=matplotlib.pyplot.cm.gray)
         ax[1][0].axhline(y=borders[1])
