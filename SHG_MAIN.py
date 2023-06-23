@@ -72,7 +72,7 @@ def usage():
     usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels.\n"
     usage_ += "'w' : 'x:y:w'  produce images starting at x, finishing at y, every w pixels."
     usage_ += "'r' : 'w'  crop width to a constant no. of pixels."
-    usage_ += "'x' : Disable ellipse fitting."
+    usage_ += "'x' : disable ellipse fitting."
     return usage_
     
 def treat_flag_at_cli(arguments):
