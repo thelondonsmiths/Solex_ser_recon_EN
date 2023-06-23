@@ -1,13 +1,13 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 18 June 2023
+Version 22 June 2023
 
 """
 
 import numpy as np
 import matplotlib.figure
-import matplotlib.pyplot
+import matplotlib.pyplot as plt
 from astropy.io import fits
 from scipy.interpolate import interp1d
 import os
@@ -33,6 +33,19 @@ def clearlog():
 def logme(s):
     print(s)
     mylog.append(s + '\n')
+
+# return values in an array not "m-far" from mean
+def reject_outliers(data, m = 2):
+    bins = np.linspace(0, np.max(data) + 1, 64)
+    inds = np.digitize(data, bins)
+    modals, counts = np.unique(inds, return_counts=True)
+    modal_value = bins[np.argmax(counts)]
+    median_value = np.median(data)
+    #print('modal value', modal_value)
+    d = np.abs(data - median_value)
+    mdev = np.median(d)
+    s = d/mdev if mdev else np.zeros(len(d))
+    return data[s<m]
 
 
 # read video and return constructed image of sun using fit
@@ -223,60 +236,90 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
 img: np array
 borders: [minX, minY, maxX, maxY]
 cirlce: (centreX, centreY, radius)
-not_fake: true/false on if this was a user-requested image
+reqFlag: 0 if this was a user-requested image, else: 1 if shift = 10, 2 if shift = 0
 '''
 
-def correct_transversalium2(img, circle, borders, options, not_fake, basefich):
+FLAG_OLD_WAY = True # False for experimental version (worse)
+def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
     if circle == (-1, -1, -1):
         print('ERROR : no circle fit so no transversalium correction')
         return img
-    y_s = []
-    y_mean = []
-    y1 = math.ceil(max(circle[1] - circle[2], borders[1]))
-    y2 = math.floor(min(circle[1] + circle[2], borders[3]))
-    for y in range(y1, y2):
-        dx = math.floor((circle[2]**2 - (y-circle[1])**2)**0.5)
-        strip = img[y, math.ceil(max(circle[0] - dx, borders[0])) : math.floor(min(circle[0] + dx, borders[2]))]
+    if (not (reqFlag == 1)) and not FLAG_OLD_WAY:
+        c = options['_transversalium_cache']
+    else:
+        y_s = []
+        y_mean = []
+        y_mean_raw = []
+        y1 = math.ceil(max(circle[1] - circle[2], borders[1]))
+        y2 = math.floor(min(circle[1] + circle[2], borders[3]))
 
-        y_s.append(y)
-        y_mean.append(np.mean(strip))
+        sum_s = 0
+        sum_s2 = 0
+        count = 0
+        for y in range(y1, y2):
+            dx = math.floor((circle[2]**2 - (y-circle[1])**2)**0.5)
+            strip = img[y, math.ceil(max(circle[0] - dx, borders[0])) : math.floor(min(circle[0] + dx, borders[2]))]
+            count += strip.shape[0]
+            sum_s += np.sum(strip)
+            sum_s2 += np.sum(strip*strip)
 
+        stdev = (sum_s2 / count - (sum_s / count) ** 2)**0.5
+        print('disc_stdev:', stdev)
+            
 
-    #smoothed2 = savgol_filter(y_mean, min(301, len(y_mean) // 2 * 2 - 1), 3)
-    smoothed = savgol_filter(y_mean, min(options['trans_strength'], len(y_mean) // 2 * 2 - 1), 3)
-    #plt.plot(y_s, y_mean)
-    #plt.plot(y_s, smoothed2)
-    #plt.plot(y_s, smoothed)
-    #plt.show()
+                
+        for y in range(y1, y2):
+            dx = math.floor((circle[2]**2 - (y-circle[1])**2)**0.5)
+            strip = img[y, math.ceil(max(circle[0] - dx, borders[0])) : math.floor(min(circle[0] + dx, borders[2]))]
 
-    correction = np.divide(smoothed, y_mean)
+            y_s.append(y)
+            y_mean.append(np.mean(reject_outliers(strip)))
+            y_mean_raw.append(np.mean(strip))
+            if y == y1 + 500:
+                #plt.hist(strip, bins = range(0, 2**16, 2**10))
+                #plt.hist(reject_outliers(strip), bins = range(0, 2**16, 2**10))
+                #plt.show()
+                print('mean1,2: ', np.mean(strip), np.mean(reject_outliers(strip)))
 
-    a = 0.05 # taper width
-    N = correction.shape[0]
+        
+        #smoothed2 = savgol_filter(y_mean, min(301, len(y_mean) // 2 * 2 - 1), 3)
+        smoothed = savgol_filter(y_mean, min(options['trans_strength'], len(y_mean) // 2 * 2 - 1), 3)
+        '''
+        plt.plot(y_s, y_mean, label = 'outlier-removed')
+        plt.plot(y_s, y_mean_raw, label = 'raw')
+        #plt.plot(y_s, smoothed2)
+        plt.plot(y_s, smoothed, label = 'smoothed')
+        plt.legend()
+        plt.show()
+        '''
+        correction = np.divide(smoothed, y_mean)
+        a = 0.05 # taper width
+        N = correction.shape[0]
 
-    # Tukey taper function
-    def t(x):
-        if 0 <= x < a*N/2:
-            return 1/2 * (1-math.cos(2*math.pi*x/(a*N)))
-        elif a*N/2 <= x <= N/2:
+        # Tukey taper function
+        def t(x):
+            if 0 <= x < a*N/2:
+                return 1/2 * (1-math.cos(2*math.pi*x/(a*N)))
+            elif a*N/2 <= x <= N/2:
+                return 1
+            elif N/2 <= x <= N:
+                return t(N - x)
+            print('error: weird input for taper function: ' + str(x))
             return 1
-        elif N/2 <= x <= N:
-            return t(N - x)
-        print('error: weird input for taper function: ' + str(x))
-        return 1
 
-    taper = np.array([t(x) for x in range(N)])
-    
-    correction_t = np.ones(N) + (correction - np.ones(N)) * taper
+        taper = np.array([t(x) for x in range(N)])
+        
+        correction_t = np.ones(N) + (correction - np.ones(N)) * taper
 
-    #plt.plot(y_s, correction)
-    #plt.plot(y_s, correction_t)
-    #plt.show()
+        #plt.plot(y_s, correction)
+        #plt.plot(y_s, correction_t)
+        #plt.show()
 
-    c = np.ones(img.shape[0])
-    c[y1:y2] = correction_t
-    #c[c<1] = 1
-    if not_fake and not options['clahe_only']:
+        c = np.ones(img.shape[0])
+        c[y1:y2] = correction_t
+        #c[c<1] = 1
+        options['_transversalium_cache'] = c
+    if (reqFlag == 1 or (FLAG_OLD_WAY and not reqFlag)) and (not options['clahe_only']):
         fig = matplotlib.figure.Figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.plot(c)
