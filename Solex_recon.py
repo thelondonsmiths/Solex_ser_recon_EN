@@ -2,7 +2,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 6 November 2022
+Version 22 June 2023
 
 ------------------------------------------------------------------------
 Reconstruction of an image from the deviations between the minimum of the line and a reference line
@@ -82,9 +82,9 @@ def solex_proc(file, options):
 
         if options['transversalium']:
             if not cercle0 == (-1, -1, -1):
-                detransversaliumed = correct_transversalium2(frame_circularized, cercle0, borders, options, i >= 2, basefich)
+                detransversaliumed = correct_transversalium2(frame_circularized, cercle0, borders, options, (i+1) * int(i < 2), basefich)
             else:
-                detransversaliumed = correct_transversalium2(frame_circularized, (0,0,99999), [0, backup_y1+20, frame_circularized.shape[1] -1, backup_y2-20], options, i >= 2, basefich)
+                detransversaliumed = correct_transversalium2(frame_circularized, (0,0,99999), [0, backup_y1+20, frame_circularized.shape[1] -1, backup_y2-20], options, (i+1) * int(i < 2), basefich)
         else:
             detransversaliumed = frame_circularized
 
