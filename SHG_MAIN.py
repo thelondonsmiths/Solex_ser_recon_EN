@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 6 November 2022
+Version 22 June 2023
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER and AVI files
@@ -60,8 +60,6 @@ flag_dictionnary = {
     'm' : 'flip_x' # True / False
 }
 
-
-
 def usage():
     usage_ = "SHG_MAIN.py [-dcfmpstwr] [file(s) to treat, * allowed]\n"
     usage_ += "'d' : 'flag_display', display all graphics (False by default)\n"
@@ -74,6 +72,7 @@ def usage():
     usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels.\n"
     usage_ += "'w' : 'x:y:w'  produce images starting at x, finishing at y, every w pixels."
     usage_ += "'r' : 'w'  crop width to a constant no. of pixels."
+    usage_ += "'x' : Disable ellipse fitting."
     return usage_
     
 def treat_flag_at_cli(arguments):
@@ -115,6 +114,8 @@ def treat_flag_at_cli(arguments):
         elif character=='p':
             options['disk_display'] = False
             i+=1
+        elif chatavter=='x':
+            options['ratio_fixe'] = 1 # no ellipse fit correction will be applied
         elif character=='r':
             fw = ''
             try:
