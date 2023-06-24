@@ -37,12 +37,12 @@ def logme(s):
 
 # return values in an array not "m-far" from mean
 def reject_outliers(data, m = 2):
-    bins = np.linspace(0, np.max(data) + 1, 64)
-    inds = np.digitize(data, bins)
-    modals, counts = np.unique(inds, return_counts=True)
-    modal_value = bins[np.argmax(counts)]
-    median_value = np.median(data)
+    #bins = np.linspace(0, np.max(data) + 1, 64)
+    #inds = np.digitize(data, bins)
+    #modals, counts = np.unique(inds, return_counts=True)
+    #modal_value = bins[np.argmax(counts)]
     #print('modal value', modal_value)
+    median_value = np.median(data)
     d = np.abs(data - median_value)
     mdev = np.median(d)
     s = d/mdev if mdev else np.zeros(len(d))
@@ -238,37 +238,11 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
 img: np array
 borders: [minX, minY, maxX, maxY]
 cirlce: (centreX, centreY, radius)
-reqFlag: 0 if this was a user-requested image, else: 1 if shift = 10, 2 if shift = 0
+reqFlag: 0 if this was a user-requested image, else: 1 if shift = 10, 2 if shift = 0 (non-user requested)
 '''
 def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
     y1 = math.ceil(max(circle[1] - circle[2], borders[1]))
     y2 = math.floor(min(circle[1] + circle[2], borders[3]))
-    '''
-    y_s = []
-    y_mean = []
-    y_mean_raw = []
-       
-    for y in range(y1, y2):
-        dx = math.floor((circle[2]**2 - (y-circle[1])**2)**0.5)
-        strip = img[y, math.ceil(max(circle[0] - dx, borders[0])) : math.floor(min(circle[0] + dx, borders[2]))]
-
-        y_s.append(y)
-        y_mean.append(np.mean(reject_outliers(strip)))
-        y_mean_raw.append(np.mean(strip))
-        if (y == 1040 or y == 900) and 0:
-            plt.plot(strip)
-            plt.title('strip')
-            plt.show()
-        if y == 1040 and 0:
-            print(y)
-            plt.hist(strip, bins = range(0, 2**16, 2**10))
-            plt.hist(reject_outliers(strip), bins = range(0, 2**16, 2**10))
-            plt.show()
-            print('mean1,2: ', np.mean(strip), np.mean(reject_outliers(strip)))
-    plt.plot(y_mean)
-    plt.show()
-    y_mean_raw = np.array(y_mean_raw)
-    '''
     y_ratios_r = [0]
     y_ratios = [0]
     for y in range(y1 + 1, y2):
@@ -285,17 +259,18 @@ def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
             plt.savefig()
     trend = savgol_filter(y_ratios_r, min(options['trans_strength'], len(y_ratios_r) // 2 * 2 - 1), 3)
 
-    detrended = y_ratios_r - trend
+    detrended = y_ratios_r - trend # remove trend (smoothed)
     detrended -= np.mean(detrended) # remove DC bias
     correction = np.exp(-np.cumsum(detrended))
 
-    if 0:        
-        plt.plot(y_ratios)
-        plt.plot(y_ratios_r)
-        plt.plot(trend)
-        plt.show()
-        plt.plot(correction)
-        plt.show()
+    '''    
+    plt.plot(y_ratios)
+    plt.plot(y_ratios_r)
+    plt.plot(trend)
+    plt.show()
+    plt.plot(correction)
+    plt.show()
+    '''
         
     a = 0.05 # taper width
     N = correction.shape[0]
@@ -323,7 +298,7 @@ def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
     c[y1:y2] = correction_t
     #c[c<1] = 1
     options['_transversalium_cache'] = c
-    if (reqFlag == 1 or (FLAG_OLD_WAY and not reqFlag)) and (not options['clahe_only']):
+    if (not reqFlag) and (not options['clahe_only']):
         fig = matplotlib.figure.Figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.plot(c)
@@ -332,157 +307,7 @@ def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
         fig.savefig(basefich+'_transversalium_correction.png', dpi=300)
     ret = (img.T * c).T # multiply each row in image by correction factor
     ret[ret > 65535] = 65535 # prevent overflow
-    return np.array(ret, dtype='uint16') 
-
-'''
-img: np array
-borders: [minX, minY, maxX, maxY]
-cirlce: (centreX, centreY, radius)
-reqFlag: 0 if this was a user-requested image, else: 1 if shift = 10, 2 if shift = 0
-'''
-
-FLAG_OLD_WAY = True # False for experimental version (worse)
-def correct_transversalium_legacy(img, circle, borders, options, reqFlag, basefich):
-    if circle == (-1, -1, -1):
-        print('ERROR : no circle fit so no transversalium correction')
-        return img
-    if (not (reqFlag == 1)) and not FLAG_OLD_WAY:
-        c = options['_transversalium_cache']
-    else:
-        y_s = []
-        y_mean = []
-        y_mean_raw = []
-        y1 = math.ceil(max(circle[1] - circle[2], borders[1]))
-        y2 = math.floor(min(circle[1] + circle[2], borders[3]))
-
-        sum_s = 0
-        sum_s2 = 0
-        count = 0
-        for y in range(y1, y2):
-            dx = math.floor((circle[2]**2 - (y-circle[1])**2)**0.5)
-            strip = img[y, math.ceil(max(circle[0] - dx, borders[0])) : math.floor(min(circle[0] + dx, borders[2]))]
-            count += strip.shape[0]
-            sum_s += np.sum(strip)
-            sum_s2 += np.sum(strip*strip)
-
-        stdev = (sum_s2 / count - (sum_s / count) ** 2)**0.5
-        print('disc_stdev:', stdev)
-            
-
-                
-        for y in range(y1, y2):
-            dx = math.floor((circle[2]**2 - (y-circle[1])**2)**0.5)
-            strip = img[y, math.ceil(max(circle[0] - dx, borders[0])) : math.floor(min(circle[0] + dx, borders[2]))]
-
-            y_s.append(y)
-            y_mean.append(np.mean(reject_outliers(strip)))
-            y_mean_raw.append(np.mean(strip))
-            if y == 1040 or y == 900:
-                plt.plot(strip)
-                plt.title('strip')
-                plt.show()
-            if y == 1040 and 0:
-                print(y)
-                plt.hist(strip, bins = range(0, 2**16, 2**10))
-                plt.hist(reject_outliers(strip), bins = range(0, 2**16, 2**10))
-                plt.show()
-                print('mean1,2: ', np.mean(strip), np.mean(reject_outliers(strip)))
-                
-        y_mean_raw = np.array(y_mean_raw)
-        
-        #fit_convex(y_mean_raw)
-        #smoothed2 = savgol_filter(y_mean, min(301, len(y_mean) // 2 * 2 - 1), 3)
-        smoothed = savgol_filter(y_mean, min(options['trans_strength'], len(y_mean) // 2 * 2 - 1), 3)
-        
-        plt.plot(y_s, y_mean, label = 'outlier-removed')
-        plt.plot(y_s, y_mean_raw, label = 'raw')
-        #plt.plot(y_s, smoothed2)
-        plt.plot(y_s, smoothed, label = 'smoothed')
-        plt.legend()
-        plt.savefig(basefich+'_trans_curve.png')
-        plt.show()
-        plt.clf()
-        
-        
-        correction = np.divide(smoothed, y_mean)
-        a = 0.05 # taper width
-        N = correction.shape[0]
-
-        # Tukey taper function
-        def t(x):
-            if 0 <= x < a*N/2:
-                return 1/2 * (1-math.cos(2*math.pi*x/(a*N)))
-            elif a*N/2 <= x <= N/2:
-                return 1
-            elif N/2 <= x <= N:
-                return t(N - x)
-            print('error: weird input for taper function: ' + str(x))
-            return 1
-
-        taper = np.array([t(x) for x in range(N)])
-        
-        correction_t = np.ones(N) + (correction - np.ones(N)) * taper
-
-        #plt.plot(y_s, correction)
-        #plt.plot(y_s, correction_t)
-        #plt.show()
-
-        c = np.ones(img.shape[0])
-        c[y1:y2] = correction_t
-        #c[c<1] = 1
-        options['_transversalium_cache'] = c
-    if (reqFlag == 1 or (FLAG_OLD_WAY and not reqFlag)) and (not options['clahe_only']):
-        fig = matplotlib.figure.Figure()
-        ax = fig.add_subplot(1, 1, 1)
-        ax.plot(c)
-        ax.set_xlabel('y')
-        ax.set_ylabel('transversalium correction factor')
-        fig.savefig(basefich+'_transversalium_correction.png', dpi=300)
-    ret = (img.T * c).T # multiply each row in image by correction factor
-    ret[ret > 65535] = 65535 # prevent overflow
-    return np.array(ret, dtype='uint16') 
-
-
-def fit_convex(data):
-    '''
-    from scipy.optimize import lsq_linear
-    data = - data
-    n = data.shape[0]
-    A = np.zeros((n, n), dtype = data.dtype)
-    A[0, 0] = 1
-    A[1, 1] = 1
-    for i in range(2, n):
-        A[i, :] = A[i - 1] * 2 - A[i - 2]
-        A[i, i] = 1
-    print(A)
-    lb = np.zeros(n)
-    lb[0] = -np.inf
-    lb[1] = -np.inf
-    ub = np.zeros(n)
-    ub[:] = np.inf
-    res = lsq_linear(A, data, bounds=(lb, ub), lsmr_tol='auto', verbose=1)
-    print(res)
-    plt.plot(A @ res.x)
-    plt.plot(data)
-    plt.show()
-    '''
-    def fit_func(x, m, a, b, c):
-        return a*(x-m)**2 + b*(x-m)**4 + c
-
-    x = np.arange(data.shape[0])
-
-    p = np.polyfit(x, data, 2)
-    
-    
-    popt, pcov = curve_fit(fit_func, x, data, p0 = [-p[1]/p[0]/2, p[0], 0, p[2] - p[1]**2/4/p[0]] )
-    plt.plot(x, fit_func(x, *popt))
-    plt.plot(x, data)
-    plt.show()
-    sub = data - fit_func(x, *popt)
-    plt.plot(x, sub)
-    plt.show()
-    
-
+    return np.array(ret, dtype='uint16')
 
 def image_process(frame, cercle, options, header, basefich):
     flag_result_show = options['flag_display']
