@@ -26,6 +26,7 @@ In the Python GUI window, enter the name of the video file(s) to be processed. B
 - m : mirror flip in the x-direction
 - s : crop width to make square
 - r : crop width to a constant number of pixels
+-x : disable ellipse fit
 
 Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek at the final png images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
@@ -66,11 +67,7 @@ For protuberance images, the ones with the black disc, turning off the transvers
 
 The slider for "Transversalium correction strength" can be adjusted from low (weak) to high (strong).
 The number corresponds to the width of a window in hundreds of pixels for creation of a "flat".
-The middle range (around 2 to 3) is typically a good value for Hydrogen alpha. Very wide defects may require a higher value, while very "clean" images may retain more features with a lower setting.
-Calcium images (with very strong contrast) seem to work better with a low value (around 1).
-Hydrogen beta images (with typically low contrast) seem to work better with a higher value (around 4).
-Continuum images, because they have weaker features, can be done with a higher setting.
-For stacking, it is recommended to use a lower correction strength than for a single frame. This is because the stacking itself will tend to average out the transversalium noise.
+The default setting of 3 seems to work well for most spectral lines. Very wide defects may be improved by using a higher value.
 
 Y/X ratio: enter a specific Y/X ratio, if this is known. Leave blank for auto-correction. Enter 1 if no correction desired.
 
