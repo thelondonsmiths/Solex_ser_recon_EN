@@ -26,7 +26,7 @@ In the Python GUI window, enter the name of the video file(s) to be processed. B
 - m : mirror flip in the x-direction
 - s : crop width to make square
 - r : crop width to a constant number of pixels
--x : disable ellipse fit
+- x : disable ellipse fit
 
 Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek at the final png images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
