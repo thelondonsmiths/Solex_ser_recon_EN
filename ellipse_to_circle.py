@@ -1,7 +1,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet
-Version 18 June 2023
+Version 27 June 2023
 
 """
 from numpy import polynomial
@@ -9,6 +9,7 @@ from solex_util import *
 
 import skimage
 import skimage.feature
+import skimage.data._fetchers
 import sys
 
 import math
