@@ -117,7 +117,7 @@ def treat_flag_at_cli(arguments):
         elif character=='p':
             options['disk_display'] = False
             i+=1
-        elif chatavter=='x':
+        elif character=='x':
             options['ratio_fixe'] = 1 # no ellipse fit correction will be applied
         elif character=='r':
             fw = ''
