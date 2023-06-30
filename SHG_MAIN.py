@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 22 June 2023
+Version 27 June 2023
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER and AVI files
@@ -28,6 +28,8 @@ import PySimpleGUI as sg
 import traceback
 import cv2
 import json
+from multiprocessing import Pool
+import time
 
 serfiles = []
 
@@ -47,6 +49,7 @@ options = {
     'flip_x': False,
     'workDir': '',
     'fixed_width': None,
+    'multithreading' : True,
 }
 
 flag_dictionnary = {
@@ -278,8 +281,9 @@ def write_ini():
         traceback.print_exc()
         print('ERROR: failed to write config file: ' + mydir_ini)
 
-def do_work(serfiles, options, cli = False):
+def do_work(data):
     print('in do work')
+    serfiles, options = data # good?
     if len(serfiles)==1:
         options['tempo']=60000 #4000 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
     else:
@@ -287,6 +291,7 @@ def do_work(serfiles, options, cli = False):
         
     # boucle sur la liste des fichers
     for serfile in serfiles:
+        print(serfile)
         if serfile=='':
             logme("ERROR filename empty")
             return
@@ -314,7 +319,7 @@ def do_work(serfiles, options, cli = False):
         except:
             print('ERROR ENCOUNTERED')
             traceback.print_exc()
-            cv2.destroyAllWindows()
+            cv2.destroyAllWindows() # ? TODO needed?
 
 """
 -------------------------------------------------------------------------------------------
@@ -323,6 +328,8 @@ le programme commence ici !
 """
 if __name__ == '__main__':
     # check for CLI input
+
+    
     if len(sys.argv)>1: 
         for argument in sys.argv[1:]:
             if '-' == argument[0]: #it's flag options
@@ -342,7 +349,16 @@ if __name__ == '__main__':
             read_ini()
             while True:
                 inputUI()
-                do_work(serfiles, options)
+                options['multithreading'] = False
+                if not options['multithreading']:
+                    do_work((serfiles, options))
+                else:
+                    data = [((sf,), options.copy()) for sf in serfiles]
+                    print(data)
+                    with Pool(2) as p:
+                        for i in range(2):
+                            p.apply_async(time.sleep, (i*6,)) # stagger start times
+                        p.map(do_work, data)
         else:
-            do_work(serfiles, options, cli = True) # use inputs from CLI
+            do_work((serfiles, options)) # use inputs from CLI
 
