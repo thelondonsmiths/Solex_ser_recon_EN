@@ -24,14 +24,19 @@ input: tasks: list of tuples (file, option)
 
 def solex_do_work(tasks):
     #print(tasks)
-    with Pool(2) as p:
+    multi = True
+    with Pool(4) as p:
+        results = []
         for file, options in tasks:
             print('file %s is processing'%file)
             disk_list, hdr = solex_read(file, options)
-            
-            #p.apply_async(solex_process, args = (options, disk_list, hdr)) # TODO: prints won't be visible inside new thread, can this be fixed?
-            solex_process(options, disk_list, hdr)
-            #future = executor.submit(solex_process, options, disk_list, hdr) # handle data processing in a new thread   
+            if multi:
+                result = p.apply_async(solex_process, args = (options, disk_list, hdr)) # TODO: prints won't be visible inside new thread, can this be fixed?
+                results.append(result)
+            else:
+                solex_process(options, disk_list, hdr)
+        [result.wait() for result in results]
+        
 '''
 read a solex file and return a list of numpy arrays representing the raw result
 '''

@@ -344,7 +344,7 @@ if __name__ == '__main__':
                     serfiles.append(argument)
         print('theses files are going to be processed : ', serfiles)
 
-    if 1: #test code for performance test
+    if 0: #test code for performance test
         read_ini()
         inputUI()
         cProfile.run('handle_files(serfiles, options)', sort='cumtime')

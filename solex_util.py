@@ -148,7 +148,6 @@ def compute_mean_max(file):
     max_data = np.zeros((rdr.ih, rdr.iw), dtype='uint16')
     while rdr.has_frames():
         img = rdr.next_frame()
-        rdr.FrameIndex += 1 # skip a frame (undersample)
         my_data += img
         max_data = np.maximum(max_data, img)
     return (my_data / rdr.FrameCount).astype('uint16'), max_data
