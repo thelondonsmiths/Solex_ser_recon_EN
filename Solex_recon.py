@@ -13,17 +13,39 @@ Reconstruction of an image from the deviations between the minimum of the line a
 from solex_util import *
 from video_reader import *
 from ellipse_to_circle import ellipse_to_circle, correct_image
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Pool
 
 
+'''
+process files: call solex_read and solex_proc to process a list of files with specified options
+input: tasks: list of tuples (file, option)
+'''
 
-def solex_proc(file, options):
-    clearlog()
-    logme('Pixel shift : ' + str(options['shift']))
-    options['shift'] = [10, 0] + options['shift']  # 10, 0 are "fake"
+def solex_do_work(tasks):
+    #print(tasks)
+    with Pool(2) as p:
+        for file, options in tasks:
+            print('file %s is processing'%file)
+            disk_list, hdr = solex_read(file, options)
+            
+            #p.apply_async(solex_process, args = (options, disk_list, hdr)) # TODO: prints won't be visible inside new thread, can this be fixed?
+            solex_process(options, disk_list, hdr)
+            #future = executor.submit(solex_process, options, disk_list, hdr) # handle data processing in a new thread   
+'''
+read a solex file and return a list of numpy arrays representing the raw result
+'''
+def solex_read(file, options):
+    basefich0 = os.path.splitext(file)[0] # file name without extension
+    options['basefich0'] = basefich0
+    clearlog(basefich0 + '_log.txt')
+    logme(basefich0 + '_log.txt', 'Pixel shift : ' + str(options['shift']))
+    options['shift_requested'] = options['shift']
+    options['shift'] = list(dict.fromkeys([10, 0] + options['shift']))  # 10, 0 are "fake", but if they are requested, then don't double count
     WorkDir = os.path.dirname(file) + "/"
     os.chdir(WorkDir)
-    base = os.path.basename(file)
-    basefich0 = os.path.splitext(base)[0]
+    #base = os.path.basename(file)
+    #directory = os.path.dirname(file)#os.path.splitext(base)[0]
     rdr = video_reader(file)
     hdr = make_header(rdr)
     ih = rdr.ih
@@ -34,31 +56,43 @@ def solex_proc(file, options):
 
     disk_list, ih, iw, FrameCount = read_video_improved(file, fit, options)
     
-    hdr['NAXIS1'] = iw  # note: slightly dodgy, new width
+    hdr['NAXIS1'] = iw  # note: slightly dodgy, new width for subsequent fits file
 
     # sauve fichier disque reconstruit
 
     if options['flag_display']:
         cv2.destroyAllWindows()
 
-    if options['transversalium']:
-        logme('Transversalium correction : ' + str(options['trans_strength']))
-    else:
-        logme('transversalium disabled')
-    logme('Mirror X : ' + str(options['flip_x']))
-    logme('Post-rotation : ' + str(options['img_rotate']) + ' degrees')
-    logme(f'Protus adjustment : {options["delta_radius"]}')
-    borders = [0,0,0,0]
-    cercle0 = (-1, -1, -1)
-    frames_circularized = []
     for i in range(len(disk_list)):
         if options['flip_x']:
             disk_list[i] = np.flip(disk_list[i], axis = 1)
         basefich = basefich0 + '_shift=' + str(options['shift'][i])
-        if options['save_fit'] and i >= 2:
+        flag_requested = options['shift'][i] in options['shift_requested']
+        
+        if options['save_fit'] and flag_requested:
             DiskHDU = fits.PrimaryHDU(disk_list[i], header=hdr)
             DiskHDU.writeto(basefich + '_raw.fits', overwrite='True')
-
+    return disk_list, hdr
+    
+'''
+process the raw disks: circularise, detransversalium, crop, and adjust contrast
+'''
+def solex_process(options, disk_list, hdr):
+    basefich0 = options['basefich0']
+    print('in solex_process')
+    if options['transversalium']:
+        logme(basefich0 + '_log.txt', 'Transversalium correction : ' + str(options['trans_strength']))
+    else:
+        logme(basefich0 + '_log.txt', 'transversalium disabled')
+    logme(basefich0 + '_log.txt', 'Mirror X : ' + str(options['flip_x']))
+    logme(basefich0 + '_log.txt', 'Post-rotation : ' + str(options['img_rotate']) + ' degrees')
+    logme(basefich0 + '_log.txt', f'Protus adjustment : {options["delta_radius"]}')
+    borders = [0,0,0,0]
+    cercle0 = (-1, -1, -1)
+    frames_circularized = []
+    for i in range(len(disk_list)):
+        flag_requested = options['shift'][i] in options['shift_requested']
+        basefich = basefich0 + '_shift=' + str(options['shift'][i])
         """
         We now apply ellipse_fit to apply the geometric correction
 
@@ -73,22 +107,26 @@ def solex_proc(file, options):
         else:
             ratio = options['ratio_fixe'] if not options['ratio_fixe'] is None else 1.0
             phi = math.radians(options['slant_fix']) if not options['slant_fix'] is None else 0.0
-            frame_circularized = correct_image(disk_list[i] / 65536, phi, ratio, np.array([-1.0, -1.0]), -1.0, print_log=i == 0)[0]  # Note that we assume 16-bit
+            if flag_requested:
+                frame_circularized = correct_image(disk_list[i] / 65536, phi, ratio, np.array([-1.0, -1.0]), -1.0, options['basefich0'], print_log=i == 0)[0]  # Note that we assume 16-bit
 
-        if options['save_fit'] and i >= 2:  # first two shifts are not user specified
+        if not flag_requested:
+            continue # skip processing if shift is not desired
+        
+        if options['save_fit']:  # first two shifts are not user specified
             DiskHDU = fits.PrimaryHDU(frame_circularized, header=hdr)
             DiskHDU.writeto(basefich + '_circular.fits', overwrite='True')
 
 
         if options['transversalium']:
             if not cercle0 == (-1, -1, -1):
-                detransversaliumed = correct_transversalium2(frame_circularized, cercle0, borders, options, (i+1) * int(i < 2), basefich)
+                detransversaliumed = correct_transversalium2(frame_circularized, cercle0, borders, options, 0, basefich)
             else:
-                detransversaliumed = correct_transversalium2(frame_circularized, (0,0,99999), [0, backup_y1+20, frame_circularized.shape[1] -1, backup_y2-20], options, (i+1) * int(i < 2), basefich)
+                detransversaliumed = correct_transversalium2(frame_circularized, (0,0,99999), [0, backup_y1+20, frame_circularized.shape[1] -1, backup_y2-20], options, 0, basefich)
         else:
             detransversaliumed = frame_circularized
 
-        if options['save_fit'] and i >= 2 and options['transversalium']:  # first two shifts are not user specified
+        if options['save_fit'] and options['transversalium']:  # first two shifts are not user specified
             DiskHDU = fits.PrimaryHDU(detransversaliumed, header=hdr)
             DiskHDU.writeto(basefich + '_detransversaliumed.fits', overwrite='True')
 
@@ -112,11 +150,5 @@ def solex_proc(file, options):
             detransversaliumed = new_img    
        
 
-        if i >= 2:
-            image_process(detransversaliumed, cercle, options, hdr, basefich)
-        
-        
-    with open(basefich0 + '_log.txt', "w") as logfile:
-        logfile.writelines(mylog)
-
-    return frames_circularized[2:], hdr, cercle
+        image_process(detransversaliumed, cercle, options, hdr, basefich)
+        write_complete(basefich0 + '_log.txt')

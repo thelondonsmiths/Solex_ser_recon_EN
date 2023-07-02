@@ -23,17 +23,19 @@ import tkinter as tk
 import ctypes # Modification Jean-Francois: for reading the monitor size
 import cv2
 from scipy.optimize import curve_fit
+import datetime
 
-mylog = []
+def clearlog(path):
+    with open(path, 'w') as f:
+        f.write('start time: ' + str(datetime.datetime.now()) + '\n')
 
+def write_complete(path):
+    with open(path, 'a') as f:
+        f.write('end time: ' + str(datetime.datetime.now()) + '\n')
 
-def clearlog():
-    mylog.clear()
-
-
-def logme(s):
-    print(s)
-    mylog.append(s + '\n')
+def logme(path, s):
+    with open(path, 'a') as f:
+        f.write(s + '\n')
 
 # return values in an array not "m-far" from mean
 def reject_outliers(data, m = 2):
@@ -136,13 +138,17 @@ def compute_mean_max(file):
     """IN : file path"
     OUT :numpy array
     """
+    basefich0 = os.path.splitext(file)[0] # file name without extension
+    
+    
     rdr = video_reader(file)
-    logme('Width, Height : ' + str(rdr.Width) + ' ' + str(rdr.Height))
-    logme('Number of frames : ' + str(rdr.FrameCount))
+    logme(basefich0 + '_log.txt', 'Width, Height : ' + str(rdr.Width) + ' ' + str(rdr.Height))
+    logme(basefich0 + '_log.txt', 'Number of frames : ' + str(rdr.FrameCount))
     my_data = np.zeros((rdr.ih, rdr.iw), dtype='uint64')
     max_data = np.zeros((rdr.ih, rdr.iw), dtype='uint16')
     while rdr.has_frames():
         img = rdr.next_frame()
+        rdr.FrameIndex += 1 # skip a frame (undersample)
         my_data += img
         max_data = np.maximum(max_data, img)
     return (my_data / rdr.FrameCount).astype('uint16'), max_data
@@ -184,7 +190,7 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
     clip = int((y2 - y1) * 0.05)
     y1 = min(max_img.shape[0]-1, y1+clip)
     y2 = max(0, y2-clip)
-    logme('Vertical limits y1, y2 : ' + str(y1) + ' ' + str(y2))
+    logme(basefich0 + '_log.txt', 'Vertical limits y1, y2 : ' + str(y1) + ' ' + str(y2))
     blur_width_x = 25
     blur_width_y = int((y2 - y1) * 0.01)
     blur = cv2.blur(mean_img, ksize=(blur_width_x,blur_width_y))
@@ -213,7 +219,7 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
     tol_line_fit = 5
     mask_good = np.abs(delta_sharp - shift) < tol_line_fit
     p = np.flip(np.asarray(np.polyfit(np.arange(y1, y2)[mask_good], min_intensity_sharp[y1:y2][mask_good], 3), dtype='d'))
-    logme('Spectral line polynomial fit: ' + str(p))
+    logme(basefich0 + '_log.txt', 'Spectral line polynomial fit: ' + str(p))
     
     curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
     fit = [[math.floor(curve[y]), curve[y] - math.floor(curve[y]), y] for y in range(ih)]
@@ -237,7 +243,7 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
 '''
 img: np array
 borders: [minX, minY, maxX, maxY]
-cirlce: (centreX, centreY, radius)
+circle: (centreX, centreY, radius)
 reqFlag: 0 if this was a user-requested image, else: 1 if shift = 10, 2 if shift = 0 (non-user requested)
 '''
 def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
@@ -370,6 +376,7 @@ def image_process(frame, cercle, options, header, basefich):
     frame = np.rot90(frame, options['img_rotate']//90, axes=(0,1))
     
     # sauvegarde en png de clahe
+    print('saving image to:' + basefich+'_clahe.png')
     cv2.imwrite(basefich+'_clahe.png',cc)   # Modification Jean-Francois: placed before the IF for clear reading
     if not options['clahe_only']:
         # sauvegarde en png pour appliquer une colormap par autre script

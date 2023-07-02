@@ -91,7 +91,7 @@ def two_step(points):
         center), height, phi, ratio, points_tresholded, ellipse_points
 
 # note: height is actually an ellipse axis
-def correct_image(image, phi, ratio, center, height, print_log=False):
+def correct_image(image, phi, ratio, center, height, basefich0, print_log=False):
     """correct image geometry. TODO : a rotation is made instead of a tilt
     IN : numpy array, float, float, numpy array (2 elements)
     OUT : numpy array, numpy array (2 elements)
@@ -127,15 +127,15 @@ def correct_image(image, phi, ratio, center, height, print_log=False):
                 math.degrees(theta)) +
             " degrees")
         np.set_printoptions(suppress=True)
-        logme('Y/X ratio : ' + "{:.3f}".format(ratio))
-        logme(
+        logme(basefich0 + '_log.txt', 'Y/X ratio : ' + "{:.3f}".format(ratio))
+        logme(basefich0 + '_log.txt',
             'Tilt angle : ' +
             "{:.3f}".format(
                 math.degrees(phi)) +
             " degrees")
-        logme('Linear transform correction matrix : \n' + str(mat))
-        logme('Disk position, radius : ' + ((str(new_center) + ', ' + "{:.3f}".format(new_radius)) if not height == -1.0 else 'UNKNOWN'))
-        logme ('Unrotation : '  +
+        logme(basefich0 + '_log.txt', 'Linear transform correction matrix : \n' + str(mat))
+        logme(basefich0 + '_log.txt', 'Disk position, radius : ' + ((str(new_center) + ', ' + "{:.3f}".format(new_radius)) if not height == -1.0 else 'UNKNOWN'))
+        logme(basefich0 + '_log.txt', 'Unrotation : '  +
             "{:.3f}".format(
                 math.degrees(theta)) +
             " degrees")
@@ -227,7 +227,7 @@ def get_edge_list(image, sigma=2):
     TODO: simplify this function?
     """
     if sigma <= 0:
-        logme('ERROR: could not find any edges')
+        print('ERROR: could not find any edges')
         return image, (-1, -1, -1)
 
     low_threshold = np.median(cv2.blur(image, ksize=(5, 5))) / 10
@@ -296,7 +296,7 @@ def ellipse_to_circle(image, options, basefich):
     center, height, phi, ratio, X_f, ellipse_points = two_step(X)
     center = np.array([center[1], center[0]])
 
-    fix_img, new_circle, mat3 = correct_image(image, phi, ratio, center, height, print_log=True)
+    fix_img, new_circle, mat3 = correct_image(image, phi, ratio, center, height, options['basefich0'], print_log=True)
 
 
     X_f3 = np.ones((X_f.shape[0], 3))

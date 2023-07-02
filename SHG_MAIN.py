@@ -21,14 +21,13 @@ import numpy as np
 
 import os
 import sys
-import Solex_recon as sol
+import Solex_recon
 from astropy.io import fits
 import cProfile
 import PySimpleGUI as sg
 import traceback
 import cv2
 import json
-from multiprocessing import Pool
 import time
 
 serfiles = []
@@ -281,45 +280,51 @@ def write_ini():
         traceback.print_exc()
         print('ERROR: failed to write config file: ' + mydir_ini)
 
-def do_work(data):
-    print('in do work')
-    serfiles, options = data # good?
+def precheck_files(serfiles, options):
+    write_ini()
     if len(serfiles)==1:
         options['tempo']=60000 #4000 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
     else:
         options['tempo']=5000
-        
-    # boucle sur la liste des fichers
+
+    good_tasks = []
     for serfile in serfiles:
         print(serfile)
         if serfile=='':
-            logme("ERROR filename empty")
-            return
-        print('file %s is processing'%serfile)
-        options['workDir'] = os.path.dirname(serfile)+"/"
-        os.chdir(options['workDir'])
+            print("ERROR filename empty")
+            continue
         base = os.path.basename(serfile)
-        basefich = os.path.splitext(base)[0]
         if base == '':
-            logme('filename ERROR : ',serfile)
-            return
+            print('filename ERROR : ', serfile)
+            continue
 
         # ouverture du fichier ser
+        '''
         try:
             f=open(serfile, "rb")
             f.close()
         except:
-            logme('ERROR opening file : ',serfile)
-            return
+            print('ERROR opening file : ', serfile)
+            continue
+        '''
+        if not good_tasks:
+            # save parameters to .ini file if this is the first good task
+            options['workDir'] = os.path.dirname(serfile)+"/"
+            write_ini()
+        good_tasks.append((serfile, options.copy()))
+    return good_tasks
 
-        # save parameters to .ini file
-        write_ini()
-        try : 
-            sol.solex_proc(serfile,options.copy()) 
-        except:
-            print('ERROR ENCOUNTERED')
-            traceback.print_exc()
-            cv2.destroyAllWindows() # ? TODO needed?
+def handle_files(files, options, flag_command_line = False):
+    good_tasks = precheck_files(files, options)
+    try : 
+       Solex_recon.solex_do_work(good_tasks)
+    except:
+        print('ERROR ENCOUNTERED')
+        traceback.print_exc() # TODO: could have pop-up error if optiond['show_graphics'] is True
+        cv2.destroyAllWindows() # ? TODO needed?
+        if not flag_command_line:
+            sg.popup_error('ERROR message: ' + traceback.format_exc()) # show pop_up of error message
+
 
 """
 -------------------------------------------------------------------------------------------
@@ -339,9 +344,10 @@ if __name__ == '__main__':
                     serfiles.append(argument)
         print('theses files are going to be processed : ', serfiles)
 
-    if 0: #test code for performance test
+    if 1: #test code for performance test
+        read_ini()
         inputUI()
-        cProfile.run('do_work(serfiles, options)', sort='cumtime')
+        cProfile.run('handle_files(serfiles, options)', sort='cumtime')
     else:
         # if no command line arguments, open GUI interface
         if len(serfiles)==0:
@@ -349,16 +355,8 @@ if __name__ == '__main__':
             read_ini()
             while True:
                 inputUI()
-                options['multithreading'] = False
-                if not options['multithreading']:
-                    do_work((serfiles, options))
-                else:
-                    data = [((sf,), options.copy()) for sf in serfiles]
-                    print(data)
-                    with Pool(2) as p:
-                        for i in range(2):
-                            p.apply_async(time.sleep, (i*6,)) # stagger start times
-                        p.map(do_work, data)
+                handle_files(serfiles, options)
+                    
         else:
-            do_work((serfiles, options)) # use inputs from CLI
+            handle_files(serfiles, options, flag_command_line = True) # use inputs from CLI
 
