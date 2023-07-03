@@ -1,7 +1,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet
-Version 27 June 2023
+Version 3 July 2023
 
 """
 from numpy import polynomial
@@ -128,6 +128,7 @@ def correct_image(image, phi, ratio, center, height, basefich0, print_log=False)
             " degrees")
         np.set_printoptions(suppress=True)
         logme(basefich0 + '_log.txt', 'Y/X ratio : ' + "{:.3f}".format(ratio))
+        print('Y/X ratio : ' + "{:.3f}".format(ratio))
         logme(basefich0 + '_log.txt',
             'Tilt angle : ' +
             "{:.3f}".format(

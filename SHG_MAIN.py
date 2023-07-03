@@ -3,7 +3,7 @@
 @author: Valerie Desnoux
 with improvements by Andrew Smith
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 27 June 2023
+Version 3 July 2023
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER and AVI files
@@ -319,13 +319,13 @@ def precheck_files(serfiles, options):
 def handle_files(files, options, flag_command_line = False):
     good_tasks = precheck_files(files, options)
     try : 
-       Solex_recon.solex_do_work(good_tasks)
+       Solex_recon.solex_do_work(good_tasks, flag_command_line)
     except:
         print('ERROR ENCOUNTERED')
         traceback.print_exc() # TODO: could have pop-up error if optiond['show_graphics'] is True
         cv2.destroyAllWindows() # ? TODO needed?
         if not flag_command_line:
-            sg.popup_error('ERROR message: ' + traceback.format_exc()) # show pop_up of error message
+            sg.popup_ok('ERROR message: ' + traceback.format_exc()) # show pop_up of error message
 
 
 """
@@ -336,8 +336,6 @@ le programme commence ici !
 if __name__ == '__main__':
     freeze_support()
     # check for CLI input
-
-    
     if len(sys.argv)>1: 
         for argument in sys.argv[1:]:
             if '-' == argument[0]: #it's flag options

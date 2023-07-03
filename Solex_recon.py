@@ -2,7 +2,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 22 June 2023
+Version 3 July 2023
 
 ------------------------------------------------------------------------
 Reconstruction of an image from the deviations between the minimum of the line and a reference line
@@ -15,6 +15,7 @@ from video_reader import *
 from ellipse_to_circle import ellipse_to_circle, correct_image
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
+import PySimpleGUI as sg # for progress bar
 
 
 '''
@@ -22,13 +23,14 @@ process files: call solex_read and solex_proc to process a list of files with sp
 input: tasks: list of tuples (file, option)
 '''
 
-def solex_do_work(tasks):
-    #print(tasks)
+def solex_do_work(tasks, flag_command_line = False):
     multi = True
     with Pool(4) as p:
         results = []
-        for file, options in tasks:
+        for i, (file, options) in enumerate(tasks):
             print('file %s is processing'%file)
+            if len(tasks) > 1 and not flag_command_line:  
+                sg.one_line_progress_meter('Progress Bar', i, len(tasks), '','Reading file...')
             disk_list, hdr = solex_read(file, options)
             if multi:
                 result = p.apply_async(solex_process, args = (options, disk_list, hdr)) # TODO: prints won't be visible inside new thread, can this be fixed?
@@ -36,6 +38,8 @@ def solex_do_work(tasks):
             else:
                 solex_process(options, disk_list, hdr)
         [result.wait() for result in results]
+        if len(tasks) > 1 and not flag_command_line:  
+            sg.one_line_progress_meter('Progress Bar', len(tasks), len(tasks), '','Done.')
         
 '''
 read a solex file and return a list of numpy arrays representing the raw result
@@ -47,10 +51,6 @@ def solex_read(file, options):
     logme(basefich0 + '_log.txt', 'Pixel shift : ' + str(options['shift']))
     options['shift_requested'] = options['shift']
     options['shift'] = list(dict.fromkeys([10, 0] + options['shift']))  # 10, 0 are "fake", but if they are requested, then don't double count
-    WorkDir = os.path.dirname(file) + "/"
-    os.chdir(WorkDir)
-    #base = os.path.basename(file)
-    #directory = os.path.dirname(file)#os.path.splitext(base)[0]
     rdr = video_reader(file)
     hdr = make_header(rdr)
     ih = rdr.ih
@@ -84,7 +84,6 @@ process the raw disks: circularise, detransversalium, crop, and adjust contrast
 '''
 def solex_process(options, disk_list, hdr):
     basefich0 = options['basefich0']
-    print('in solex_process')
     if options['transversalium']:
         logme(basefich0 + '_log.txt', 'Transversalium correction : ' + str(options['trans_strength']))
     else:

@@ -1,7 +1,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 24 June 2023
+Version 3 July 2023
 
 """
 
@@ -26,16 +26,29 @@ from scipy.optimize import curve_fit
 import datetime
 
 def clearlog(path):
-    with open(path, 'w') as f:
-        f.write('start time: ' + str(datetime.datetime.now()) + '\n')
+    try:
+        with open(path, 'w') as f:
+            f.write('start time: ' + str(datetime.datetime.now()) + '\n')
+    except Exception:
+        traceback.print_exc()
+        print('ERROR: failed to log file: ' + path)
 
 def write_complete(path):
-    with open(path, 'a') as f:
-        f.write('end time: ' + str(datetime.datetime.now()) + '\n')
+    try:
+        with open(path, 'a') as f:
+            f.write('end time: ' + str(datetime.datetime.now()) + '\n')
+    except Exception:
+        traceback.print_exc()
+        print('ERROR: failed to log file: ' + path)
+        
 
 def logme(path, s):
-    with open(path, 'a') as f:
-        f.write(s + '\n')
+    try:
+        with open(path, 'a') as f:
+            f.write(s + '\n')
+    except Exception:
+        traceback.print_exc()
+        print('ERROR: failed to log file: ' + path)
 
 # return values in an array not "m-far" from mean
 def reject_outliers(data, m = 2):
@@ -322,23 +335,10 @@ def image_process(frame, cercle, options, header, basefich):
     clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(2,2))
     cl1 = clahe.apply(frame)
     
-    # image leger seuils
-    frame1=np.copy(frame)
-    Seuil_bas=np.percentile(frame, 25)
-    Seuil_haut=np.percentile(frame,99.9999)
-    print('Seuil bas       :', np.floor(Seuil_bas))
-    print('Seuil haut      :', np.floor(Seuil_haut))
-    fc=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
-    fc[fc<0]=0
-    fc[fc>65535] = 65535
-    frame_contrasted=np.array(fc, dtype='uint16')
-    
     # image seuils serres 
     frame1=np.copy(frame)
     Seuil_bas=(Seuil_haut*0.25)
     Seuil_haut=np.percentile(frame1,99.9999)
-    print('Seuil bas HC    :', np.floor(Seuil_bas))
-    print('Seuil haut HC   :', np.floor(Seuil_haut))
     fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
     fc2[fc2<0]=0
     fc2[fc2>65535] = 65535
@@ -369,7 +369,6 @@ def image_process(frame, cercle, options, header, basefich):
 
     # handle rotations
     cc = np.rot90(cc, options['img_rotate']//90, axes=(0,1))
-    frame_contrasted = np.rot90(frame_contrasted, options['img_rotate']//90, axes=(0,1))
     frame_contrasted2 = np.rot90(frame_contrasted2, options['img_rotate']//90, axes=(0,1))
     frame_contrasted3 = np.rot90(frame_contrasted3, options['img_rotate']//90, axes=(0,1))
     frame = np.rot90(frame, options['img_rotate']//90, axes=(0,1))
@@ -378,8 +377,6 @@ def image_process(frame, cercle, options, header, basefich):
     print('saving image to:' + basefich+'_clahe.png')
     cv2.imwrite(basefich+'_clahe.png',cc)   # Modification Jean-Francois: placed before the IF for clear reading
     if not options['clahe_only']:
-        # sauvegarde en png pour appliquer une colormap par autre script
-        #cv2.imwrite(basefich+'_disk.png',frame_contrasted)
         # sauvegarde en png pour appliquer une colormap par autre script
         cv2.imwrite(basefich+'_diskHC.png',frame_contrasted2)
         # sauvegarde en png pour appliquer une colormap par autre script
