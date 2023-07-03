@@ -1,7 +1,7 @@
 """
 @author: Andrew Smith 
 contributors: Valerie Desnoux, Matt Considine
-Version 30 June 2022
+Version 3 July 2023
 
 """
 import numpy as np
@@ -9,9 +9,11 @@ import cv2 #MattC
 
 class video_reader:
 
-    def __init__(self, file):
+    def __init__(self, file, buffer_size = 25):
         # ouverture et lecture de l'entete du fichier ser
         self.file = file
+        self.buffer_size = buffer_size
+        self.buffer_remaining = 0
         
         if self.file.upper().endswith('.SER'): #MattC 20210726
             self.SER_flag=True
@@ -93,11 +95,18 @@ class video_reader:
         self.offset = self.fileoffset + self.FrameIndex * self.count * self.infilebytes #MattC track offset
       
         if self.SER_flag: #MattC
-            img = np.fromfile(
-                self.file,
-                dtype = self.infiledatatype,
-                count = self.count,
-                offset=self.offset)
+            if self.buffer_remaining == 0:
+                self.buf = np.fromfile(
+                    self.file,
+                    dtype = self.infiledatatype,
+                    count = self.count * max(0, min(self.buffer_size, self.FrameCount - self.FrameIndex)),
+                    offset=self.offset)
+                self.buffer_remaining = self.buffer_size
+            i = self.buffer_size - self.buffer_remaining
+            img = self.buf[self.count*i : self.count*(i+1)]
+            self.buffer_remaining -= 1
+
+            
         elif self.AVI_flag:
             ret, img = self.file.read()
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
