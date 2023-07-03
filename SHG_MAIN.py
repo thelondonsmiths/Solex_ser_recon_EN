@@ -29,6 +29,8 @@ import traceback
 import cv2
 import json
 import time
+from multiprocessing import freeze_support
+
 
 serfiles = []
 
@@ -332,6 +334,7 @@ le programme commence ici !
 --------------------------------------------------------------------------------------------
 """
 if __name__ == '__main__':
+    freeze_support()
     # check for CLI input
 
     
