@@ -327,66 +327,54 @@ def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
     ret[ret > 65535] = 65535 # prevent overflow
     return np.array(ret, dtype='uint16')
 
+
+def rescale_brightness(img, lo, hi):
+    sat = np.iinfo(img.dtype).max
+    assert(sat >= hi > lo)
+    rescaled = (float(sat) * (img - lo) / (hi - lo)) # convert to float to prevent integer multiplication
+    rescaled[rescaled<0] = 0
+    rescaled[rescaled>sat] = sat
+    return rescaled.astype(img.dtype)
+
 def image_process(frame, cercle, options, header, basefich):
+    frame=frame.astype(np.uint16) # make sure we are working with uint16 data
     flag_result_show = options['flag_display']
-                
     # create a CLAHE object (Arguments are optional)
     # clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(5,5))
     clahe = cv2.createCLAHE(clipLimit=0.8, tileGridSize=(2,2))
     cl1 = clahe.apply(frame)
     
-    # image seuils serres 
-    frame1=np.copy(frame)
-    Seuil_bas=(Seuil_haut*0.25)
-    Seuil_haut=np.percentile(frame1,99.9999)
-    fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
-    fc2[fc2<0]=0
-    fc2[fc2>65535] = 65535
-    frame_contrasted2=np.array(fc2, dtype='uint16')
-    
-    # image seuils protus
-    frame1=np.copy(frame)
-    Seuil_bas=0
-    Seuil_haut=np.percentile(frame1,99.9999)*0.18        
-    print('Seuil bas protu :', np.floor(Seuil_bas))
-    print('Seuil haut protu:', np.floor(Seuil_haut))
-    fc2=(frame1-Seuil_bas)* (65535/(Seuil_haut-Seuil_bas))
-    fc2[fc2<0]=0
-    fc2[fc2>65535] = 65535
-    frame_contrasted3=np.array(fc2, dtype='uint16')
+    bright = np.percentile(frame, 99.9999) # basically the same as max
+    dark_clahe=np.percentile(cl1, 10)
+    bright_clahe=np.max(cl1)
+    frame_HC     = rescale_brightness(frame, bright*0.25, bright)             
+    frame_protus = rescale_brightness(frame, 0, bright*0.18)
+    cc = rescale_brightness(cl1, dark_clahe, bright_clahe)
     if not cercle == (-1, -1, -1) and options['disk_display']:
         x0=int(cercle[0])
         y0=int(cercle[1])
         r=int(cercle[2]) + options['delta_radius']
         if r > 0:
-            frame_contrasted3=cv2.circle(frame_contrasted3, (x0,y0),r,80,-1)            
-    Seuil_bas=np.percentile(cl1, 10)
-    Seuil_haut=np.percentile(cl1,99.9999)*1.05
-    cc=(cl1-Seuil_bas)*(65535/(Seuil_haut-Seuil_bas))
-    cc[cc<0]=0
-    cc[cc>65535] = 65535
-    cc=np.array(cc, dtype='uint16')
-
+            frame_protus = cv2.circle(frame_protus, (x0,y0),r,80,-1)
+    
     # handle rotations
     cc = np.rot90(cc, options['img_rotate']//90, axes=(0,1))
-    frame_contrasted2 = np.rot90(frame_contrasted2, options['img_rotate']//90, axes=(0,1))
-    frame_contrasted3 = np.rot90(frame_contrasted3, options['img_rotate']//90, axes=(0,1))
-    frame = np.rot90(frame, options['img_rotate']//90, axes=(0,1))
+    frame_HC = np.rot90(frame_HC, options['img_rotate']//90, axes=(0,1))
+    frame_protus = np.rot90(frame_protus, options['img_rotate']//90, axes=(0,1))
     
-    # sauvegarde en png de clahe
+    # save the clahe as a png
     print('saving image to:' + basefich+'_clahe.png')
     cv2.imwrite(basefich+'_clahe.png',cc)   # Modification Jean-Francois: placed before the IF for clear reading
     if not options['clahe_only']:
-        # sauvegarde en png pour appliquer une colormap par autre script
-        cv2.imwrite(basefich+'_diskHC.png',frame_contrasted2)
-        # sauvegarde en png pour appliquer une colormap par autre script
-        cv2.imwrite(basefich+'_protus.png',frame_contrasted3)
+        # save "high-contrast" and "protus" pngs
+        cv2.imwrite(basefich+'_diskHC.png',frame_HC)
+        cv2.imwrite(basefich+'_protus.png',frame_protus)
     
     # The 3 images are concatenated together in 1 image => 'Sun images'
     # The 'Sun images' is scaled for the monitor maximal dimension ... it is scaled to match the dimension of the monitor without 
     # changing the Y/X scale of the images 
     if flag_result_show:
-        im_3 = cv2.hconcat([cc, frame_contrasted2, frame_contrasted3])
+        im_3 = cv2.hconcat([cc, frame_HC, frame_protus])
         screen = tk.Tk()
         screensize = screen.winfo_screenwidth(), screen.winfo_screenheight()
         screen.destroy()
@@ -395,12 +383,10 @@ def image_process(frame, cercle, options, header, basefich):
         cv2.moveWindow('Sun images', 0, 0)
         cv2.resizeWindow('Sun images',int(im_3.shape[1] * scale), int(im_3.shape[0] * scale))
         cv2.imshow('Sun images',im_3)
-        cv2.waitKey(options['tempo'])  # affiche et continue
+        cv2.waitKey(options['tempo'])  # wait a few seconds before deleting the window
         cv2.destroyAllWindows()
-
-    frame2=np.copy(frame)
-    frame2=np.array(cl1, dtype='uint16')
-    # sauvegarde le fits
+    
     if options['save_fit']:
-        DiskHDU=fits.PrimaryHDU(frame2,header)
+        # save the fits file
+        DiskHDU=fits.PrimaryHDU(cl1,header)
         DiskHDU.writeto(basefich+ '_clahe.fits', overwrite='True')

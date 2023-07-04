@@ -50,7 +50,6 @@ options = {
     'flip_x': False,
     'workDir': '',
     'fixed_width': None,
-    'multithreading' : True,
 }
 
 flag_dictionnary = {
@@ -283,7 +282,6 @@ def write_ini():
         print('ERROR: failed to write config file: ' + mydir_ini)
 
 def precheck_files(serfiles, options):
-    write_ini()
     if len(serfiles)==1:
         options['tempo']=60000 #4000 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
     else:
@@ -300,20 +298,21 @@ def precheck_files(serfiles, options):
             print('filename ERROR : ', serfile)
             continue
 
-        # ouverture du fichier ser
-        '''
+        # try to open the file to see if it is possible
         try:
             f=open(serfile, "rb")
             f.close()
         except:
             print('ERROR opening file : ', serfile)
             continue
-        '''
+        
         if not good_tasks:
-            # save parameters to .ini file if this is the first good task
+            # save parameters to config file if this is the first good task
             options['workDir'] = os.path.dirname(serfile)+"/"
             write_ini()
         good_tasks.append((serfile, options.copy()))
+    if not good_tasks:
+        write_ini() # save to config file if it never happened
     return good_tasks
 
 def handle_files(files, options, flag_command_line = False):

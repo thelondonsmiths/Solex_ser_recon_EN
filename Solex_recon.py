@@ -24,7 +24,7 @@ input: tasks: list of tuples (file, option)
 '''
 
 def solex_do_work(tasks, flag_command_line = False):
-    multi = True
+    multi = False
     with Pool(4) as p:
         results = []
         for i, (file, options) in enumerate(tasks):
@@ -37,7 +37,7 @@ def solex_do_work(tasks, flag_command_line = False):
                 results.append(result)
             else:
                 solex_process(options, disk_list, hdr)
-        [result.wait() for result in results]
+        [result.get() for result in results]
         if len(tasks) > 1 and not flag_command_line:  
             sg.one_line_progress_meter('Progress Bar', len(tasks), len(tasks), '','Done.')
         
