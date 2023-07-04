@@ -347,6 +347,7 @@ def image_process(frame, cercle, options, header, basefich):
     bright = np.percentile(frame, 99.9999) # basically the same as max
     dark_clahe=np.percentile(cl1, 10)
     bright_clahe=np.max(cl1)
+    frame_raw    = rescale_brightness(frame, np.percentile(frame, 10), np.max(frame))
     frame_HC     = rescale_brightness(frame, bright*0.25, bright)             
     frame_protus = rescale_brightness(frame, 0, bright*0.18)
     cc = rescale_brightness(cl1, dark_clahe, bright_clahe)
@@ -358,17 +359,19 @@ def image_process(frame, cercle, options, header, basefich):
             frame_protus = cv2.circle(frame_protus, (x0,y0),r,80,-1)
     
     # handle rotations
-    cc = np.rot90(cc, options['img_rotate']//90, axes=(0,1))
+    frame_raw = np.rot90(frame_raw, options['img_rotate']//90, axes=(0,1))
     frame_HC = np.rot90(frame_HC, options['img_rotate']//90, axes=(0,1))
     frame_protus = np.rot90(frame_protus, options['img_rotate']//90, axes=(0,1))
-    
+    cc = np.rot90(cc, options['img_rotate']//90, axes=(0,1))
+
     # save the clahe as a png
     print('saving image to:' + basefich+'_clahe.png')
     cv2.imwrite(basefich+'_clahe.png',cc)   # Modification Jean-Francois: placed before the IF for clear reading
     if not options['clahe_only']:
         # save "high-contrast" and "protus" pngs
-        cv2.imwrite(basefich+'_diskHC.png',frame_HC)
-        cv2.imwrite(basefich+'_protus.png',frame_protus)
+        cv2.imwrite(basefich+'_raw.png', frame_raw)
+        cv2.imwrite(basefich+'_diskHC.png', frame_HC)
+        cv2.imwrite(basefich+'_protus.png', frame_protus)
     
     # The 3 images are concatenated together in 1 image => 'Sun images'
     # The 'Sun images' is scaled for the monitor maximal dimension ... it is scaled to match the dimension of the monitor without 
