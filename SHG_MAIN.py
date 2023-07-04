@@ -22,6 +22,8 @@ import numpy as np
 import os
 import sys
 import Solex_recon
+import UI_handler
+import CLI_handler
 from astropy.io import fits
 import cProfile
 import PySimpleGUI as sg
@@ -52,213 +54,13 @@ options = {
     'fixed_width': None,
 }
 
-flag_dictionnary = {
-    'd' : 'flag_display', #True False display all pictures
-    'c' : 'clahe_only',  #True/False
-    'f' : 'save_fit', #True/False
-    'p' : 'disk_display', #True/False protuberances 
-    'w' : 'shift',
-    's' : 'crop_width_square', # True / False
-    't' : 'transversalium', # True / False
-    'm' : 'flip_x' # True / False
-}
-
-def usage():
-    usage_ = "SHG_MAIN.py [-dcfmpstwr] [file(s) to treat, * allowed]\n"
-    usage_ += "'d' : 'flag_display', display all graphics (False by default)\n"
-    usage_ += "'c' : 'clahe_only',  only final clahe image is saved (False by default)\n"
-    usage_ += "'f' : 'save_fit', save all fits files (False by default)\n"
-    usage_ += "'m' : 'mirror flip', mirror flip in x-direction (False by default)\n"
-    usage_ += "'p' : 'disk_display' turn off black disk with protuberance images (False by default)\n"
-    usage_ += "'s' : 'crop_square_width', crop the width to equal the height (False by default)\n"
-    usage_ += "'t' : 'disable transversalium', disable transversalium correction (False by default)\n"
-    usage_ += "'w' : 'a,b,c'  produce images at a, b and c pixels.\n"
-    usage_ += "'w' : 'x:y:w'  produce images starting at x, finishing at y, every w pixels."
-    usage_ += "'r' : 'w'  crop width to a constant no. of pixels."
-    usage_ += "'x' : disable ellipse fitting."
-    return usage_
-    
-def treat_flag_at_cli(arguments):
-    """read cli arguments and produce options variable"""
-    #reading arguments
-    i=0
-    while i < len(argument[1:]): #there's a '-' at first)
-        character = argument[1:][i]
-        if character=='h': #asking help menu
-            print(usage())
-            sys.exit()
-        elif character=='w' :
-            #find characters for shifting
-            shift=''
-            stop = False
-            try : 
-                while not stop : 
-                    if argument[1:][i+1].isdigit() or argument[1:][i+1]==':' or argument[1:][i+1]==',' or argument[1:][i+1]=='-': 
-                        shift+=argument[1:][i+1]
-                        i+=1
-                    else : 
-                        i+=1
-                        stop=True
-            except IndexError :
-                i+=1 #the reach the end of arguments.
-            shift_choice = shift.split(':')
-            if len(shift_choice) == 1:
-                options['shift'] = list(map(int, [x.strip() for x in shift.split(',')]))
-            elif len(shift_choice) == 2:
-                options['shift'] = list(range(int(shift_choice[0].strip()), int(shift_choice[1].strip())+1))
-            elif len(shift_choice) == 3:
-                options['shift'] = list(range(int(shift_choice[0].strip()), int(shift_choice[1].strip())+1, int(shift_choice[2].strip())))
-            else:
-                print('invalid shift input')
-                sys.exit()
-        elif character=='t':
-            options['transversalium'] = False
-            i+=1
-        elif character=='p':
-            options['disk_display'] = False
-            i+=1
-        elif character=='x':
-            options['ratio_fixe'] = 1 # no ellipse fit correction will be applied
-        elif character=='r':
-            fw = ''
-            try:
-                while argument[1:][i+1].isdigit():
-                    fw += argument[1:][i+1]
-                    i += 1
-                i += 1
-            except IndexError:
-                i+=1 #the reach the end of arguments.    
-            options['fixed_width'] = int(fw)
-        else : 
-            try : #all others
-                options[flag_dictionnary[character]]=True if flag_dictionnary.get(character) else False
-                i+=1
-            except KeyError: 
-                print('ERROR !!! At least one argument is not accepted')
-                print(usage())
-                i+=1
-    print('options %s' % (options))
-
-def interpret_UI_values(ui_values):
-    try:
-        shift = ui_values['-DX-']
-        shift_choice = shift.split(':')
-        if len(shift_choice) == 1:
-            options['shift'] = list(map(int, [x.strip() for x in shift.split(',')]))
-        elif len(shift_choice) == 2:
-            options['shift'] = list(range(int(shift_choice[0].strip()), int(shift_choice[1].strip())+1))
-        elif len(shift_choice) == 3:
-            options['shift'] = list(range(int(shift_choice[0].strip()), int(shift_choice[1].strip())+1, int(shift_choice[2].strip())))
-        else:
-            raise Exception('invalid offset input!')
-        if len(options['shift']) == 0:
-            raise Exception('Error: pixel offset input lower bound greater than upper bound!')
-    except ValueError : 
-        raise Exception('invalid pixel offset value!')        
-    options['flag_display'] = ui_values['-DISP-']
-    try : 
-        options['ratio_fixe'] = float(ui_values['-RATIO-']) if ui_values['-RATIO-'] else None
-    except ValueError : 
-        raise Exception('invalid Y/X ratio value')
-    try : 
-        options['slant_fix'] = float(ui_values['-SLANT-']) if ui_values['-SLANT-'] else None
-    except ValueError : 
-        raise Exception('invalid tilt angle value!')
-    try : 
-        options['fixed_width'] = int(ui_values['fixed_width']) if ui_values['fixed_width'] else None
-    except ValueError : 
-        raise Exception('invalid fixed width value!')
-    try:
-        options['delta_radius'] = int(ui_values['-delta_radius-'])
-    except ValueError:
-        raise Exception('invalid protus_radius_adjustment')
-    options['save_fit'] = ui_values['-FIT-']
-    options['clahe_only'] = ui_values['-CLAHE_ONLY-']
-    options['crop_width_square'] = ui_values['-crop_width_square-']
-    options['transversalium'] = ui_values['-transversalium-']
-    options['trans_strength'] = int(ui_values['-trans_strength-']*100) + 1
-    options['flip_x'] = ui_values['-flip_x-']
-    options['img_rotate'] = int(ui_values['img_rotate'])
-    global serfiles
-    serfiles=ui_values['-FILE-'].split(';')
-    try:
-        for serfile in serfiles:
-            f=open(serfile, "rb")
-            f.close()
-    except:
-        raise Exception('ERROR opening file :'+serfile+'!')
-
-def inputUI():
-    sg.theme('Dark2')
-    sg.theme_button_color(('white', '#500000'))
-    
-    layout = [
-    [sg.Text('File(s)', size=(5, 1)), sg.InputText(default_text=options['workDir'],size=(75,1),key='-FILE-'),
-     sg.FilesBrowse('Open',file_types=(("SER Files", "*.ser"),("AVI Files", "*.avi"),),initial_folder=options['workDir'])],
-    [sg.Checkbox('Show graphics', default=options['flag_display'], key='-DISP-')],
-    [sg.Checkbox('Save fits files', default=options['save_fit'], key='-FIT-')],
-    [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='-CLAHE_ONLY-')],
-    [sg.Checkbox('Crop square', default=options['crop_width_square'], key='-crop_width_square-')],
-    [sg.Text('Fixed image width (blank for none)', size=(25,1)), sg.Input(default_text=options['fixed_width'], size=(8,1),key='fixed_width')],
-    [sg.Checkbox('Mirror X', default=False, key='-flip_x-')],
-    [sg.Text("Rotate png images:", key='img_rotate_slider')],
-    [sg.Slider(range=(0,270),
-         default_value=options['img_rotate'],
-         resolution=90,     
-         size=(25,15),
-         orientation='horizontal',
-         font=('Helvetica', 12),
-         key='img_rotate')],
-    [sg.Checkbox('Correct transversalium lines', default=options['transversalium'], key='-transversalium-', enable_events=True)],
-    [sg.Text("Transversalium correction strength (pixels x 100) :", key='text_trans', visible=options['transversalium'])],
-    [sg.Slider(range=(0.25,7),
-         default_value=options['trans_strength']/100,
-         resolution=0.25,     
-         size=(25,15),
-         orientation='horizontal',
-         font=('Helvetica', 12),
-         key='-trans_strength-',
-         visible=options['transversalium'])],
-    [sg.Text('Y/X ratio (blank for auto)', size=(25,1)), sg.Input(default_text='', size=(8,1),key='-RATIO-')],
-    [sg.Text('Tilt angle (blank for auto)',size=(25,1)),sg.Input(default_text='',size=(8,1),key='-SLANT-',enable_events=True)],
-    [sg.Text('Pixel offset',size=(25,1)),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='-DX-',enable_events=True)],
-    [sg.Text('Protus adjustment', size=(25,1)), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='-delta_radius-')],
-    [sg.Button('OK'), sg.Cancel()]
-    ] 
-    
-    window = sg.Window('Processing', layout, finalize=True)
-    window.BringToFront()
-    
-    
-    while True:
-        event, values = window.read()
-        if event==sg.WIN_CLOSED or event=='Cancel':
-            window.close()
-            sys.exit()
-        
-        if event=='OK':
-            if not values['-FILE-'] == options['workDir'] and not values['-FILE-'] == '':
-                try:
-                    interpret_UI_values(values)
-                    window.close()
-                    return
-                except Exception as inst:
-                    sg.Popup('Error: ' + inst.args[0], keep_on_top=True)
-                    
-            else:
-                # display pop-up file not entered
-                sg.Popup('Error: file not entered! Please enter file(s)', keep_on_top=True)
-        window.Element('-trans_strength-').Update(visible = values['-transversalium-'])
-        window.Element('text_trans').Update(visible = values['-transversalium-'])    
-
-    
 
 '''
-open SHG.ini and read parameters
+open config.txt and read parameters
 return parameters from file, or default if file not found or invalid
 '''
 def read_ini():
-    # check for .ini file for working directory
+    # check for config.txt file for working directory
     print('loading config file...')
 
     try:
@@ -321,7 +123,7 @@ def handle_files(files, options, flag_command_line = False):
        Solex_recon.solex_do_work(good_tasks, flag_command_line)
     except:
         print('ERROR ENCOUNTERED')
-        traceback.print_exc() # TODO: could have pop-up error if optiond['show_graphics'] is True
+        traceback.print_exc()
         cv2.destroyAllWindows() # ? TODO needed?
         if not flag_command_line:
             sg.popup_ok('ERROR message: ' + traceback.format_exc()) # show pop_up of error message
@@ -333,30 +135,27 @@ le programme commence ici !
 --------------------------------------------------------------------------------------------
 """
 if __name__ == '__main__':
-    freeze_support()
+    freeze_support() # enables multiprocessing for py-2-exe
+    
     # check for CLI input
     if len(sys.argv)>1: 
-        for argument in sys.argv[1:]:
-            if '-' == argument[0]: #it's flag options
-                treat_flag_at_cli(argument)
-            else : #it's a file or some files
-                if argument.split('.')[-1].upper()=='SER' or argument.split('.')[-1].upper()=='AVI': 
-                    serfiles.append(argument)
-        print('theses files are going to be processed : ', serfiles)
-
+        serfiles.extend(CLI_handler.handle_CLI(options))
+        
     if 0: #test code for performance test
         read_ini()
-        inputUI()
+        serfiles.extend(UI_handler.inputUI(options))
         cProfile.run('handle_files(serfiles, options)', sort='cumtime')
     else:
         # if no command line arguments, open GUI interface
         if len(serfiles)==0:
-            # read initial parameters from .ini file
+            # read initial parameters from config.txt file
             read_ini()
             while True:
-                inputUI()
-                handle_files(serfiles, options)
+                serfiles.extend(UI_handler.inputUI(options)) # get files
+                handle_files(serfiles, options) # handle files
+                serfiles.clear() # clear files that have been processed
                     
         else:
             handle_files(serfiles, options, flag_command_line = True) # use inputs from CLI
+            
 
