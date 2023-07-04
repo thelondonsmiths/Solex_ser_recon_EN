@@ -33,6 +33,7 @@ def interpret_UI_values(options, ui_values):
         raise Exception('invalid fixed width value!')
     try:
         options['delta_radius'] = int(ui_values['-delta_radius-'])
+        options['disk_display'] = True
     except ValueError:
         raise Exception('invalid protus_radius_adjustment')
     options['save_fit'] = ui_values['-FIT-']

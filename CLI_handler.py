@@ -29,6 +29,7 @@ def usage():
     
 def treat_flag_at_cli(options, argument):
     """read cli arguments and produce options variable"""
+    options['disk_display'] = True # disk_display on by default
     #reading arguments
     i=0
     while i < len(argument[1:]): #there's a '-' at first)
