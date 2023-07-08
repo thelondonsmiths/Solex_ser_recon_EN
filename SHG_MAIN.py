@@ -37,21 +37,21 @@ from multiprocessing import freeze_support
 serfiles = []
 
 options = {    
-    'shift':[0],
-    'flag_display':False,
-    'ratio_fixe' : None,
-    'slant_fix' : None ,
-    'save_fit' : False,
-    'clahe_only' : False,
-    'disk_display' : True, #protus
-    'delta_radius' : 0,
-    'crop_width_square' : False,
-    'transversalium' : True,
-    'trans_strength': 301,
-    'img_rotate': 0,
-    'flip_x': False,
-    'workDir': '',
-    'fixed_width': None,
+    'shift':[0],                    # argument: w
+    'flag_display':False,           # argument: d
+    'ratio_fixe' : None,            # argument: x
+    'slant_fix' : None ,            #
+    'save_fit' : False,             # argument: f
+    'clahe_only' : False,           # argument: c
+    'disk_display' : True,          # argument: p
+    'delta_radius' : 0,             #
+    'crop_width_square' : False,    # argument: s
+    'transversalium' : True,        # argument: t
+    'trans_strength': 301,          #
+    'img_rotate': 0,                #
+    'flip_x': False,                # argument: m
+    'workDir': '',                  #
+    'fixed_width': None,            # argument: r
 }
 
 

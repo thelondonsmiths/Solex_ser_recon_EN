@@ -31,12 +31,12 @@ def solex_do_work(tasks, flag_command_line = False):
             print('file %s is processing'%file)
             if len(tasks) > 1 and not flag_command_line:  
                 sg.one_line_progress_meter('Progress Bar', i, len(tasks), '','Reading file...')
-            disk_list, hdr = solex_read(file, options)
+            disk_list, backup_bounds, hdr = solex_read(file, options)
             if multi:
-                result = p.apply_async(solex_process, args = (options, disk_list, hdr)) # TODO: prints won't be visible inside new thread, can this be fixed?
+                result = p.apply_async(solex_process, args = (options, disk_list, backup_bounds, hdr)) # TODO: prints won't be visible inside new thread, can this be fixed?
                 results.append(result)
             else:
-                solex_process(options, disk_list, hdr)
+                solex_process(options, disk_list, backup_bounds, hdr)
         [result.get() for result in results]
         if len(tasks) > 1 and not flag_command_line:  
             sg.one_line_progress_meter('Progress Bar', len(tasks), len(tasks), '','Done.')
@@ -58,7 +58,6 @@ def solex_read(file, options):
 
     fit, backup_y1, backup_y2 = compute_mean_return_fit(file, options, hdr, iw, ih, basefich0)
 
-
     disk_list, ih, iw, FrameCount = read_video_improved(file, fit, options)
     
     hdr['NAXIS1'] = iw  # note: slightly dodgy, new width for subsequent fits file
@@ -77,12 +76,17 @@ def solex_read(file, options):
         if options['save_fit'] and flag_requested:
             DiskHDU = fits.PrimaryHDU(disk_list[i], header=hdr)
             DiskHDU.writeto(basefich + '_raw.fits', overwrite='True')
-    return disk_list, hdr
+    return disk_list, (backup_y1, backup_y2), hdr
     
 '''
 process the raw disks: circularise, detransversalium, crop, and adjust contrast
+
+inputs: disk_list : list of images as np arrays
+backup_bounds: tuple of numbers for disk upper and lower bounds (backup for case of no ellipse-fit)
+hdr: an hdr header for fits files
+
 '''
-def solex_process(options, disk_list, hdr):
+def solex_process(options, disk_list, backup_bounds, hdr):
     basefich0 = options['basefich0']
     if options['transversalium']:
         logme(basefich0 + '_log.txt', 'Transversalium correction : ' + str(options['trans_strength']))
@@ -126,7 +130,7 @@ def solex_process(options, disk_list, hdr):
             if not cercle0 == (-1, -1, -1):
                 detransversaliumed = correct_transversalium2(frame_circularized, cercle0, borders, options, 0, basefich)
             else:
-                detransversaliumed = correct_transversalium2(frame_circularized, (0,0,99999), [0, backup_y1+20, frame_circularized.shape[1] -1, backup_y2-20], options, 0, basefich)
+                detransversaliumed = correct_transversalium2(frame_circularized, (0,0,99999), [0, backup_bounds[0]+20, frame_circularized.shape[1] -1, backup_bounds[1]-20], options, 0, basefich)
         else:
             detransversaliumed = frame_circularized
 
