@@ -370,8 +370,8 @@ def image_process(frame, cercle, options, header, basefich):
     cv2.imwrite(basefich+'_clahe.png',cc, [cv2.IMWRITE_PNG_COMPRESSION, compression])   # Modification Jean-Francois: placed before the IF for clear reading
     if not options['clahe_only']:
         # save "high-contrast" and "protus" pngs
-        cv2.imwrite(basefich+'_raw.png', frame_raw, [cv2.IMWRITE_PNG_COMPRESSION, compression])
-        cv2.imwrite(basefich+'_diskHC.png', frame_HC, [cv2.IMWRITE_PNG_COMPRESSION, compression])
+        cv2.imwrite(basefich+'_uncontrasted.png', frame_raw, [cv2.IMWRITE_PNG_COMPRESSION, compression])
+        cv2.imwrite(basefich+'_high_contrast.png', frame_HC, [cv2.IMWRITE_PNG_COMPRESSION, compression])
         cv2.imwrite(basefich+'_protus.png', frame_protus, [cv2.IMWRITE_PNG_COMPRESSION, compression])
     
     # The 3 images are concatenated together in 1 image => 'Sun images'

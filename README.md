@@ -17,15 +17,17 @@ In the Python GUI window, enter the name of the video file(s) to be processed. B
 **Command line interface example**: `python SHG_MAIN.py serfile1.SER` [serfile2.SER ... if batch processing]
 
 **Command line options**:
+
 - d : display all graphics
 - c : only the CLAHE image is saved
 - f : all FITS files are saved
-- w : a,b,c will produce images at a, b and c ; x:y:w will produce images starting at x, finishing at y, every w pixels
-- p : disable black disk on protuberance images
-- t : disable transversalium correction
+- h : displays help menu
 - m : mirror flip in the x-direction
-- s : crop width to make square
+- p : disable black disk on protuberance image
 - r : crop width to a constant number of pixels
+- s : crop width to make square
+- t : disable transversalium correction
+- w : a,b,c will produce images at a, b and c ; x:y:w will produce images starting at x, finishing at y, every w pixels
 - x : disable ellipse fit
 
 Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek at the final png images.
