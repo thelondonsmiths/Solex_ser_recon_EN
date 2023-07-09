@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-@author: Valerie Desnoux
-with improvements by Andrew Smith
+@author: Andrew Smith
+based on code by Valerie Desnoux
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 3 July 2023
+Version 9 July 2023
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER and AVI files
