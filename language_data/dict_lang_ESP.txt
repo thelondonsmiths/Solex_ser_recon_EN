@@ -18,6 +18,6 @@
 "Pixel offset" : "Desplazamiento de píxeles",
 "Protus adjustment": "Ajuste Protus",
 "no_file_error": "Error: ¡archivo no ingresado! Por favor, ingrese archivo(s)",
-"pixel_offset_tooltip": "a, b, c generarán imágenes en a, b y c\nx:y:w generará imágenes comenzando en x, terminando en y, cada w píxeles",
+"pixel_offset_tooltip": "a, b, c ... generarán imágenes en a, b, c ...\nx:y:w generará imágenes comenzando en x, terminando en y, cada w píxeles",
 "protus_adjustment_tooltip": "hacer el círculo negro más grande o más pequeño ingresando un número entero"
 }

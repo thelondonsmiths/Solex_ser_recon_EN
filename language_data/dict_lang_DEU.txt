@@ -11,13 +11,13 @@
 "Fixed image width (blank for none)": "Feste Bildbreite (leer für keine)",
 "Mirror X": "Spiegeln entlang der X-Achse",
 "Rotate png images:" : "PNG-Bilder drehen:",
-"Correct transversalium lines": "Querlinien korrigieren",
+"Correct transversalium lines": Transversalium korrigieren",
 "Transversalium correction strength (pixels x 100) :": "Transversalium-Korrektur Stärke (Pixel x 100):",
 "Y/X ratio (blank for auto)": "Y/X-Verhältnis (leer für auto)",
 "Tilt angle (blank for auto)": "Neigungswinkel (leer für auto)",
 "Pixel offset" : "Pixel-Offset",
 "Protus adjustment": "Protus-Anpassung",
 "no_file_error": "Fehler: Keine Datei eingegeben! Bitte Datei(en) eingeben",
-"pixel_offset_tooltip": "a,b,c erzeugt Bilder bei a, b und c\nx:y:w erzeugt Bilder, beginnend bei x, endend bei y, alle w Pixel",
+"pixel_offset_tooltip": "a,b,c ... erzeugt Bilder bei a, b, c ...\nx:y:w erzeugt Bilder, beginnend bei x, endend bei y, alle w Pixel",
 "protus_adjustment_tooltip": "Vergrößern oder Verkleinern des schwarzen Kreises durch Eingabe einer ganzen Zahl"
 }

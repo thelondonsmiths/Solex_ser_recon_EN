@@ -18,6 +18,6 @@
 "Pixel offset" : "Offset pixel",
 "Protus adjustment": "Regolazione Protus",
 "no_file_error": "Errore: file non inserito! Inserisci il file (o i file)",
-"pixel_offset_tooltip": "a, b, c produrranno immagini a a, b e c\nx:y:w produrrà immagini a partire da x, finendo a y, ogni w pixel",
+"pixel_offset_tooltip": "a, b, c ... produrranno immagini a a, b, c ...\nx:y:w produrrà immagini a partire da x, finendo a y, ogni w pixel",
 "protus_adjustment_tooltip": "rendi il cerchio nero più grande o più piccolo inserendo un numero intero"
 }

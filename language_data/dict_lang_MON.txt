@@ -17,6 +17,6 @@
 "Pixel offset" : "Offset de pîxel",
 "Protus adjustment": "Adujustament Protus",
 "no_file_error": "Error: fìchîéu non-zintroduè ! Prega d'intròdi fìchî(é)",
-"pixel_offset_tooltip": "a, b, c prudurìen imâges à a, b é c\nx:y:w prudurìen imâges partìend da x, fnind à y, tôc cada w pîxel",
+"pixel_offset_tooltip": "a, b, c ... prudurìen imâges à a, b, c ...\nx:y:w prudurìen imâges partìend da x, fnind à y, tôc cada w pîxel",
 "protus_adjustment_tooltip": "Fé mâjou lë cërcle nêro pë grôssë ou pë pëti by introudé un nùmer enter"
 }

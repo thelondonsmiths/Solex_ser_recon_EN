@@ -10,7 +10,7 @@
 "Crop square": "Recadrer en carré",
 "Fixed image width (blank for none)": "Largeur d'image fixe (vide pour aucune)",
 "Mirror X": "Miroir X",
-"Rotate png images:" : "Faire pivoter les images PNG :",
+"Rotate png images:" : "Tourner les images PNG :",
 "Correct transversalium lines": "Corriger les lignes transversalium",
 "Transversalium correction strength (pixels x 100) :": "Force de correction des lignes transversalium (pixels x 100) :",
 "Y/X ratio (blank for auto)": "Rapport Y/X (vide pour auto)",
@@ -18,6 +18,6 @@
 "Pixel offset" : "Décalage de pixel",
 "Protus adjustment": "Ajustement Protus",
 "no_file_error": "Erreur : fichier non saisi ! Veuillez entrer le(s) fichier(s)",
-"pixel_offset_tooltip": "a, b, c produiront des images à a, b et c\nx:y:w produira des images commençant à x, se terminant à y, tous les w pixels",
+"pixel_offset_tooltip": "a, b, c ... produiront des images à a, b, c ...\nx:y:w produira des images commençant à x, se terminant à y, tous les w pixels",
 "protus_adjustment_tooltip": "agrandir ou réduire le cercle noir en saisissant un nombre entier"
 }
