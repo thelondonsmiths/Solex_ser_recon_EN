@@ -1,0 +1,22 @@
+{
+"_lang_name":"Ukrainska",
+"_flag_icon": "flagUKR.png",
+"File(s)": "Fichièr(e)",
+"Open" : "Dubrì",
+"Show graphics": "Mostrà grafiche",
+"Save fits files": "Arregistrà fichièr FITS",
+"Save clahe.png only": "Arregistrà solament clahe.png",
+"Crop square": "Crope carré",
+"Fixed image width (blank for none)": "Larcëssa de l'imâge fìssâ (vuide por gnun)",
+"Mirror X": "Mire X",
+"Rotate png images:" : "Rotìe imâges png :",
+"Correct transversalium lines": "Curege lihn transversalium",
+"Transversalium correction strength (pixels x 100) :": "Fôrça de correccion transversalium (pixels x 100) :",
+"Y/X ratio (blank for auto)": "Râcio Y/X (vuide por auto)",
+"Tilt angle (blank for auto)": "Anglo de cllinâtion (vuide por auto)",
+"Pixel offset" : "Offset de pîxel",
+"Protus adjustment": "Adujustament Protus",
+"no_file_error": "Error: fìchîéu non-zintroduè ! Prega d'intròdi fìchî(é)",
+"pixel_offset_tooltip": "a, b, c prudurìen imâges à a, b é c\nx:y:w prudurìen imâges partìend da x, fnind à y, tôc cada w pîxel",
+"protus_adjustment_tooltip": "Fé mâjou lë cërcle nêro pë grôssë ou pë pëti by introudé un nùmer enter"
+}

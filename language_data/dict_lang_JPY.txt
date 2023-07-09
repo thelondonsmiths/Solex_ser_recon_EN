@@ -1,0 +1,22 @@
+{
+"_lang_name":"日本語",
+"_flag_icon": "flagJPY.png",
+"File(s)": "ファイル",
+"Open" : "開く",
+"Show graphics": "グラフィックを表示",
+"Save fits files": "FITSファイルを保存",
+"Save clahe.png only": "clahe.pngのみ保存",
+"Crop square": "正方形に切り取る",
+"Fixed image width (blank for none)": "固定画像幅（空白なし）",
+"Mirror X": "X軸で反転",
+"Rotate png images:" : "PNG画像を回転:",
+"Correct transversalium lines": "横断線を修正",
+"Transversalium correction strength (pixels x 100) :": "横断線補正強度（ピクセル×100）:",
+"Y/X ratio (blank for auto)": "Y/X比率（自動の場合は空白）",
+"Tilt angle (blank for auto)": "傾斜角度（自動の場合は空白）",
+"Pixel offset" : "ピクセルオフセット",
+"Protus adjustment": "Protus調整",
+"no_file_error": "エラー：ファイルが入力されていません！ファイルを入力してください",
+"pixel_offset_tooltip": "a、b、cはa、b、cで画像を生成します\nx：y：wはxから始まり、yで終わり、wピクセルごとに画像を生成します",
+"protus_adjustment_tooltip": "整数を入力して黒い円を大きくまたは小さくします"
+}

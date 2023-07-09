@@ -1,0 +1,23 @@
+{
+	"_lang_name":"English",
+	"_flag_icon": "flagEN.png",
+	"File(s)": "File(s)",
+	"Open" : "Open",
+	"Show graphics": "Show graphics",
+	"Save fits files": "Save fits files",
+	"Save clahe.png only": "Save clahe.png only",
+	"Crop square": "Crop square",
+	"Fixed image width (blank for none)": "Fixed image width (blank for none)",
+	"Mirror X": "Mirror X",
+	"Rotate png images:" : "Rotate png images:",
+	"Correct transversalium lines": "Correct transversalium lines",
+	"Transversalium correction strength (pixels x 100) :": "Transversalium correction strength (pixels x 100) :",
+	"Y/X ratio (blank for auto)": "Y/X ratio (blank for auto)",
+	"Tilt angle (blank for auto)": "Tilt angle (blank for auto)",
+	"Pixel offset" : "Pixel offset",
+	"Protus adjustment": "Protus adjustment",
+	"no_file_error": "Error: file not entered! Please enter file(s)",
+	"pixel_offset_tooltip": "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",
+	"protus_adjustment_tooltip": "make the black circle bigger or smaller by inputting an integer"
+
+}

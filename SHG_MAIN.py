@@ -36,7 +36,8 @@ from multiprocessing import freeze_support
 
 serfiles = []
 
-options = {    
+options = {
+    'language':'English',           #
     'shift':[0],                    # argument: w
     'flag_display':False,           # argument: d
     'ratio_fixe' : None,            # argument: x
