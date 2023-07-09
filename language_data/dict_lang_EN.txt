@@ -1,6 +1,7 @@
 {
 	"_lang_name":"English",
 	"_flag_icon": "flagEN.png",
+	"Solar disk reconstruction from SHG video files":"Solar disk reconstruction from SHG video files",
 	"File(s)": "File(s)",
 	"Open" : "Open",
 	"Show graphics": "Show graphics",

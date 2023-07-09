@@ -6,3 +6,4 @@ pip install -U astropy
 pip install -U opencv-python
 pip install -U lsq-ellipse
 pip install -U scikit-image
+pip install -U pillow

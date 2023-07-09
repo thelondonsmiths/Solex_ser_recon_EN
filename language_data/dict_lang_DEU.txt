@@ -1,6 +1,7 @@
 {
 "_lang_name":"Deutsch",
 "_flag_icon": "flagDEU.png",
+"Solar disk reconstruction from SHG video files":"Rekonstruktion der Sonnenscheibe aus SHG-Videodateien",
 "File(s)": "Datei(en)",
 "Open" : "Öffnen",
 "Show graphics": "Grafiken anzeigen",

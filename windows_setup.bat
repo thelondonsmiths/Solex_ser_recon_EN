@@ -5,3 +5,4 @@ pip install pysimplegui
 pip install opencv-python
 pip install scikit-image
 pip install lsq-ellipse
+pip install pillow

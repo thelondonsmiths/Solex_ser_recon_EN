@@ -7,3 +7,4 @@ PySimpleGUI
 OpenCV-python
 scikit-image
 lsq-ellipse
+pillow

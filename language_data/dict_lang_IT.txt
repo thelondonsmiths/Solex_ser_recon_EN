@@ -1,6 +1,7 @@
 {
 "_lang_name":"Italiano",
 "_flag_icon": "flagIT.png",
+"Solar disk reconstruction from SHG video files":"Ricostruzione del disco solare da file video SHG",
 "File(s)": "File",
 "Open" : "Apri",
 "Show graphics": "Mostra grafici",

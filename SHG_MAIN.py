@@ -66,9 +66,9 @@ def read_ini():
 
     try:
         mydir_ini=os.path.join(os.path.dirname(sys.argv[0]),'SHG_config.txt')
-        with open(mydir_ini, 'r') as fp:
+        with open(mydir_ini, 'r', encoding="utf-8") as fp:
             global options
-            options = json.load(fp)   
+            options.update(json.load(fp)) # if config has missing entries keep default   
     except Exception:
         traceback.print_exc()
         print('note: error reading config file - using default parameters')
@@ -78,7 +78,7 @@ def write_ini():
     try:
         print('saving config file ...')
         mydir_ini = os.path.join(os.path.dirname(sys.argv[0]),'SHG_config.txt')
-        with open(mydir_ini, 'w') as fp:
+        with open(mydir_ini, 'w', encoding="utf-8") as fp:
             json.dump(options, fp, sort_keys=True, indent=4)
     except Exception:
         traceback.print_exc()

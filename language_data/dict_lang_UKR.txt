@@ -1,6 +1,7 @@
 {
 "_lang_name":"украї́нська",
 "_flag_icon": "flagUKR.png",
+"Solar disk reconstruction from SHG video files":"Реконструкція сонячного диска за відеофайлами SHG",
 "File(s)": "Файл(и)",
 "Open" : "Відкрити",
 "Show graphics": "Показати графіку",

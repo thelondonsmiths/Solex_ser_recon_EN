@@ -1,6 +1,7 @@
 {
 "_lang_name":"한국어",
 "_flag_icon": "flagKOR.png",
+"Solar disk reconstruction from SHG video files":"SHG 비디오 파일에서 솔라 디스크 재구성",
 "File(s)": "파일(들)",
 "Open" : "열기",
 "Show graphics": "그래픽 보기",

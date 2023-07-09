@@ -14,6 +14,16 @@ import traceback
 from PIL import Image, ImageTk
 import io
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 def interpret_UI_values(options, ui_values):
     try:
         shift = ui_values['_pixel_offset']
@@ -65,13 +75,13 @@ def interpret_UI_values(options, ui_values):
         raise Exception('ERROR opening file :'+serfile+'!')
 
 def read_langs():
-    prefixed = sorted([filename for filename in os.listdir('language_data') if filename.startswith('dict_lang') and filename.endswith('.txt')])
+    prefixed = sorted([filename for filename in os.listdir(resource_path('language_data')) if filename.startswith('dict_lang') and filename.endswith('.txt')])
     langs = []
     lang_dicts = []
     for file in prefixed:
         print('loading lang: ', file)
         try:
-            with open(os.path.join('language_data', file), encoding="utf-8") as fp:
+            with open(resource_path(os.path.join('language_data', file)), encoding="utf-8") as fp:
                 lang_dict = json.load(fp)
         except Exception:
             traceback.print_exc()
@@ -93,7 +103,7 @@ def get_img_data(f, maxsize=(30, 18), first=False):
     """Generate image data using PIL
     """
     try:
-        img = Image.open(f)
+        img = Image.open(resource_path(f))
         img.thumbnail(maxsize)
         if first:                     # tkinter is inactive the first time
             bio = io.BytesIO()
@@ -106,12 +116,13 @@ def get_img_data(f, maxsize=(30, 18), first=False):
         print(f'note: error reading flag thumbnail file {f}')
         return None
 
-def change_langs(window, popup_messages, lang_dict):
+def change_langs(window, popup_messages, lang_dict, flag_change=True):
     flag_ok = 0
     checkboxes = set(['Show graphics', 'Save fits files', 'Save clahe.png only', 'Crop square', 'Mirror X', 'Correct transversalium lines'])
     for k, v in lang_dict.items():
         if k == '_flag_icon':
-            window['_flag_icon'].update(data=get_img_data(os.path.join('language_data', v)))
+            if flag_change:
+                window['_flag_icon'].update(data=get_img_data(os.path.join('language_data', v)))
             flag_ok = 1
         elif k == 'no_file_error':
             popup_messages['no_file_error'] = v
@@ -146,7 +157,7 @@ def inputUI(options):
     sg.theme_button_color(('white', '#500000'))
 
     layout = [
-    [sg.Push(), image_elem, sg.Combo(langs, key="lang_input", enable_events=True, default_value='English', size=(10, 12), readonly=True)], # TODO: save default in options
+    [sg.Text('Solar disk reconstruction from SHG video files', font='Any 14', key='Solar disk reconstruction from SHG video files'), sg.Push(), image_elem, sg.Combo(langs, key="lang_input", enable_events=True, default_value='English', size=(10, 12), readonly=True)], # TODO: save default in options
     [sg.Text('File(s)', size=(7, 1), key = 'File(s)'), sg.InputText(default_text=options['workDir'],size=(75,1),key='-FILE-'),
      sg.FilesBrowse('Open', key = 'Open', file_types=(("SER Files", "*.ser"),("AVI Files", "*.avi"),),initial_folder=options['workDir'])],
     [sg.Checkbox('Show graphics', default=options['flag_display'], key='Show graphics')],
@@ -186,6 +197,7 @@ def inputUI(options):
     if options['language'] in langs:
         window['lang_input'].update(options['language'])
         lang_dict = lang_dicts[langs.index(options['language'])]
+        change_langs(window, popup_messages, lang_dicts[langs.index('English')], flag_change=False)
         change_langs(window, popup_messages, lang_dict)
     else:
         print(f'ERROR: language not available: "{options["language"]}"')
@@ -197,6 +209,7 @@ def inputUI(options):
             sys.exit()
         if event == 'lang_input':
             lang_dict = lang_dicts[langs.index(values['lang_input'])]
+            change_langs(window, popup_messages, lang_dicts[langs.index('English')], flag_change=False) # if missing will be English
             change_langs(window, popup_messages, lang_dict)
             options['language'] = values['lang_input']
         if event=='OK':
