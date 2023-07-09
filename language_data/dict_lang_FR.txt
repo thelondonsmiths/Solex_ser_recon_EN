@@ -1,5 +1,5 @@
 {
-"_lang_name": "Fraçais",
+"_lang_name": "Français",
 "_flag_icon": "flagFR.png",
 "File(s)": "Fichier(s)",
 "Open" : "Ouvrir",

@@ -1,0 +1,22 @@
+{
+"_lang_name":"한국어",
+"_flag_icon": "flagKOR.png",
+"File(s)": "파일(들)",
+"Open" : "열기",
+"Show graphics": "그래픽 보기",
+"Save fits files": "FITS 파일 저장",
+"Save clahe.png only": "clahe.png만 저장",
+"Crop square": "정사각형 자르기",
+"Fixed image width (blank for none)": "고정 이미지 너비 (없음은 공백)",
+"Mirror X": "X축 반전",
+"Rotate png images:" : "PNG 이미지 회전:",
+"Correct transversalium lines": "횡단선 수정",
+"Transversalium correction strength (pixels x 100) :": "횡단선 보정 강도 (픽셀 x 100) :",
+"Y/X ratio (blank for auto)": "Y/X 비율 (자동은 공백)",
+"Tilt angle (blank for auto)": "기울기 각도 (자동은 공백)",
+"Pixel offset" : "픽셀 오프셋",
+"Protus adjustment": "Protus 조정",
+"no_file_error": "오류: 파일을 입력하지 않았습니다! 파일(들)을 입력해주세요",
+"pixel_offset_tooltip": "a, b, c는 a, b, c에서 이미지를 생성합니다\nx:y:w는 x에서 시작하여 y에서 끝나며 w픽셀마다 이미지를 생성합니다",
+"protus_adjustment_tooltip": "정수를 입력하여 검은 원의 크기를 더 크거나 작게 조정합니다"
+}

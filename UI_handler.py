@@ -139,20 +139,20 @@ def inputUI(options):
     sg.theme_button_color(('white', '#500000'))
 
     layout = [
-    [sg.Push(), image_elem, sg.Combo(langs, key="lang_input", enable_events=True, default_value='English')], # TODO: save default in options
+    [sg.Push(), image_elem, sg.Combo(langs, key="lang_input", enable_events=True, default_value='English', size=(10, 12), readonly=True)], # TODO: save default in options
     [sg.Text('File(s)', size=(7, 1), key = 'File(s)'), sg.InputText(default_text=options['workDir'],size=(75,1),key='-FILE-'),
      sg.FilesBrowse('Open', key = 'Open', file_types=(("SER Files", "*.ser"),("AVI Files", "*.avi"),),initial_folder=options['workDir'])],
     [sg.Checkbox('Show graphics', default=options['flag_display'], key='Show graphics')],
     [sg.Checkbox('Save fits files', default=options['save_fit'], key='Save fits files')],
     [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='Save clahe.png only')],
     [sg.Checkbox('Crop square', default=options['crop_width_square'], key='Crop square')],
-    [sg.Text('Fixed image width (blank for none)', size=(30,1), key='Fixed image width (blank for none)'), sg.Input(default_text=options['fixed_width'], size=(8,1),key='_fixed_width')],
+    [sg.Text('Fixed image width (blank for none)', size=(32,1), key='Fixed image width (blank for none)'), sg.Input(default_text=options['fixed_width'], size=(8,1),key='_fixed_width')],
     [sg.Checkbox('Mirror X', default=False, key='Mirror X')],
     [sg.Text("Rotate png images:", key='Rotate png images:')],
     [sg.Slider(range=(0,270),
          default_value=options['img_rotate'],
          resolution=90,     
-         size=(25,15),
+         size=(30,15),
          orientation='horizontal',
          font=('Helvetica', 12),
          key='img_rotate')],
@@ -161,15 +161,15 @@ def inputUI(options):
     [sg.Slider(range=(0.25,7),
          default_value=options['trans_strength']/100,
          resolution=0.25,     
-         size=(25,15),
+         size=(30,15),
          orientation='horizontal',
          font=('Helvetica', 12),
          key='-trans_strength-',
          visible=options['transversalium'])],
-    [sg.Text('Y/X ratio (blank for auto)', key='Y/X ratio (blank for auto)', size=(25,1)), sg.Input(default_text='', key = '_y/x_ratio', size=(8,1))],
-    [sg.Text('Tilt angle (blank for auto)',size=(25,1), key='Tilt angle (blank for auto)'), sg.Input(default_text='',size=(8,1),key='_tilt',enable_events=True)],
-    [sg.Text('Pixel offset',size=(25,1), key='Pixel offset'),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='_pixel_offset',enable_events=True)],
-    [sg.Text('Protus adjustment', size=(25,1), key='Protus adjustment'), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='_protus_adjustment')],
+    [sg.Text('Y/X ratio (blank for auto)', key='Y/X ratio (blank for auto)', size=(32,1)), sg.Input(default_text='', key = '_y/x_ratio', size=(8,1))],
+    [sg.Text('Tilt angle (blank for auto)',size=(32,1), key='Tilt angle (blank for auto)'), sg.Input(default_text='',size=(8,1),key='_tilt',enable_events=True)],
+    [sg.Text('Pixel offset',size=(32,1), key='Pixel offset'),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='_pixel_offset',enable_events=True)],
+    [sg.Text('Protus adjustment', size=(32,1), key='Protus adjustment'), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='_protus_adjustment')],
     [sg.Button('OK'), sg.Cancel()]
     ] 
     

@@ -1,0 +1,22 @@
+{
+"_lang_name":"正體字",
+"_flag_icon": "flagTC.png",
+"File(s)": "檔案(們)",
+"Open" : "開啟",
+"Show graphics": "顯示圖形",
+"Save fits files": "儲存 fits 檔案",
+"Save clahe.png only": "僅儲存 clahe.png",
+"Crop square": "裁剪成正方形",
+"Fixed image width (blank for none)": "固定圖片寬度 (空白表示無)",
+"Mirror X": "X軸鏡像",
+"Rotate png images:" : "旋轉 png 圖片：",
+"Correct transversalium lines": "校正橫向線條",
+"Transversalium correction strength (pixels x 100) :": "橫向校正強度 (像素 x 100)：",
+"Y/X ratio (blank for auto)": "Y/X 比例 (空白為自動)",
+"Tilt angle (blank for auto)": "傾斜角度 (空白為自動)",
+"Pixel offset" : "像素位移",
+"Protus adjustment": "Protus 調整",
+"no_file_error": "錯誤：未輸入檔案！請輸入檔案(們)",
+"pixel_offset_tooltip": "a、b、c 會生成 a、b 和 c 的圖片\nx:y:w 會生成以 x 開始、以 y 結束、每隔 w 個像素的圖片",
+"protus_adjustment_tooltip": "通過輸入整數使黑色圓變大或變小"
+}

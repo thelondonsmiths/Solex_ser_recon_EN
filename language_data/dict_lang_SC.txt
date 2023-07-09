@@ -1,0 +1,22 @@
+{
+"_lang_name":"简化字",
+"_flag_icon": "flagSC.png",
+"File(s)": "文件(们)",
+"Open" : "打开",
+"Show graphics": "显示图形",
+"Save fits files": "保存 FITS 文件",
+"Save clahe.png only": "仅保存 clahe.png",
+"Crop square": "裁剪为正方形",
+"Fixed image width (blank for none)": "固定图像宽度（留空表示无）",
+"Mirror X": "沿 X 轴镜像",
+"Rotate png images:" : "旋转 PNG 图像：",
+"Correct transversalium lines": "校正横向线条",
+"Transversalium correction strength (pixels x 100) :": "横向校正强度（像素 x 100）：",
+"Y/X ratio (blank for auto)": "Y/X 比例（留空表示自动）",
+"Tilt angle (blank for auto)": "倾斜角度（留空表示自动）",
+"Pixel offset" : "像素偏移",
+"Protus adjustment": "Protus 调整",
+"no_file_error": "错误：未输入文件！请输入文件(们)",
+"pixel_offset_tooltip": "a、b、c 将生成 a、b 和 c 的图像\nx:y:w 将生成以 x 开始、以 y 结束、每隔 w 个像素的图像",
+"protus_adjustment_tooltip": "通过输入整数来增大或减小黑色圆"
+}

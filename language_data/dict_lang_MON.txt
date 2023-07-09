@@ -1,5 +1,5 @@
 {
-"_lang_name":"Monagasque",
+"_lang_name":"Munegascu",
 "_flag_icon": "flagMON.png",
 "File(s)": "Fichièr(e)",
 "Open" : "Dubrì",
