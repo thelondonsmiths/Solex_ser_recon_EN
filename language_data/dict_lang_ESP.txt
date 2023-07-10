@@ -8,7 +8,7 @@
 "Save fits files": "Guardar archivos FITS",
 "Save clahe.png only": "Guardar solo clahe.png",
 "Crop square": "Recortar cuadrado",
-"Fixed image width (blank for none)": "Ancho de imagen fijo (en blanco: ninguno)",
+"Fixed image width (blank for none)": "Ancho de imagen fijo (en blanco:ninguno)",
 "Mirror X": "Espejar en X",
 "Rotate png images:" : "Rotar imágenes png:",
 "Correct transversalium lines": "Corregir líneas transversalium",

@@ -1,0 +1,23 @@
+{
+	"_lang_name":"Português",
+	"_flag_icon": "flagPT.png",
+	"Solar disk reconstruction from SHG video files":"Reconstrução do disco solar a partir de arquivos de vídeo SHG",
+	"File(s)": "Arquivo(s)",
+	"Open" : "Abrir",
+	"Show graphics": "Mostrar gráficos",
+	"Save fits files": "Salvar arquivos FITS",
+	"Save clahe.png only": "Salvar apenas clahe.png",
+	"Crop square": "Recortar em formato quadrado",
+	"Fixed image width (blank for none)": "Largura fixa da imagem (em branco:nenhum)",
+	"Mirror X": "Espelhar em X",
+	"Rotate png images:" : "Girar imagens png:",
+	"Correct transversalium lines": "Corrigir linhas transversalium",
+	"Transversalium correction strength (pixels x 100) :": "Força de correção transversalium (pixels x 100) :",
+	"Y/X ratio (blank for auto)": "Razão Y/X (em branco para auto)",
+	"Tilt angle (blank for auto)": "Ângulo de inclinação (em branco para auto)",
+	"Pixel offset" : "Deslocamento de pixels",
+	"Protus adjustment": "Ajuste Protus",
+	"no_file_error": "Erro: arquivo não inserido! Por favor, insira o(s) arquivo(s)",
+	"pixel_offset_tooltip": "a, b, c ... gerarão imagens em a, b, c ...\nx:y:w gerará imagens começando em x, terminando em y, a cada w pixels",
+	"protus_adjustment_tooltip": "aumente ou diminua o tamanho do círculo preto inserindo um número inteiro"
+}
