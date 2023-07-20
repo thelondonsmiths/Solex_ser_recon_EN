@@ -328,10 +328,10 @@ def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
     return np.array(ret, dtype='uint16')
 
 
-def rescale_brightness(img, lo, hi):
+def rescale_brightness(img, lo, hi, alpha=1.0):
     sat = np.iinfo(img.dtype).max
     assert(sat >= hi > lo)
-    rescaled = (float(sat) * (img - lo) / (hi - lo)) # convert to float to prevent integer multiplication
+    rescaled = (float(sat) * alpha * (img - lo) / (hi - lo)) # convert to float to prevent integer multiplication
     rescaled[rescaled<0] = 0
     rescaled[rescaled>sat] = sat
     return rescaled.astype(img.dtype)
@@ -347,7 +347,7 @@ def image_process(frame, cercle, options, header, basefich):
     bright = np.percentile(frame, 99.9999) # basically the same as max
     dark_clahe=np.percentile(cl1, 10)
     bright_clahe=np.max(cl1)
-    frame_raw    = rescale_brightness(frame, np.percentile(frame, 10), np.max(frame))
+    frame_raw    = frame # no rescale
     frame_HC     = rescale_brightness(frame, bright*0.25, bright)             
     frame_protus = rescale_brightness(frame, 0, bright*0.18)
     cc = rescale_brightness(cl1, dark_clahe, bright_clahe)

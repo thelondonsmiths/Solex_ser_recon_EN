@@ -1,4 +1,4 @@
-pip install -U pip
+python -m pip install --upgrade pip
 pip install -U scipy
 pip install -U matplotlib
 pip install -U PySimpleGUI
