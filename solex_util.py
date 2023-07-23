@@ -55,8 +55,8 @@ if options['output_dir'] is empty, then output there
 else output same file name, but into directory in options
 '''
 def output_path(path, options):
-    if options['output_dir'] == '':
-        path
+    if options['output_dir'].strip() == '':
+        return path
     return os.path.join(options['output_dir'], os.path.basename(path))
 
 

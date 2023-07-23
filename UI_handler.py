@@ -91,7 +91,7 @@ def read_langs():
     langs = []
     lang_dicts = []
     for file in prefixed:
-        print('loading lang: ', file)
+#        print('loading lang: ', file)
         try:
             with open(resource_path(os.path.join('language_data', file)), encoding="utf-8") as fp:
                 lang_dict = json.load(fp)
@@ -130,7 +130,7 @@ def get_img_data(f, maxsize=(30, 18), first=False):
 
 def change_langs(window, popup_messages, lang_dict, flag_change=True):
     flag_ok = 0
-    checkboxes = set(['Show graphics', 'Save fits files', 'Save clahe.png only', 'Crop square', 'Mirror X', 'Correct transversalium lines'])
+    checkboxes = set(['Show graphics', 'Save fits files', 'Save clahe.png only', 'Crop square', 'Mirror X', 'Correct transversalium lines', 'Continuous detect mode'])
     popup_ids = set(['no_file_error', 'no_folder_error'])
     for k, v in lang_dict.items():
         if k == '_flag_icon':
@@ -181,7 +181,7 @@ def inputUI(options):
     layout_folder_input = [
         [sg.Text('Folder', size=(7, 1), key = 'Folder'), sg.InputText(default_text='',size=(75,1),key='input_dir'),
          sg.FolderBrowse('Choose input folder', key = 'Choose input folder', initial_folder=options['input_dir'])],
-        [sg.Checkbox('Continuous detect mode', default=False, key='Continuous detect mode')],
+        [sg.Checkbox('Continuous detect mode', default=options['continuous_detect_mode'], key='Continuous detect mode')],
     ]
 
     layout_folder_output = [

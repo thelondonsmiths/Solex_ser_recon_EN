@@ -166,7 +166,6 @@ def handle_folder(options):
     
     
     window.perform_long_operation(lambda : time.sleep(0.01), '-END SLEEP-') # dummy function to get started
-    is_first = True
     prev=None
     while True:
         event, values = window.read()
@@ -179,9 +178,9 @@ def handle_folder(options):
                 window.close()
                 break
             time.sleep(0.1)
-            window['_prev_img'].update(data=UI_handler.get_img_data(prev, maxsize=(600,600), first=True))
-            window['previous'].update('Previous: ' + prev)
-            is_first = False
+            if not prev is None:
+                window['_prev_img'].update(data=UI_handler.get_img_data(prev, maxsize=(600,600), first=True))
+                window['previous'].update('Previous: ' + prev)
             window.perform_long_operation(lambda : time.sleep(3), '-END SLEEP-')
 
         if event == '-END SLEEP-':
@@ -192,7 +191,7 @@ def handle_folder(options):
             if files_todo:
                 prev=files_todo[-1]
                 prev=os.path.join(solex_util.output_path(os.path.splitext(prev)[0] + f'_shift={options["shift"][-1]}_clahe.png', options))
-                print('the image file:' + prev)
+                print('the image file:' + str(prev))
                 window.perform_long_operation(lambda : handle_files(files_todo, options, True), '-END KEY-')
             else:
                 window.perform_long_operation(lambda : time.sleep(1), '-END KEY-')
