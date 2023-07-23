@@ -89,6 +89,7 @@ class video_reader:
             self.flag_rotate = False
             self.iw = self.Width
             self.ih = self.Height
+        #print(f'in video reader with nframes, height, width = {self.FrameCount}, {self.ih}, {self.iw}')
 
     def next_frame(self):
         self.FrameIndex += 1

@@ -34,6 +34,7 @@ import time
 from multiprocessing import freeze_support
 import glob
 import solex_util
+import video_reader
 
 serfiles = []
 
@@ -139,7 +140,8 @@ def is_openable(file):
     try:
         f=open(file, "rb")
         f.close()
-        return True
+        rdr = video_reader.video_reader(file)
+        return rdr.FrameCount > 0
     except:
         return False
 
