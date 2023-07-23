@@ -32,7 +32,8 @@ import cv2
 import json
 import time
 from multiprocessing import freeze_support
-
+import glob
+import solex_util
 
 serfiles = []
 
@@ -53,7 +54,10 @@ options = {
     'flip_x': False,                # argument: m
     'workDir': '',                  #
     'fixed_width': None,            # argument: r
-    'output_dir': ''                #
+    'output_dir': '',               #
+    'input_dir': '',                #
+    'selected_mode': 'File input mode',
+    'continuous_detect_mode': False,#
 }
 
 
@@ -107,6 +111,7 @@ def precheck_files(serfiles, options):
             f=open(serfile, "rb")
             f.close()
         except:
+            traceback.print_exc()
             print('ERROR opening file : ', serfile)
             continue
         
@@ -129,6 +134,75 @@ def handle_files(files, options, flag_command_line = False):
         cv2.destroyAllWindows() # ? TODO needed?
         if not flag_command_line:
             sg.popup_ok('ERROR message: ' + traceback.format_exc()) # show pop_up of error message
+
+def is_openable(file):
+    try:
+        f=open(file, "rb")
+        f.close()
+        return True
+    except:
+        return False
+
+def handle_folder(options):
+    if not options['continuous_detect_mode']:
+        files_todo = glob.glob(os.path.join(options['input_dir'], '*.ser')) + glob.glob(os.path.join(options['input_dir'], '*.avi'))
+        print(f'number of files todo: {len(files_todo)}')
+        handle_files(files_todo, options)
+        return
+    
+    files_processed = set()
+    layout = [
+        [sg.Text('Auto processing of SHG video files', font='Any 14', key='Auto processing of SHG video files')],
+        [sg.Text('Looking for files', key='status_info')],
+        [sg.Text(f'Number of files processed: {len(files_processed)}', key='auto_info')],
+        [sg.Image(UI_handler.resource_path(os.path.join('language_data', 'Black.png')), size=(600, 600), key='_prev_img')],
+        [sg.Text('Previous: none', key='previous')],
+        [sg.Button('Stop')]
+        
+    ]
+    window = sg.Window('Continuous processing mode', layout)
+    window.finalize()
+    stop=False
+    
+    
+    window.perform_long_operation(lambda : time.sleep(0.01), '-END SLEEP-') # dummy function to get started
+    is_first = True
+    prev=None
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED:
+            break
+        if event == '-END KEY-':
+            window['status_info'].update(f'Sleeping ... will check for files in 3 seconds')
+            window['auto_info'].update(f'Number of files processed: {len(files_processed)}')
+            if stop:
+                window.close()
+                break
+            time.sleep(0.1)
+            window['_prev_img'].update(data=UI_handler.get_img_data(prev, maxsize=(600,600), first=True))
+            window['previous'].update('Previous: ' + prev)
+            is_first = False
+            window.perform_long_operation(lambda : time.sleep(3), '-END SLEEP-')
+
+        if event == '-END SLEEP-':
+            files_todo = glob.glob(os.path.join(options['input_dir'], '*.ser')) + glob.glob(os.path.join(options['input_dir'], '*.avi'))
+            files_todo = [x for x in files_todo if not x in files_processed and os.access(x, os.R_OK) and is_openable(x)]
+            files_todo = files_todo[:min(2, len(files_todo))] # maximum batch size 2
+            window['status_info'].update(f'About to process {len(files_todo)} file(s)')
+            if files_todo:
+                prev=files_todo[-1]
+                prev=os.path.join(solex_util.output_path(os.path.splitext(prev)[0] + f'_shift={options["shift"][-1]}_clahe.png', options))
+                print('the image file:' + prev)
+                window.perform_long_operation(lambda : handle_files(files_todo, options, True), '-END KEY-')
+            else:
+                window.perform_long_operation(lambda : time.sleep(1), '-END KEY-')
+            files_processed.update(files_todo)
+            
+        if event == 'Stop':
+            stop=True
+            window['status_info'].update(f'WILL STOP AFTER PROCESSING NEXT BATCH OF {len(files_todo)} files')
+        
+        
 
 
 """
@@ -154,7 +228,12 @@ if __name__ == '__main__':
             read_ini()
             while True:
                 serfiles.extend(UI_handler.inputUI(options)) # get files
-                handle_files(serfiles, options) # handle files
+                if options['selected_mode'] == 'File input mode':
+                    handle_files(serfiles, options) # handle files
+                elif options['selected_mode'] == 'Folder input mode':
+                    handle_folder(options)
+                else:
+                    raise Exception('invalid selected_mode: ' + options['selected_mode'])
                 serfiles.clear() # clear files that have been processed
                     
         else:

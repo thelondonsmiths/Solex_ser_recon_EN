@@ -67,13 +67,24 @@ def interpret_UI_values(options, ui_values):
     options['img_rotate'] = int(ui_values['img_rotate'])
     serfiles=ui_values['-FILE-'].split(';')
     options['output_dir'] = ui_values['output_dir']
-    try:
-        for serfile in serfiles:
-            f=open(serfile, "rb")
-            f.close()
-        return serfiles
-    except:
-        raise Exception('ERROR opening file :'+serfile+'!')
+    options['input_dir'] = ui_values['input_dir']
+    options['continuous_detect_mode'] = ui_values['Continuous detect mode']
+    if options['selected_mode'] == 'File input mode':
+        try:
+            for serfile in serfiles:
+                f=open(serfile, "rb")
+                f.close()
+            return serfiles
+        except:
+            traceback.print_exc()
+            raise Exception('ERROR opening file :'+serfile+'!')
+    elif options['selected_mode'] == 'Folder input mode':
+        if not os.path.isdir(options['input_dir']):
+            raise Exception('ERROR opening folder :'+options['input_dir'])
+        return []
+    else:
+        raise Exception('ERROR: Invalid mode selection: ' + options['selected_mode'])
+        
 
 def read_langs():
     prefixed = sorted([filename for filename in os.listdir(resource_path('language_data')) if filename.startswith('dict_lang') and filename.endswith('.txt')])
@@ -104,7 +115,7 @@ def get_img_data(f, maxsize=(30, 18), first=False):
     """Generate image data using PIL
     """
     try:
-        img = Image.open(resource_path(f))
+        img = Image.open(f)
         img.thumbnail(maxsize)
         if first:                     # tkinter is inactive the first time
             bio = io.BytesIO()
@@ -120,12 +131,13 @@ def get_img_data(f, maxsize=(30, 18), first=False):
 def change_langs(window, popup_messages, lang_dict, flag_change=True):
     flag_ok = 0
     checkboxes = set(['Show graphics', 'Save fits files', 'Save clahe.png only', 'Crop square', 'Mirror X', 'Correct transversalium lines'])
+    popup_ids = set(['no_file_error', 'no_folder_error'])
     for k, v in lang_dict.items():
         if k == '_flag_icon':
             if flag_change:
-                window['_flag_icon'].update(data=get_img_data(os.path.join('language_data', v)))
+                window['_flag_icon'].update(data=get_img_data(resource_path(os.path.join('language_data', v))))
             flag_ok = 1
-        elif k == 'no_file_error':
+        elif k in popup_ids:
             popup_messages['no_file_error'] = v
         elif k == 'pixel_offset_tooltip':
             window['_pixel_offset'].TooltipObject.text = v
@@ -151,16 +163,35 @@ def change_langs(window, popup_messages, lang_dict, flag_change=True):
     
 def inputUI(options):
     langs, lang_dicts = read_langs()
-    popup_messages = {"no_file_error": "Error: file not entered! Please enter file(s)"}
-    image_elem = sg.Image(data=get_img_data(os.path.join('language_data', 'flagEN.png'), first=True), key = '_flag_icon')
+    popup_messages = {"no_file_error": "Error: file not entered! Please enter file(s)", "no_folder_error": "Error: folder not entered! Please enter folder"}
+    image_elem = sg.Image(data=get_img_data(resource_path(os.path.join('language_data', 'flagEN.png')), first=True), key = '_flag_icon')
         
     sg.theme('Dark2')
     sg.theme_button_color(('white', '#500000'))
 
-    layout = [
-    [sg.Text('Solar disk reconstruction from SHG video files', font='Any 14', key='Solar disk reconstruction from SHG video files'), sg.Push(), image_elem, sg.Combo(langs, key="lang_input", enable_events=True, default_value='English', size=(10, 12), readonly=True)], # TODO: save default in options
-    [sg.Text('File(s)', size=(7, 1), key = 'File(s)'), sg.InputText(default_text=options['workDir'],size=(75,1),key='-FILE-'),
-     sg.FilesBrowse('Open', key = 'Open', file_types=(("Video Files (AVI or SER)", "*.ser *.avi"),),initial_folder=options['workDir'])],
+    layout_title = [
+        [sg.Text('Solar disk reconstruction from SHG video files', font='Any 14', key='Solar disk reconstruction from SHG video files'), sg.Push(), image_elem, sg.Combo(langs, key="lang_input", enable_events=True, default_value='English', size=(10, 12), readonly=True)], # TODO: save default in options
+    ]
+
+    layout_file_input = [
+        [sg.Text('File(s)', size=(7, 1), key = 'File(s)'), sg.InputText(default_text=options['workDir'],size=(75,1),key='-FILE-'),
+         sg.FilesBrowse('Choose file(s)', key = 'Choose file(s)', file_types=(("Video Files (AVI or SER)", "*.ser *.avi"),),initial_folder=options['workDir'])],
+    ]
+
+    layout_folder_input = [
+        [sg.Text('Folder', size=(7, 1), key = 'Folder'), sg.InputText(default_text='',size=(75,1),key='input_dir'),
+         sg.FolderBrowse('Choose input folder', key = 'Choose input folder', initial_folder=options['input_dir'])],
+        [sg.Checkbox('Continuous detect mode', default=False, key='Continuous detect mode')],
+    ]
+
+    layout_folder_output = [
+        [sg.Text('Output folder (blank for same as input):', size=(50, 1), key = 'Output Folder (blank for same as input):')],
+        [sg.InputText(default_text=options['output_dir'],size=(75,1),key='output_dir'),
+            sg.FolderBrowse('Choose output folder', key = 'Choose output folder',initial_folder=options['output_dir'])],
+    ]
+
+    layout_base = [
+    
     [sg.Checkbox('Show graphics', default=options['flag_display'], key='Show graphics')],
     [sg.Checkbox('Save fits files', default=options['save_fit'], key='Save fits files')],
     [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='Save clahe.png only')],
@@ -189,13 +220,15 @@ def inputUI(options):
     [sg.Text('Tilt angle (blank for auto)',size=(32,1), key='Tilt angle (blank for auto)'), sg.Input(default_text='',size=(8,1),key='_tilt',enable_events=True)],
     [sg.Text('Pixel offset',size=(32,1), key='Pixel offset'),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='_pixel_offset',enable_events=True)],
     [sg.Text('Protus adjustment', size=(32,1), key='Protus adjustment'), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='_protus_adjustment')],
-    [sg.Text('Output folder (blank for same as input):', size=(50, 1), key = 'Output Folder (blank for same as input):')],
-    [sg.InputText(default_text=options['output_dir'],size=(75,1),key='output_dir'),
-     sg.FolderBrowse('Choose output folder', key = 'Choose output folder',initial_folder=options['output_dir'])],
     [sg.Button('OK'), sg.Cancel()]
     ] 
+
+    tab_group = sg.TabGroup([[sg.Tab('File input mode', layout_file_input, tooltip='', key='File input mode'), sg.Tab('Folder input mode', layout_folder_input, key='Folder input mode')]])
+    layout = [
+        layout_title + [[tab_group]] + layout_folder_output + layout_base    
+    ]  
     
-    window = sg.Window('SHG Version 4.0', layout, finalize=True)
+    window = sg.Window('SHG Version 4.1', layout, finalize=True)
     window.BringToFront()
 
     if options['language'] in langs:
@@ -205,7 +238,7 @@ def inputUI(options):
         change_langs(window, popup_messages, lang_dict)
     else:
         print(f'ERROR: language not available: "{options["language"]}"')
-    
+
     while True:
         event, values = window.read()
         if event==sg.WIN_CLOSED or event=='Cancel':
@@ -216,8 +249,30 @@ def inputUI(options):
             change_langs(window, popup_messages, lang_dicts[langs.index('English')], flag_change=False) # if missing will be English
             change_langs(window, popup_messages, lang_dict)
             options['language'] = values['lang_input']
+        print(event)
+        if event == 'File input mode' or event == 'Folder input mode':
+            print('hi' + event)
+            selected_mode = event
         if event=='OK':
-            if not values['-FILE-'] == options['workDir'] and not values['-FILE-'] == '':
+            selected_mode = tab_group.Get()
+            if selected_mode == 'File input mode':
+                if not values['-FILE-'] == options['workDir'] and not values['-FILE-'] == '':
+                    input_okay_flag = True
+                else:
+                    # display pop-up file not entered
+                    input_okay_flag = False
+                    sg.Popup(popup_messages['no_file_error'], keep_on_top=True)
+            elif selected_mode == 'Folder input mode':
+                if not values['input_dir'] ==  '':
+                    input_okay_flag = True
+                else:
+                    # display pop-up folder not entered
+                    input_okay_flag = False
+                    sg.Popup(popup_messages['no_folder_error'], keep_on_top=True)
+            else:
+                sg.Popup(popup_messages['ERROR: mode selection error: ' + selected_mode], keep_on_top=True)
+            if input_okay_flag:
+                options['selected_mode'] = selected_mode
                 try:
                     serfiles = interpret_UI_values(options, values)
                     window.close()
@@ -226,8 +281,6 @@ def inputUI(options):
                     traceback.print_exc()
                     sg.Popup('Error: ' + inst.args[0], keep_on_top=True)
                     
-            else:
-                # display pop-up file not entered
-                sg.Popup(popup_messages['no_file_error'], keep_on_top=True)
+        
         window.Element('-trans_strength-').Update(visible = values['Correct transversalium lines'])
         window.Element('Transversalium correction strength (pixels x 100) :').Update(visible = values['Correct transversalium lines'])    
