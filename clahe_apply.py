@@ -29,7 +29,7 @@ def interpret_UI_values(options, ui_values):
     options['lo'] = int(ui_values['lo'])
     options['tile_size'] = int(ui_values['tile_size'])
     options['sat'] = int(ui_values['sat'])
-    options['do_stretch'] = ui_values['do_stretch']
+    options['do_stretch'] = ui_values['Use high/low stretch']
     files=ui_values['-FILE-'].split(';')
     try:
         for file in files:
@@ -83,7 +83,7 @@ def get_img_data(f, maxsize=(30, 18), first=False):
 
 def change_langs(window, popup_messages, lang_dict, flag_change=True):
     flag_ok = 0
-    checkboxes = set(['Show graphics', 'Save fits files', 'Save clahe.png only', 'Crop square', 'Mirror X', 'Correct transversalium lines'])
+    checkboxes = set(['Use high/low stretch'])
     for k, v in lang_dict.items():
         if k == '_flag_icon':
             if flag_change:
@@ -130,7 +130,7 @@ def inputUI(options):
              orientation='horizontal',
              font=('Helvetica', 12),
              key='tile_size')], 
-        [sg.Checkbox('Use high/low stretch', default=options['do_stretch'], key='do_stretch', enable_events=True)],
+        [sg.Checkbox('Use high/low stretch', default=options['do_stretch'], key='Use high/low stretch', enable_events=True)],
         [sg.Text("Low threshhold:", key='Low threshhold', visible=options['do_stretch'])],
         [sg.Slider(range=(0,100),
              default_value=options['lo'],

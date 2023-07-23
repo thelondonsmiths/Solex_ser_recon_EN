@@ -91,7 +91,7 @@ def two_step(points):
         center), height, phi, ratio, points_tresholded, ellipse_points
 
 # note: height is actually an ellipse axis
-def correct_image(image, phi, ratio, center, height, basefich0, print_log=False):
+def correct_image(image, phi, ratio, center, height, options, print_log=False):
     """correct image geometry. TODO : a rotation is made instead of a tilt
     IN : numpy array, float, float, numpy array (2 elements)
     OUT : numpy array, numpy array (2 elements)
@@ -121,22 +121,23 @@ def correct_image(image, phi, ratio, center, height, basefich0, print_log=False)
     
     new_radius = height * np.sqrt(np.abs(ratio / np.linalg.det(mat))) # derivation: area of a circle / area of an ellipse
     if print_log:
+        basefich0 = options['basefich0']
         print(
             'unrotation angle theta = ' +
             "{:.3f}".format(
                 math.degrees(theta)) +
             " degrees")
         np.set_printoptions(suppress=True)
-        logme(basefich0 + '_log.txt', 'Y/X ratio : ' + "{:.3f}".format(ratio))
+        logme(basefich0 + '_log.txt', options, 'Y/X ratio : ' + "{:.3f}".format(ratio))
         print('Y/X ratio : ' + "{:.3f}".format(ratio))
-        logme(basefich0 + '_log.txt',
+        logme(basefich0 + '_log.txt', options,
             'Tilt angle : ' +
             "{:.3f}".format(
                 math.degrees(phi)) +
             " degrees")
-        logme(basefich0 + '_log.txt', 'Linear transform correction matrix : \n' + str(mat))
-        logme(basefich0 + '_log.txt', 'Disk position, radius : ' + ((str(new_center) + ', ' + "{:.3f}".format(new_radius)) if not height == -1.0 else 'UNKNOWN'))
-        logme(basefich0 + '_log.txt', 'Unrotation : '  +
+        logme(basefich0 + '_log.txt', options, 'Linear transform correction matrix : \n' + str(mat))
+        logme(basefich0 + '_log.txt', options, 'Disk position, radius : ' + ((str(new_center) + ', ' + "{:.3f}".format(new_radius)) if not height == -1.0 else 'UNKNOWN'))
+        logme(basefich0 + '_log.txt', options, 'Unrotation : '  +
             "{:.3f}".format(
                 math.degrees(theta)) +
             " degrees")
@@ -297,7 +298,7 @@ def ellipse_to_circle(image, options, basefich):
     center, height, phi, ratio, X_f, ellipse_points = two_step(X)
     center = np.array([center[1], center[0]])
 
-    fix_img, new_circle, mat3 = correct_image(image, phi, ratio, center, height, options['basefich0'], print_log=True)
+    fix_img, new_circle, mat3 = correct_image(image, phi, ratio, center, height, options, print_log=True)
 
 
     X_f3 = np.ones((X_f.shape[0], 3))
@@ -331,6 +332,6 @@ def ellipse_to_circle(image, options, basefich):
         ax[1][0].axvline(x=borders[0])
         ax[1][0].axvline(x=borders[2])
         ax[1][0].set_title('geometrically corrected image', fontsize=11)    
-        fig.savefig(basefich + '_ellipse_fit.png', dpi=300)
+        fig.savefig(output_path(basefich + '_ellipse_fit.png', options), dpi=300)
   
     return fix_img, new_circle, ratio, phi, borders

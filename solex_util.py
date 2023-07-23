@@ -25,30 +25,40 @@ import cv2
 from scipy.optimize import curve_fit
 import datetime
 
-def clearlog(path):
+def clearlog(path, options):
     try:
-        with open(path, 'w') as f:
+        with open(output_path(path, options), 'w') as f:
             f.write('start time: ' + str(datetime.datetime.now()) + '\n')
     except Exception:
         traceback.print_exc()
         print('ERROR: failed to log file: ' + path)
 
-def write_complete(path):
+def write_complete(path, options):
     try:
-        with open(path, 'a') as f:
+        with open(output_path(path, options), 'a') as f:
             f.write('end time: ' + str(datetime.datetime.now()) + '\n')
     except Exception:
         traceback.print_exc()
         print('ERROR: failed to log file: ' + path)
         
 
-def logme(path, s):
+def logme(path, options, s):
     try:
-        with open(path, 'a') as f:
+        with open(output_path(path, options), 'a') as f:
             f.write(s + '\n')
     except Exception:
         traceback.print_exc()
         print('ERROR: failed to log file: ' + path)
+
+'''
+if options['output_dir'] is empty, then output there
+else output same file name, but into directory in options
+'''
+def output_path(path, options):
+    if options['output_dir'] == '':
+        path
+    return os.path.join(options['output_dir'], os.path.basename(path))
+
 
 # return values in an array not "m-far" from mean
 def reject_outliers(data, m = 2):
@@ -147,7 +157,7 @@ def detect_bord(img, axis):
     ub = img.shape[int(not axis)] - 1 - np.argmax(np.flip(where_sun)) # int(not axis) : get the other axis 1 -> 0 and 0 -> 1
     return lb, ub
 
-def compute_mean_max(file):
+def compute_mean_max(file, options):
     """IN : file path"
     OUT :numpy array
     """
@@ -155,8 +165,8 @@ def compute_mean_max(file):
     
     
     rdr = video_reader(file)
-    logme(basefich0 + '_log.txt', 'Width, Height : ' + str(rdr.Width) + ' ' + str(rdr.Height))
-    logme(basefich0 + '_log.txt', 'Number of frames : ' + str(rdr.FrameCount))
+    logme(basefich0 + '_log.txt', options, 'Width, Height : ' + str(rdr.Width) + ' ' + str(rdr.Height))
+    logme(basefich0 + '_log.txt', options, 'Number of frames : ' + str(rdr.FrameCount))
     my_data = np.zeros((rdr.ih, rdr.iw), dtype='uint64')
     max_data = np.zeros((rdr.ih, rdr.iw), dtype='uint16')
     while rdr.has_frames():
@@ -177,11 +187,11 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
     flag_display = options['flag_display']
     # first compute mean image
     # rdr is the video_reader object
-    mean_img, max_img = compute_mean_max(file)
+    mean_img, max_img = compute_mean_max(file, options)
     
     if options['save_fit']:
         DiskHDU = fits.PrimaryHDU(mean_img, header=hdr)
-        DiskHDU.writeto(basefich0 + '_mean.fits', overwrite='True')
+        DiskHDU.writeto(output_path(basefich0 + '_mean.fits', options), overwrite='True')
 
     # affiche image moyenne
     if flag_display:
@@ -202,7 +212,7 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
     clip = int((y2 - y1) * 0.05)
     y1 = min(max_img.shape[0]-1, y1+clip)
     y2 = max(0, y2-clip)
-    logme(basefich0 + '_log.txt', 'Vertical limits y1, y2 : ' + str(y1) + ' ' + str(y2))
+    logme(basefich0 + '_log.txt', options, 'Vertical limits y1, y2 : ' + str(y1) + ' ' + str(y2))
     blur_width_x = 25
     blur_width_y = int((y2 - y1) * 0.01)
     blur = cv2.blur(mean_img, ksize=(blur_width_x,blur_width_y))
@@ -231,7 +241,7 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
     tol_line_fit = 5
     mask_good = np.abs(delta_sharp - shift) < tol_line_fit
     p = np.flip(np.asarray(np.polyfit(np.arange(y1, y2)[mask_good], min_intensity_sharp[y1:y2][mask_good], 3), dtype='d'))
-    logme(basefich0 + '_log.txt', 'Spectral line polynomial fit: ' + str(p))
+    logme(basefich0 + '_log.txt', options, 'Spectral line polynomial fit: ' + str(p))
     
     curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
     fit = [[math.floor(curve[y]), curve[y] - math.floor(curve[y]), y] for y in range(ih)]
@@ -248,7 +258,7 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         ax.set_aspect(0.1)
         fig.tight_layout()
-        fig.savefig(basefich0+'_spectral_line_data.png', dpi=400)
+        fig.savefig(output_path(basefich0+'_spectral_line_data.png', options), dpi=400)
     return fit, y1, y2
 
 
@@ -322,7 +332,7 @@ def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
         ax.plot(c)
         ax.set_xlabel('y')
         ax.set_ylabel('transversalium correction factor')
-        fig.savefig(basefich+'_transversalium_correction.png', dpi=300)
+        fig.savefig(output_path(basefich+'_transversalium_correction.png', options), dpi=300)
     ret = (img.T * c).T # multiply each row in image by correction factor
     ret[ret > 65535] = 65535 # prevent overflow
     return np.array(ret, dtype='uint16')
@@ -367,12 +377,12 @@ def image_process(frame, cercle, options, header, basefich):
     # save the clahe as a png
     print('saving image to:' + basefich+'_clahe.png')
     compression = 0
-    cv2.imwrite(basefich+'_clahe.png',cc, [cv2.IMWRITE_PNG_COMPRESSION, compression])   # Modification Jean-Francois: placed before the IF for clear reading
+    cv2.imwrite(output_path(basefich+'_clahe.png', options),cc, [cv2.IMWRITE_PNG_COMPRESSION, compression])   # Modification Jean-Francois: placed before the IF for clear reading
     if not options['clahe_only']:
         # save "high-contrast" and "protus" pngs
-        cv2.imwrite(basefich+'_uncontrasted.png', frame_raw, [cv2.IMWRITE_PNG_COMPRESSION, compression])
-        cv2.imwrite(basefich+'_high_contrast.png', frame_HC, [cv2.IMWRITE_PNG_COMPRESSION, compression])
-        cv2.imwrite(basefich+'_protus.png', frame_protus, [cv2.IMWRITE_PNG_COMPRESSION, compression])
+        cv2.imwrite(output_path(basefich+'_uncontrasted.png', options), frame_raw, [cv2.IMWRITE_PNG_COMPRESSION, compression])
+        cv2.imwrite(output_path(basefich+'_high_contrast.png', options), frame_HC, [cv2.IMWRITE_PNG_COMPRESSION, compression])
+        cv2.imwrite(output_path(basefich+'_protus.png', options), frame_protus, [cv2.IMWRITE_PNG_COMPRESSION, compression])
     
     # The 3 images are concatenated together in 1 image => 'Sun images'
     # The 'Sun images' is scaled for the monitor maximal dimension ... it is scaled to match the dimension of the monitor without 
@@ -393,4 +403,4 @@ def image_process(frame, cercle, options, header, basefich):
     if options['save_fit']:
         # save the fits file
         DiskHDU=fits.PrimaryHDU(cl1,header)
-        DiskHDU.writeto(basefich+ '_clahe.fits', overwrite='True')
+        DiskHDU.writeto(output_path(basefich+ '_clahe.fits', options), overwrite='True')

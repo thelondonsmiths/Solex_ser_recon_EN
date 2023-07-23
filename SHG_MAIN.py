@@ -53,6 +53,7 @@ options = {
     'flip_x': False,                # argument: m
     'workDir': '',                  #
     'fixed_width': None,            # argument: r
+    'output_dir': ''                #
 }
 
 

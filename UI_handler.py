@@ -66,6 +66,7 @@ def interpret_UI_values(options, ui_values):
     options['flip_x'] = ui_values['Mirror X']
     options['img_rotate'] = int(ui_values['img_rotate'])
     serfiles=ui_values['-FILE-'].split(';')
+    options['output_dir'] = ui_values['output_dir']
     try:
         for serfile in serfiles:
             f=open(serfile, "rb")
@@ -159,7 +160,7 @@ def inputUI(options):
     layout = [
     [sg.Text('Solar disk reconstruction from SHG video files', font='Any 14', key='Solar disk reconstruction from SHG video files'), sg.Push(), image_elem, sg.Combo(langs, key="lang_input", enable_events=True, default_value='English', size=(10, 12), readonly=True)], # TODO: save default in options
     [sg.Text('File(s)', size=(7, 1), key = 'File(s)'), sg.InputText(default_text=options['workDir'],size=(75,1),key='-FILE-'),
-     sg.FilesBrowse('Open', key = 'Open', file_types=(("SER Files", "*.ser"),("AVI Files", "*.avi"),),initial_folder=options['workDir'])],
+     sg.FilesBrowse('Open', key = 'Open', file_types=(("Video Files (AVI or SER)", "*.ser *.avi"),),initial_folder=options['workDir'])],
     [sg.Checkbox('Show graphics', default=options['flag_display'], key='Show graphics')],
     [sg.Checkbox('Save fits files', default=options['save_fit'], key='Save fits files')],
     [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='Save clahe.png only')],
@@ -188,6 +189,9 @@ def inputUI(options):
     [sg.Text('Tilt angle (blank for auto)',size=(32,1), key='Tilt angle (blank for auto)'), sg.Input(default_text='',size=(8,1),key='_tilt',enable_events=True)],
     [sg.Text('Pixel offset',size=(32,1), key='Pixel offset'),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='_pixel_offset',enable_events=True)],
     [sg.Text('Protus adjustment', size=(32,1), key='Protus adjustment'), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='_protus_adjustment')],
+    [sg.Text('Output folder (blank for same as input):', size=(50, 1), key = 'Output Folder (blank for same as input):')],
+    [sg.InputText(default_text=options['output_dir'],size=(75,1),key='output_dir'),
+     sg.FolderBrowse('Choose output folder', key = 'Choose output folder',initial_folder=options['output_dir'])],
     [sg.Button('OK'), sg.Cancel()]
     ] 
     

@@ -47,8 +47,8 @@ read a solex file and return a list of numpy arrays representing the raw result
 def solex_read(file, options):
     basefich0 = os.path.splitext(file)[0] # file name without extension
     options['basefich0'] = basefich0
-    clearlog(basefich0 + '_log.txt')
-    logme(basefich0 + '_log.txt', 'Pixel shift : ' + str(options['shift']))
+    clearlog(basefich0 + '_log.txt', options)
+    logme(basefich0 + '_log.txt', options, 'Pixel shift : ' + str(options['shift']))
     options['shift_requested'] = options['shift']
     options['shift'] = list(dict.fromkeys([10, 0] + options['shift']))  # 10, 0 are "fake", but if they are requested, then don't double count
     rdr = video_reader(file)
@@ -75,7 +75,7 @@ def solex_read(file, options):
         
         if options['save_fit'] and flag_requested:
             DiskHDU = fits.PrimaryHDU(disk_list[i], header=hdr)
-            DiskHDU.writeto(basefich + '_raw.fits', overwrite='True')
+            DiskHDU.writeto(output_path(basefich + '_raw.fits', options), overwrite='True')
     return disk_list, (backup_y1, backup_y2), hdr
     
 '''
@@ -89,12 +89,12 @@ hdr: an hdr header for fits files
 def solex_process(options, disk_list, backup_bounds, hdr):
     basefich0 = options['basefich0']
     if options['transversalium']:
-        logme(basefich0 + '_log.txt', 'Transversalium correction : ' + str(options['trans_strength']))
+        logme(basefich0 + '_log.txt', options, 'Transversalium correction : ' + str(options['trans_strength']))
     else:
-        logme(basefich0 + '_log.txt', 'transversalium disabled')
-    logme(basefich0 + '_log.txt', 'Mirror X : ' + str(options['flip_x']))
-    logme(basefich0 + '_log.txt', 'Post-rotation : ' + str(options['img_rotate']) + ' degrees')
-    logme(basefich0 + '_log.txt', f'Protus adjustment : {options["delta_radius"]}')
+        logme(basefich0 + '_log.txt', options, 'Transversalium disabled')
+    logme(basefich0 + '_log.txt', options, 'Mirror X : ' + str(options['flip_x']))
+    logme(basefich0 + '_log.txt', options, 'Post-rotation : ' + str(options['img_rotate']) + ' degrees')
+    logme(basefich0 + '_log.txt', options, f'Protus adjustment : {options["delta_radius"]}')
     borders = [0,0,0,0]
     cercle0 = (-1, -1, -1)
     frames_circularized = []
@@ -116,14 +116,14 @@ def solex_process(options, disk_list, backup_bounds, hdr):
             ratio = options['ratio_fixe'] if not options['ratio_fixe'] is None else 1.0
             phi = math.radians(options['slant_fix']) if not options['slant_fix'] is None else 0.0
             if flag_requested:
-                frame_circularized = correct_image(disk_list[i] / 65536, phi, ratio, np.array([-1.0, -1.0]), -1.0, options['basefich0'], print_log=i == 0)[0]  # Note that we assume 16-bit
+                frame_circularized = correct_image(disk_list[i] / 65536, phi, ratio, np.array([-1.0, -1.0]), -1.0, options, print_log=i == 0)[0]  # Note that we assume 16-bit
 
         if not flag_requested:
             continue # skip processing if shift is not desired
         
         if options['save_fit']:  # first two shifts are not user specified
             DiskHDU = fits.PrimaryHDU(frame_circularized, header=hdr)
-            DiskHDU.writeto(basefich + '_circular.fits', overwrite='True')
+            DiskHDU.writeto(output_path(basefich + '_circular.fits', options), overwrite='True')
 
 
         if options['transversalium']:
@@ -136,7 +136,7 @@ def solex_process(options, disk_list, backup_bounds, hdr):
 
         if options['save_fit'] and options['transversalium']:  # first two shifts are not user specified
             DiskHDU = fits.PrimaryHDU(detransversaliumed, header=hdr)
-            DiskHDU.writeto(basefich + '_detransversaliumed.fits', overwrite='True')
+            DiskHDU.writeto(output_path(basefich + '_detransversaliumed.fits', options), overwrite='True')
 
         cercle = cercle0
         if not options['fixed_width'] == None or options['crop_width_square']:
@@ -159,4 +159,4 @@ def solex_process(options, disk_list, backup_bounds, hdr):
        
 
         image_process(detransversaliumed, cercle, options, hdr, basefich)
-        write_complete(basefich0 + '_log.txt')
+        write_complete(basefich0 + '_log.txt', options)
