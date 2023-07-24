@@ -33,17 +33,18 @@ In the Python GUI window, enter the name of the video file(s) to be processed. B
 Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek at the final png images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
 The composite png peek window can be killed early by pushing any key on the keyboard (default is 30 sec in single file mode and 5 sec in batch mode).
+For rapid processing during data acquisition, make sure "Show graphics" is off.
 
 Note that by default all output files will be saved in the same directory as the video file. If the program is run a second time, it will overwrite the original output files.
 A different output folder can also be chosen using the GUI. This destination will be remembered for subsequent processing.
 
-In "File input mode", you can choose on or more files. The working directory is remembered for the next time the program runs.
+In "File input mode", you can choose one or more files. The working directory is remembered for the next time the program runs.
 In "Folder input mode", you can choose a particular folder to process all the files in batch mode (all with the same settings).
 If "Continuous detect mode" is selected, the program will process all the files already in the folder then wait until a new file arrives, at which point it will also be processed.
 A 600x600 pixel CLAHE image of the last file processed will be displayed while the program is waiting.
 If "Continuous detect mode" is on, then generally "Show graphics" should be off.
 
-When restarted, the program will always be in "File input mode" rather than "Folder input mode".
+When the program starts, it will always be in "File input mode" rather than "Folder input mode".
 
 If the "Save fits files" box is checked, the following files will be stored:
 
@@ -54,10 +55,10 @@ If the "Save fits files" box is checked, the following files will be stored:
 - _filename_clahe.fits_: final image, with Contrast Limited Adaptive Histogram Equalization
 
 If the "Save clahe.png only" box is checked, then only the png image with Contrast Limited Adaptive Histogram Equalization will be saved.
-This is the most useful output file for stacking purposes.
+This is typically the most useful output file for stacking purposes.
 
 If the "Crop width square" box is checked, the width is cropped to be the same as the height, with the Sun centred.
-This feature is particularly helpful for stacking frames (which typically require them all to be the same dimensions) and creating animations and mosaics.
+This feature is particularly helpful for stacking frames (which typically require them to all be the same dimensions) and creating animations and mosaics.
 The crop square feature is only useful for full-disk images.
 If the width is smaller than the height, the Sun is centred and some dark space is added on each side to make the image square.
 
@@ -74,19 +75,19 @@ The "Rotate png images" silder applies only to the final png output images. Rota
 If "Correct transversalium lines" is not checked, then the program makes no attempt to fix line defects.
 The function for fixing line defects works well if they are small and well-defined. Wide lines may require a more manual process.
 In this case, turning off the automated function may be helpful. The default should be for this box to be checked.
-For protuberance images, the ones with the black disc, turning off the transversalium is recommended. This because the transversalium filter effects the dark sky background but is useless if the surface is masked.
+For protuberance images, the ones with the black disc, turning off the transversalium is recommended. This because the transversalium filter affects the dark sky background but is irrelevant if the surface is masked.
 
 The slider for "Transversalium correction strength" can be adjusted from low (weak) to high (strong).
-The number corresponds to the width of a window in hundreds of pixels for creation of a "flat".
+The number corresponds to the width of a window in hundreds of pixels for the creation of a "flat".
 The default setting of 3 seems to work well for most spectral lines. Very wide defects may be improved by using a higher value.
 
 Y/X ratio: enter a specific Y/X ratio, if this is known. Leave blank for auto-correction. Enter 1 if no correction is desired.
 
 Tilt angle: enter a specific tilt angle in degrees. Leave blank for auto-correction. Enter 0 if no tilt correction is desired.
 
-Pixel offset: offset in pixels from the minimum of the line to reconstruct the image on another wavelength (displaced from the central minimum).
+Pixel offset: offset in pixels from the minimum of the spectral line to reconstruct the image on a wavelength displaced from the central minimum.
 - For no shift, leave the "Pixel offset" box at the default of '0'
-- Specify the output of a particular shift by entering a single number or particular values with commas: 'a,b,c,d,e' etc
+- Specify the output of a particular shift by entering a single number or particular values separated by commas: 'a,b,c,d,e' etc
 - For a range x to y with an interval of w, use colons: 'x:y:w'
 - If 'w' not specified, the default is 1 so  'x:y' will produce the range x, x+1, x+2, ... y-2, y-1, y
 - x, y, a, b, c can be positive or negative integers; the number w can only be a positive integer
@@ -94,13 +95,9 @@ Pixel offset: offset in pixels from the minimum of the line to reconstruct the i
 
 Protus adjustment: make the black circle larger or smaller in radius by inputting a positive or negative integer (typically between -10 and +10).
 If you want to turn off the black disk altogether, then enter a negative number greater than the radius (e.g. -9999).
-The proftus adjustment setting is remembered.
+The protus adjustment setting is remembered.
 
 Geometry correction may fail under certain circumstances (one example being a partial eclipse). In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
-
-For rapid processing during data acquisition, make sure "Show graphics" is off.
-If Y/X is set to 1, distortion due to inappropriate scanning speed vs frame rate can be recognised and optimised.
-Similarly, if Tilt is set to 0, instrument misalignment can be recognised and corrected.
 
 By default, the Processing GUI will reappear after each run.
 The prior input file location and several other GUI states are saved in the _SHG_config_ file.
