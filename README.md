@@ -32,9 +32,18 @@ In the Python GUI window, enter the name of the video file(s) to be processed. B
 
 Check the "Show graphics" box for a 'live view' display of the reconstruction and a peek at the final png images.
 This will increase processing time significantly. This feature is not recommended for batch processing.
-The composite png peek window can be killed early by pushing any key on the keyboard (default is 60 sec in single file mode and 5 sec in batch mode).
+The composite png peek window can be killed early by pushing any key on the keyboard (default is 30 sec in single file mode and 5 sec in batch mode).
 
-Note that all output files will be saved in the same directory as the video file. If the program is run a second time, it will overwrite the original output files.
+Note that by default all output files will be saved in the same directory as the video file. If the program is run a second time, it will overwrite the original output files.
+A different output folder can also be chosen using the GUI. This destination will be remembered for subsequent processing.
+
+In "File input mode", you can choose on or more files. The working directory is remembered for the next time the program runs.
+In "Folder input mode", you can choose a particular folder to process all the files in batch mode (all with the same settings).
+If "Continuous detect mode" is selected, the program will process all the files already in the folder then wait until a new file arrives, at which point it will also be processed.
+A 600x600 pixel CLAHE image of the last file processed will be displayed while the program is waiting.
+If "Continuous detect mode" is on, then generally "Show graphics" should be off.
+
+When restarted, the program will always be in "File input mode" rather than "Folder input mode".
 
 If the "Save fits files" box is checked, the following files will be stored:
 
@@ -60,7 +69,7 @@ The value of the fixed width is remembered.
 If "Mirror X" is checked, the image is reversed after the geometric correction to compensate for scanning in the reverse direction. This applies to all files (png and fits).
 The choice of "Mirror X" is deliberately not remembered.
 
-The "Rotate png images" silder applies only to the final png output images. Rotation is counterclockwise in degrees (0, 90, 180, 270)
+The "Rotate png images" silder applies only to the final png output images. Rotation is counterclockwise in degrees (0, 90, 180, 270).
 
 If "Correct transversalium lines" is not checked, then the program makes no attempt to fix line defects.
 The function for fixing line defects works well if they are small and well-defined. Wide lines may require a more manual process.
@@ -71,13 +80,13 @@ The slider for "Transversalium correction strength" can be adjusted from low (we
 The number corresponds to the width of a window in hundreds of pixels for creation of a "flat".
 The default setting of 3 seems to work well for most spectral lines. Very wide defects may be improved by using a higher value.
 
-Y/X ratio: enter a specific Y/X ratio, if this is known. Leave blank for auto-correction. Enter 1 if no correction desired.
+Y/X ratio: enter a specific Y/X ratio, if this is known. Leave blank for auto-correction. Enter 1 if no correction is desired.
 
-Tilt angle: enter a specific tilt angle in degrees. Leave blank for auto-correction. Enter 0 if no tilt correction desired.
+Tilt angle: enter a specific tilt angle in degrees. Leave blank for auto-correction. Enter 0 if no tilt correction is desired.
 
 Pixel offset: offset in pixels from the minimum of the line to reconstruct the image on another wavelength (displaced from the central minimum).
 - For no shift, leave the "Pixel offset" box at the default of '0'
-- Specify the output of a particular shift by entering a single number or particular values with commas: 'a,b,c,d,e'
+- Specify the output of a particular shift by entering a single number or particular values with commas: 'a,b,c,d,e' etc
 - For a range x to y with an interval of w, use colons: 'x:y:w'
 - If 'w' not specified, the default is 1 so  'x:y' will produce the range x, x+1, x+2, ... y-2, y-1, y
 - x, y, a, b, c can be positive or negative integers; the number w can only be a positive integer
@@ -94,7 +103,7 @@ If Y/X is set to 1, distortion due to inappropriate scanning speed vs frame rate
 Similarly, if Tilt is set to 0, instrument misalignment can be recognised and corrected.
 
 By default, the Processing GUI will reappear after each run.
-The prior file location and several other GUI states are saved in the _SHG_config_ file (previously in a _SHG.ini_ file).
+The prior input file location and several other GUI states are saved in the _SHG_config_ file.
 In CLI mode, the GUI parameters in the _SHG_config_ file are ignored.
 
 A file _serfile_log_ is generated with a number of useful parameters. In particular:
