@@ -2,7 +2,7 @@
 "_lang_name":"Munegascu",
 "_flag_icon": "flagMON.png",
 "File(s)": "Fichièr(e)",
-"Open" : "Dubrì",
+
 "Show graphics": "Mostrà grafiche",
 "Save fits files": "Arregistrà fichièr FITS",
 "Save clahe.png only": "Arregistrà solament clahe.png",

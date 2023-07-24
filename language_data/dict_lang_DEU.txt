@@ -3,7 +3,7 @@
 "_flag_icon": "flagDEU.png",
 "Solar disk reconstruction from SHG video files":"Rekonstruktion der Sonnenscheibe aus SHG-Videodateien",
 "File(s)": "Datei(en)",
-"Open" : "Öffnen",
+
 "Show graphics": "Grafiken anzeigen",
 "Save fits files": "FITS-Dateien speichern",
 "Save clahe.png only": "Nur clahe.png speichern",

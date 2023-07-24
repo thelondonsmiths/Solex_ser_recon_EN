@@ -3,7 +3,7 @@
 "_flag_icon": "flagJPY.png",
 "Solar disk reconstruction from SHG video files":"SHGビデオファイルからの太陽円盤再構築",
 "File(s)": "ファイル",
-"Open" : "開く",
+
 "Show graphics": "グラフィックを表示",
 "Save fits files": "FITSファイルを保存",
 "Save clahe.png only": "clahe.pngのみ保存",

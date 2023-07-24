@@ -3,7 +3,7 @@
 "_flag_icon": "flagUKR.png",
 "Solar disk reconstruction from SHG video files":"Реконструкція сонячного диска за відеофайлами SHG",
 "File(s)": "Файл(и)",
-"Open" : "Відкрити",
+
 "Show graphics": "Показати графіку",
 "Save fits files": "Зберегти файли FITS",
 "Save clahe.png only": "Зберегти лише clahe.png",

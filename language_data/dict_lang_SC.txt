@@ -3,7 +3,7 @@
 "_flag_icon": "flagSC.png",
 "Solar disk reconstruction from SHG video files":"从SHG视频文件中重建太阳盘",
 "File(s)": "文件(们)",
-"Open" : "打开",
+
 "Show graphics": "显示图形",
 "Save fits files": "保存 FITS 文件",
 "Save clahe.png only": "仅保存 clahe.png",

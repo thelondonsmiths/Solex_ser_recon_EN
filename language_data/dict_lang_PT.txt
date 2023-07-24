@@ -3,7 +3,7 @@
 	"_flag_icon": "flagPT.png",
 	"Solar disk reconstruction from SHG video files":"Reconstrução do disco solar a partir de arquivos de vídeo SHG",
 	"File(s)": "Arquivo(s)",
-	"Open" : "Abrir",
+	
 	"Show graphics": "Mostrar gráficos",
 	"Save fits files": "Salvar arquivos FITS",
 	"Save clahe.png only": "Salvar apenas clahe.png",
