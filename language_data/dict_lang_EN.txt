@@ -5,6 +5,8 @@
 	"File(s)": "File(s)",
 	"Choose file(s)": "Choose file(s)",
 	"Folder input mode": "Folder input mode",
+	"Folder": "Folder",
+	"Output Folder (blank for same as input):": "Output Folder (blank for same as input):",
 	"File input mode": "File input mode",
 	"Choose input folder": "Choose input folder",
 	"Continuous detect mode": "Continuous detect mode",

@@ -3,7 +3,7 @@
 @author: Andrew Smith
 based on code by Valerie Desnoux
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 9 July 2023
+Version 24 July 2023
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER and AVI files
@@ -92,7 +92,7 @@ def write_ini():
 
 def precheck_files(serfiles, options):
     if len(serfiles)==1:
-        options['tempo']=60000 #4000 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
+        options['tempo']=30000 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
     else:
         options['tempo']=5000
 
@@ -154,15 +154,12 @@ def handle_folder(options):
     
     files_processed = set()
     layout = [
-        [sg.Text('Auto processing of SHG video files', font='Any 14', key='Auto processing of SHG video files')],
-        [sg.Text('Looking for files', key='status_info')],
-        [sg.Text(f'Number of files processed: {len(files_processed)}', key='auto_info')],
+        [sg.Text('Auto processing of SHG video files', font='Any 12', key='Auto processing of SHG video files'), sg.Push(), sg.Button('Stop')],
+        [sg.Text(f'Number of files processed: {len(files_processed)}', key='auto_info'), sg.Push(), sg.Text('Looking for files ...', key='status_info')],
         [sg.Image(UI_handler.resource_path(os.path.join('language_data', 'Black.png')), size=(600, 600), key='_prev_img')],
-        [sg.Text('Previous: none', key='previous')],
-        [sg.Button('Stop')]
-        
+        [sg.Text('Previous: none', key='previous')],        
     ]
-    window = sg.Window('Continuous processing mode', layout)
+    window = sg.Window('Continuous processing mode', layout, keep_on_top=True)
     window.finalize()
     stop=False
     
@@ -174,7 +171,7 @@ def handle_folder(options):
         if event == sg.WIN_CLOSED:
             break
         if event == '-END KEY-':
-            window['status_info'].update(f'Sleeping ... will check for files in 3 seconds')
+            window['status_info'].update('Looking for files ...')
             window['auto_info'].update(f'Number of files processed: {len(files_processed)}')
             if stop:
                 window.close()
@@ -183,19 +180,20 @@ def handle_folder(options):
             if not prev is None:
                 window['_prev_img'].update(data=UI_handler.get_img_data(prev, maxsize=(600,600), first=True))
                 window['previous'].update('Previous: ' + prev)
-            window.perform_long_operation(lambda : time.sleep(3), '-END SLEEP-')
+            window.perform_long_operation(lambda : time.sleep(1), '-END SLEEP-')
 
         if event == '-END SLEEP-':
             files_todo = glob.glob(os.path.join(options['input_dir'], '*.ser')) + glob.glob(os.path.join(options['input_dir'], '*.avi'))
             files_todo = [x for x in files_todo if not x in files_processed and os.access(x, os.R_OK) and is_openable(x)]
-            files_todo = files_todo[:min(2, len(files_todo))] # maximum batch size 2
-            window['status_info'].update(f'About to process {len(files_todo)} file(s)')
+            files_todo = files_todo[:min(1, len(files_todo))] # maximum batch size 1
             if files_todo:
+                window['status_info'].update(f'About to process {len(files_todo)} file(s)')
                 prev=files_todo[-1]
-                prev=os.path.join(solex_util.output_path(os.path.splitext(prev)[0] + f'_shift={options["shift"][-1]}_clahe.png', options))
+                prev=os.path.join(solex_util.output_path(os.path.splitext(prev)[0] + f'_shift={options["shift"][-1]}_clahe.png', options)).replace('\\', "/")
                 print('the image file:' + str(prev))
                 window.perform_long_operation(lambda : handle_files(files_todo, options, True), '-END KEY-')
             else:
+                window['status_info'].update('Looking for files ...')
                 window.perform_long_operation(lambda : time.sleep(1), '-END KEY-')
             files_processed.update(files_todo)
             

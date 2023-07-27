@@ -1,3 +1,9 @@
+"""
+@author: Andrew Smith
+contributors: Jean-Francois Pittet, Jean-Baptiste Butet
+Version 24 July 2023
+"""
+
 import math
 import sys
 

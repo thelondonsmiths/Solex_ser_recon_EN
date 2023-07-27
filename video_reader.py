@@ -1,7 +1,7 @@
 """
 @author: Andrew Smith 
 contributors: Valerie Desnoux, Matt Considine
-Version 3 July 2023
+Version 24 July 2023
 
 """
 import numpy as np
