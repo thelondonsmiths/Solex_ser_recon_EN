@@ -3,7 +3,7 @@
 @author: Andrew Smith
 based on code by Valerie Desnoux
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 24 July 2023
+Version 27 July 2023
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER and AVI files
@@ -187,7 +187,7 @@ def handle_folder(options):
             files_todo = [x for x in files_todo if not x in files_processed and os.access(x, os.R_OK) and is_openable(x)]
             files_todo = files_todo[:min(1, len(files_todo))] # maximum batch size 1
             if files_todo:
-                window['status_info'].update(f'About to process {len(files_todo)} file(s)')
+                window['status_info'].update(f'About to process {len(files_todo)} file')
                 prev=files_todo[-1]
                 prev=os.path.join(solex_util.output_path(os.path.splitext(prev)[0] + f'_shift={options["shift"][-1]}_clahe.png', options)).replace('\\', "/")
                 print('the image file:' + str(prev))
