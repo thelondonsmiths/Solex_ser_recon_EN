@@ -5,6 +5,8 @@
 "File(s)": "Fichier(s)",
 "Choose file(s)": "Choisir le(s) fichier(s)",
 "Folder input mode": "Mode d'entrée des dossiers",
+"Folder": "Dossier",
+"Output Folder (blank for same as input):": "Dossier de sortie (vide si identique à l'entrée) :",
 "File input mode": "Mode d'entrée des fichiers",
 "Choose input folder": "Choisir le dossier d'entrée",
 "Continuous detect mode": "Mode de détection continue",
