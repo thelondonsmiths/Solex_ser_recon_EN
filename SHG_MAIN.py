@@ -92,7 +92,7 @@ def write_ini():
 
 def precheck_files(serfiles, options):
     if len(serfiles)==1:
-        options['tempo']=30000 #pour gerer la tempo des affichages des images resultats dans cv2.waitKey
+        options['tempo']=30000 #to manage the display time in ms of result images in cv2.waitKey
     else:
         options['tempo']=5000
 
@@ -157,7 +157,7 @@ def handle_folder(options):
         [sg.Text('Auto processing of SHG video files', font='Any 12', key='Auto processing of SHG video files'), sg.Push(), sg.Button('Stop')],
         [sg.Text(f'Number of files processed: {len(files_processed)}', key='auto_info'), sg.Push(), sg.Text('Looking for files ...', key='status_info')],
         [sg.Image(UI_handler.resource_path(os.path.join('language_data', 'Black.png')), size=(600, 600), key='_prev_img')],
-        [sg.Text('Previous: none', key='previous')],        
+        [sg.Text('Last: none', key='last')],        
     ]
     window = sg.Window('Continuous processing mode', layout, keep_on_top=True)
     window.finalize()
@@ -179,7 +179,7 @@ def handle_folder(options):
             time.sleep(0.1)
             if not prev is None:
                 window['_prev_img'].update(data=UI_handler.get_img_data(prev, maxsize=(600,600), first=True))
-                window['previous'].update('Previous: ' + prev)
+                window['last'].update('Last: ' + prev)
             window.perform_long_operation(lambda : time.sleep(1), '-END SLEEP-')
 
         if event == '-END SLEEP-':
@@ -199,7 +199,7 @@ def handle_folder(options):
             
         if event == 'Stop':
             stop=True
-            window['status_info'].update(f'WILL STOP AFTER PROCESSING NEXT BATCH OF {len(files_todo)} files')
+            window['status_info'].update(f'WILL STOP AFTER PROCESSING CURRENT BATCH OF {len(files_todo)} FILE(S)')
         
         
 

@@ -220,7 +220,7 @@ def inputUI(options):
     [sg.Text('Tilt angle (blank for auto)',size=(32,1), key='Tilt angle (blank for auto)'), sg.Input(default_text='',size=(8,1),key='_tilt',enable_events=True)],
     [sg.Text('Pixel offset',size=(32,1), key='Pixel offset'),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='_pixel_offset',enable_events=True)],
     [sg.Text('Protus adjustment', size=(32,1), key='Protus adjustment'), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='_protus_adjustment')],
-    [sg.Button('OK'), sg.Cancel()]
+    [sg.Button('OK'), sg.Cancel(), sg.Push(), sg.Button("Open output folder", key='Open output folder', enable_events=True)]
     ] 
 
     tab_group = sg.TabGroup([[sg.Tab('File input mode', layout_file_input, tooltip='', key='File input mode'), sg.Tab('Folder input mode', layout_folder_input, key='Folder input mode')]])
@@ -253,6 +253,13 @@ def inputUI(options):
         if event == 'File input mode' or event == 'Folder input mode':
             print('hi' + event)
             selected_mode = event
+        if event=='Open output folder':
+            x = values['output_dir'].strip()
+            if x and os.path.isdir(x):
+                path = os.path.realpath(x)
+                os.startfile(path)
+            else:
+                sg.Popup(popup_messages['no_folder_error'], keep_on_top=True)
         if event=='OK':
             selected_mode = tab_group.Get()
             if selected_mode == 'File input mode':
