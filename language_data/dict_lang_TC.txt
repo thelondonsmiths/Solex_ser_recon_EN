@@ -1,8 +1,16 @@
 {
 "_lang_name":"正體字",
 "_flag_icon": "flagTC.png",
+"Solar disk reconstruction from SHG video files": "太陽磁盤重建來自SHG視頻檔案",
 "File(s)": "檔案(們)",
-
+"Choose file(s)": "選擇文件",
+"Folder input mode": "文件夾輸入模式",
+"Folder": "文件夾",
+"Output Folder (blank for same as input):": "輸出文件夾（留空為與輸入相同）：",
+"File input mode": "文件輸入模式",
+"Choose input folder": "選擇輸入文件夾",
+"Continuous detect mode": "連續檢測模式",
+"Choose output folder": "選擇輸出文件夾",
 "Show graphics": "顯示圖形",
 "Save fits files": "儲存 fits 檔案",
 "Save clahe.png only": "僅儲存 clahe.png",

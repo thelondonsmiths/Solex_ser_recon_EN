@@ -1,9 +1,16 @@
 {
 "_lang_name":"한국어",
 "_flag_icon": "flagKOR.png",
-"Solar disk reconstruction from SHG video files":"SHG 비디오 파일에서 솔라 디스크 재구성",
+"Solar disk reconstruction from SHG video files": "SHG 비디오 파일에서 솔라 디스크 재구성",
 "File(s)": "파일(들)",
-
+"Choose file(s)": "파일 선택",
+"Folder input mode": "폴더 입력 모드",
+"Folder": "폴더",
+"Output Folder (blank for same as input):": "출력 폴더 (입력과 동일한 경우 공백):",
+"File input mode": "파일 입력 모드",
+"Choose input folder": "입력 폴더 선택",
+"Continuous detect mode": "연속 감지 모드",
+"Choose output folder": "출력 폴더 선택",
 "Show graphics": "그래픽 보기",
 "Save fits files": "FITS 파일 저장",
 "Save clahe.png only": "clahe.png만 저장",

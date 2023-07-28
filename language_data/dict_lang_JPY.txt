@@ -1,9 +1,16 @@
 {
 "_lang_name":"日本語",
 "_flag_icon": "flagJPY.png",
-"Solar disk reconstruction from SHG video files":"SHGビデオファイルからの太陽円盤再構築",
+"Solar disk reconstruction from SHG video files": "SHGビデオファイルからの太陽円盤再構築",
 "File(s)": "ファイル",
-
+"Choose file(s)": "ファイルを選択",
+"Folder input mode": "フォルダ入力モード",
+"Folder": "フォルダ",
+"Output Folder (blank for same as input):": "出力フォルダ（入力と同じ場合は空白）:",
+"File input mode": "ファイル入力モード",
+"Choose input folder": "入力フォルダを選択",
+"Continuous detect mode": "連続検出モード",
+"Choose output folder": "出力フォルダを選択",
 "Show graphics": "グラフィックを表示",
 "Save fits files": "FITSファイルを保存",
 "Save clahe.png only": "clahe.pngのみ保存",

@@ -1,9 +1,16 @@
 {
 "_lang_name":"Español",
 "_flag_icon": "flagESP.png",
-"Solar disk reconstruction from SHG video files":"Reconstrucción del disco solar a partir de archivos de vídeo SHG",
+"Solar disk reconstruction from SHG video files": "Reconstrucción del disco solar a partir de archivos de vídeo SHG",
 "File(s)": "Archivo(s)",
-
+"Choose file(s)": "Elegir archivo(s)",
+"Folder input mode": "Modo de entrada de carpeta",
+"Folder": "Carpeta",
+"Output Folder (blank for same as input):": "Carpeta de salida (en blanco para la misma que la de entrada):",
+"File input mode": "Modo de entrada de archivo",
+"Choose input folder": "Elegir carpeta de entrada",
+"Continuous detect mode": "Modo de detección continua",
+"Choose output folder": "Elegir carpeta de salida",
 "Show graphics": "Mostrar gráficos",
 "Save fits files": "Guardar archivos FITS",
 "Save clahe.png only": "Guardar solo clahe.png",
