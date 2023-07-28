@@ -25,6 +25,8 @@
 "Pixel offset" : "Pixel-Offset",
 "Protus adjustment": "Protus-Anpassung",
 "no_file_error": "Fehler: Keine Datei eingegeben! Bitte Datei(en) eingeben",
+"no_folder_error": "Fehler: Ordner nicht eingegeben! Bitte Ordner eingeben",
+"Open output folder": "Ausgabeordner öffnen",
 "pixel_offset_tooltip": "a,b,c ... erzeugt Bilder bei a, b, c ...\nx:y:w erzeugt Bilder, beginnend bei x, endend bei y, alle w Pixel",
 "protus_adjustment_tooltip": "Vergrößern oder Verkleinern des schwarzen Kreises durch Eingabe einer ganzen Zahl"
 }

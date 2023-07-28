@@ -25,6 +25,8 @@
 "Pixel offset" : "Décalage de pixel",
 "Protus adjustment": "Ajustement Protus",
 "no_file_error": "Erreur : fichier non saisi ! Veuillez entrer le(s) fichier(s)",
+"no_folder_error": "Erreur : dossier non saisi ! Veuillez entrer le dossier",
+"Open output folder": "Ouvrir le dossier de sortie",
 "pixel_offset_tooltip": "a, b, c ... produiront des images à a, b, c ...\nx:y:w produira des images commençant à x, se terminant à y, tous les w pixels",
 "protus_adjustment_tooltip": "agrandir ou réduire le cercle noir en saisissant un nombre entier"
 }

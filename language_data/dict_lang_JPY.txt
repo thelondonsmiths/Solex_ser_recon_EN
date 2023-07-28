@@ -25,6 +25,8 @@
 "Pixel offset" : "ピクセルオフセット",
 "Protus adjustment": "Protus調整",
 "no_file_error": "エラー：ファイルが入力されていません！ファイルを入力してください",
+"no_folder_error": "エラー：フォルダが入力されていません！フォルダを入力してください",
+"Open output folder": "出力フォルダを開く",
 "pixel_offset_tooltip": "a、b、cはa、b、cで画像を生成します\nx：y：wはxから始まり、yで終わり、wピクセルごとに画像を生成します",
 "protus_adjustment_tooltip": "整数を入力して黒い円を大きくまたは小さくします"
 }

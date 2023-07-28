@@ -25,6 +25,8 @@
 "Pixel offset" : "像素位移",
 "Protus adjustment": "Protus 調整",
 "no_file_error": "錯誤：未輸入檔案！請輸入檔案(們)",
+"no_folder_error": "錯誤：未輸入資料夾！請輸入資料夾",
+"Open output folder": "開啟輸出資料夾",
 "pixel_offset_tooltip": "a、b、c 會生成 a、b 和 c 的圖片\nx:y:w 會生成以 x 開始、以 y 結束、每隔 w 個像素的圖片",
 "protus_adjustment_tooltip": "通過輸入整數使黑色圓變大或變小"
 }

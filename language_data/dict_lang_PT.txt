@@ -25,6 +25,8 @@
 "Pixel offset" : "Deslocamento de pixels",
 "Protus adjustment": "Ajuste Protus",
 "no_file_error": "Erro: arquivo não inserido! Por favor, insira o(s) arquivo(s)",
+"no_folder_error": "Erro: pasta não inserida! Por favor, insira a pasta",
+"Open output folder": "Abrir pasta de saída",
 "pixel_offset_tooltip": "a, b, c ... gerarão imagens em a, b, c ...\nx:y:w gerará imagens começando em x, terminando em y, a cada w pixels",
 "protus_adjustment_tooltip": "aumente ou diminua o tamanho do círculo preto inserindo um número inteiro"
 }

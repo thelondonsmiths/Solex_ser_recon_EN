@@ -25,6 +25,8 @@
 "Pixel offset" : "像素偏移",
 "Protus adjustment": "Protus 调整",
 "no_file_error": "错误：未输入文件！请输入文件(们)",
+"no_folder_error": "错误：未输入文件夹！请输入文件夹",
+"Open output folder": "打开输出文件夹",
 "pixel_offset_tooltip": "a、b、c 将生成 a、b 和 c 的图像\nx:y:w 将生成以 x 开始、以 y 结束、每隔 w 个像素的图像",
 "protus_adjustment_tooltip": "通过输入整数来增大或减小黑色圆"
 }
