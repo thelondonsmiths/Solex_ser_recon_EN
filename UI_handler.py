@@ -67,7 +67,8 @@ def interpret_UI_values(options, ui_values):
     options['img_rotate'] = int(ui_values['img_rotate'])
     serfiles=ui_values['-FILE-'].split(';')
     options['output_dir'] = ui_values['output_dir']
-    options['input_dir'] = ui_values['input_dir']
+    if options['selected_mode'] == 'Folder input mode':
+        options['input_dir'] = ui_values['input_dir']
     options['continuous_detect_mode'] = ui_values['Continuous detect mode']
     if options['selected_mode'] == 'File input mode':
         try:
@@ -138,7 +139,7 @@ def change_langs(window, popup_messages, lang_dict, flag_change=True):
                 window['_flag_icon'].update(data=get_img_data(resource_path(os.path.join('language_data', v))))
             flag_ok = 1
         elif k in popup_ids:
-            popup_messages['no_file_error'] = v
+            popup_messages[k] = v
         elif k == 'pixel_offset_tooltip':
             window['_pixel_offset'].TooltipObject.text = v
         elif k == 'protus_adjustment_tooltip':
@@ -160,7 +161,7 @@ def change_langs(window, popup_messages, lang_dict, flag_change=True):
     if not flag_ok:
         window['_flag_icon'].update(data=None)
     
-    
+
 def inputUI(options):
     langs, lang_dicts = read_langs()
     popup_messages = {"no_file_error": "Error: file not entered! Please enter file(s)", "no_folder_error": "Error: folder not entered! Please enter folder"}
@@ -249,15 +250,19 @@ def inputUI(options):
             change_langs(window, popup_messages, lang_dicts[langs.index('English')], flag_change=False) # if missing will be English
             change_langs(window, popup_messages, lang_dict)
             options['language'] = values['lang_input']
-        print(event)
-        if event == 'File input mode' or event == 'Folder input mode':
-            print('hi' + event)
-            selected_mode = event
+
         if event=='Open output folder':
             x = values['output_dir'].strip()
+            if not x:
+                selected_mode = tab_group.Get()
+                if selected_mode == 'File input mode':
+                    x = options['workDir']
+                elif selected_mode == 'Folder input mode':
+                    x = options['input_dir']
+                else:
+                    sg.Popup(popup_messages['ERROR: mode selection error: ' + selected_mode], keep_on_top=True)
             if x and os.path.isdir(x):
-                path = os.path.realpath(x)
-                os.startfile(path)
+                path = os.startfile(os.path.realpath(x))
             else:
                 sg.Popup(popup_messages['no_folder_error'], keep_on_top=True)
         if event=='OK':

@@ -118,7 +118,8 @@ def precheck_files(serfiles, options):
         
         if not good_tasks:
             # save parameters to config file if this is the first good task
-            options['workDir'] = os.path.dirname(serfile)+"/"
+            if options['selected_mode'] == 'File input mode':
+                options['workDir'] = os.path.dirname(serfile)+"/"
             write_ini()
         good_tasks.append((serfile, options.copy()))
     if not good_tasks:
