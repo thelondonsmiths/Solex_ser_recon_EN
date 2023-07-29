@@ -11,10 +11,10 @@ In this case, run `pip install -U pip` in a Command Prompt window and follow the
 
 ### **Usage**
 
-**Graphical user interface**: launch SHG_MAIN (by double clicking under Windows). A Windows Desktop shortcut can also be created.
-In the Python GUI window, enter the name of the video file(s) to be processed. Batch processing is possible but will halt if a file is unsuitable.
+**Graphical User Interface**: launch SHG_MAIN (by double clicking under Windows). A Windows Desktop shortcut can also be created.
+In the Python UI window, enter the name of the video file(s) to be processed. Batch processing is possible but will halt if a file is unsuitable.
 
-**Command line interface example**: `python SHG_MAIN.py serfile1.SER` [serfile2.SER ... if batch processing]
+**Command Line Interface example**: `python SHG_MAIN.py serfile1.SER` [serfile2.SER ... if batch processing]
 
 **Command line options**:
 
@@ -36,10 +36,10 @@ The composite png peek window can be killed early by pushing any key on the keyb
 For rapid processing during data acquisition, make sure "Show graphics" is off.
 
 Note that by default all output files will be saved in the same directory as the video file. If the program is run a second time, it will overwrite the original output files.
-A different output folder can also be chosen using the GUI. This destination will be remembered for subsequent processing.
+A different output folder can also be chosen using the UI. This destination will be remembered for subsequent processing.
 
 In "File input mode", you can choose one or more files. The working directory is remembered for the next time the program runs.
-In "Folder input mode", you can choose a particular folder to process all the files in batch mode (all with the same settings).
+In "Folder input mode", you can choose a particular folder to process all the files in batch mode (all with the same settings). The input direction is remembered.
 If "Continuous detect mode" is selected, the program will process all the files already in the folder then wait until a new file arrives, at which point it will also be processed.
 A 600x600 pixel CLAHE image of the last file processed will be displayed while the program is waiting.
 If "Continuous detect mode" is on, then generally "Show graphics" should be off.
@@ -72,9 +72,8 @@ The choice of "Mirror X" is deliberately not remembered.
 
 The "Rotate png images" silder applies only to the final png output images. Rotation is counterclockwise in degrees (0, 90, 180, 270).
 
-If "Correct transversalium lines" is not checked, then the program makes no attempt to fix line defects.
-The function for fixing line defects works well if they are small and well-defined. Wide lines may require a more manual process.
-In this case, turning off the automated function may be helpful. The default should be for this box to be checked.
+If "Correct transversalium lines" is not checked, then the program makes no attempt to fix line defects. The default should be for this box to be checked.
+The function for fixing line defects works well if they are fairly narrow. Wide, dark lines may require a more manual process.
 For protuberance images, the ones with the black disc, turning off the transversalium is recommended. This because the transversalium filter affects the dark sky background but is irrelevant if the surface is masked.
 
 The slider for "Transversalium correction strength" can be adjusted from low (weak) to high (strong).
@@ -86,6 +85,8 @@ Y/X ratio: enter a specific Y/X ratio, if this is known. Leave blank for auto-co
 Tilt angle: enter a specific tilt angle in degrees. Leave blank for auto-correction. Enter 0 if no tilt correction is desired.
 
 Pixel offset: offset in pixels from the minimum of the spectral line to reconstruct the image on a wavelength displaced from the central minimum.
+For the direction of positive and negative offsets, check the _spectral_line_data_ file. Negative is to the left and positive is to the right.
+The spectral line will typically be curved and the apex of the parabolic curve will point towards the blue.
 - For no shift, leave the "Pixel offset" box at the default of '0'
 - Specify the output of a particular shift by entering a single number or particular values separated by commas: 'a,b,c,d,e' etc
 - For a range x to y with an interval of w, use colons: 'x:y:w'
@@ -94,14 +95,13 @@ Pixel offset: offset in pixels from the minimum of the spectral line to reconstr
 - Batch pixel shift processing of a batch of files is allowed
 
 Protus adjustment: make the black circle larger or smaller in radius by inputting a positive or negative integer (typically between -10 and +10).
-If you want to turn off the black disk altogether, then enter a negative number greater than the radius (e.g. -9999).
-The protus adjustment setting is remembered.
+If you want to turn off the black disk altogether, then enter a negative number greater than the radius (e.g. -9999). The protus adjustment setting is remembered.
 
 Geometry correction may fail under certain circumstances (one example being a partial eclipse). In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
 
-By default, the Processing GUI will reappear after each run.
-The prior input file location and several other GUI states are saved in the _SHG_config_ file.
-In CLI mode, the GUI parameters in the _SHG_config_ file are ignored.
+By default, the Processing UI will reappear after each run.
+The prior input file location and several other UI states are saved in the _SHG_config_ file.
+In CLI mode, the UI parameters in the _SHG_config_ file are ignored.
 
 A file _serfile_log_ is generated with a number of useful parameters. In particular:
 - **Y/X ratio**: in general, this should be close to 1. If it is larger than 1.1, then the data is likely being undersampled and so a higher FPS or slower scan speed may be helpful.
