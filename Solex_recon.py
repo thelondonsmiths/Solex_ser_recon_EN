@@ -2,7 +2,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 24 July 2023
+Version 30 July 2023
 
 ------------------------------------------------------------------------
 Reconstruction of an image from the deviations between the minimum of the line and a reference line
@@ -24,7 +24,7 @@ input: tasks: list of tuples (file, option)
 '''
 
 def solex_do_work(tasks, flag_command_line = False):
-    multi = False
+    multi = True
     with Pool(4) as p:
         results = []
         for i, (file, options) in enumerate(tasks):
