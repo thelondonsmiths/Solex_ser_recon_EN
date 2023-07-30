@@ -56,9 +56,9 @@ def solex_read(file, options):
     ih = rdr.ih
     iw = rdr.iw
 
-    fit, backup_y1, backup_y2 = compute_mean_return_fit(file, options, hdr, iw, ih, basefich0)
+    _, fit, backup_y1, backup_y2 = compute_mean_return_fit(video_reader(file), options, hdr, iw, ih, basefich0)
 
-    disk_list, ih, iw, FrameCount = read_video_improved(file, fit, options)
+    disk_list, ih, iw, FrameCount = read_video_improved(video_reader(file), fit, options)
     
     hdr['NAXIS1'] = iw  # note: slightly dodgy, new width for subsequent fits file
 
@@ -97,7 +97,6 @@ def solex_process(options, disk_list, backup_bounds, hdr):
     logme(basefich0 + '_log.txt', options, f'Protus adjustment : {options["delta_radius"]}')
     borders = [0,0,0,0]
     cercle0 = (-1, -1, -1)
-    frames_circularized = []
     for i in range(len(disk_list)):
         flag_requested = options['shift'][i] in options['shift_requested']
         basefich = basefich0 + '_shift=' + str(options['shift'][i])
@@ -121,42 +120,46 @@ def solex_process(options, disk_list, backup_bounds, hdr):
         if not flag_requested:
             continue # skip processing if shift is not desired
         
-        if options['save_fit']:  # first two shifts are not user specified
-            DiskHDU = fits.PrimaryHDU(frame_circularized, header=hdr)
-            DiskHDU.writeto(output_path(basefich + '_circular.fits', options), overwrite='True')
-
-
-        if options['transversalium']:
-            if not cercle0 == (-1, -1, -1):
-                detransversaliumed = correct_transversalium2(frame_circularized, cercle0, borders, options, 0, basefich)
-            else:
-                detransversaliumed = correct_transversalium2(frame_circularized, (0,0,99999), [0, backup_bounds[0]+20, frame_circularized.shape[1] -1, backup_bounds[1]-20], options, 0, basefich)
-        else:
-            detransversaliumed = frame_circularized
-
-        if options['save_fit'] and options['transversalium']:  # first two shifts are not user specified
-            DiskHDU = fits.PrimaryHDU(detransversaliumed, header=hdr)
-            DiskHDU.writeto(output_path(basefich + '_detransversaliumed.fits', options), overwrite='True')
-
-        cercle = cercle0
-        if not options['fixed_width'] == None or options['crop_width_square']:
-            h, w = detransversaliumed.shape
-            nw = h if options['fixed_width'] == None else options['fixed_width'] # new width
-            nw2 = nw // 2
-            cx = w // 2 if cercle == (-1, -1, -1) else int(cercle[0])
-            tx = nw2 - cx
-            new_img = np.full((h, nw), detransversaliumed[0, 0], dtype=detransversaliumed.dtype)
-
-            new_img[:, :min(cx + nw2, detransversaliumed.shape[1]) - max(0, cx - nw2)] = detransversaliumed[:, max(0, cx - nw2) : min(cx + nw2, detransversaliumed.shape[1])]
-            
-            if tx > 0:
-                new_img = np.roll(new_img, tx, axis = 1)
-                new_img[:, :tx] = detransversaliumed[0, 0]
-
-            if not cercle == (-1, -1, -1):
-                cercle = (nw2, cercle[1], cercle[2])
-            detransversaliumed = new_img    
-       
-
-        image_process(detransversaliumed, cercle, options, hdr, basefich)
+        single_image_process(frame_circularized, hdr, options, cercle0, borders, basefich, backup_bounds)
         write_complete(basefich0 + '_log.txt', options)
+
+
+def single_image_process(frame_circularized, hdr, options, cercle0, borders, basefich, backup_bounds):
+    if options['save_fit']:  # first two shifts are not user specified
+        DiskHDU = fits.PrimaryHDU(frame_circularized, header=hdr)
+        DiskHDU.writeto(output_path(basefich + '_circular.fits', options), overwrite='True')
+
+
+    if options['transversalium']:
+        if not cercle0 == (-1, -1, -1):
+            detransversaliumed = correct_transversalium2(frame_circularized, cercle0, borders, options, 0, basefich)
+        else:
+            detransversaliumed = correct_transversalium2(frame_circularized, (0,0,99999), [0, backup_bounds[0]+20, frame_circularized.shape[1] -1, backup_bounds[1]-20], options, 0, basefich)
+    else:
+        detransversaliumed = frame_circularized
+
+    if options['save_fit'] and options['transversalium']:  # first two shifts are not user specified
+        DiskHDU = fits.PrimaryHDU(detransversaliumed, header=hdr)
+        DiskHDU.writeto(output_path(basefich + '_detransversaliumed.fits', options), overwrite='True')
+
+    cercle = cercle0
+    if not options['fixed_width'] == None or options['crop_width_square']:
+        h, w = detransversaliumed.shape
+        nw = h if options['fixed_width'] == None else options['fixed_width'] # new width
+        nw2 = nw // 2
+        cx = w // 2 if cercle == (-1, -1, -1) else int(cercle[0])
+        tx = nw2 - cx
+        new_img = np.full((h, nw), detransversaliumed[0, 0], dtype=detransversaliumed.dtype)
+
+        new_img[:, :min(cx + nw2, detransversaliumed.shape[1]) - max(0, cx - nw2)] = detransversaliumed[:, max(0, cx - nw2) : min(cx + nw2, detransversaliumed.shape[1])]
+        
+        if tx > 0:
+            new_img = np.roll(new_img, tx, axis = 1)
+            new_img[:, :tx] = detransversaliumed[0, 0]
+
+        if not cercle == (-1, -1, -1):
+            cercle = (nw2, cercle[1], cercle[2])
+        detransversaliumed = new_img    
+   
+
+    return image_process(detransversaliumed, cercle, options, hdr, basefich)

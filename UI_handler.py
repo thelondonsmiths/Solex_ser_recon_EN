@@ -13,6 +13,7 @@ import os
 import traceback
 from PIL import Image, ImageTk
 import io
+from spectralAnalyserUI import analyseSpectrum
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -219,7 +220,8 @@ def inputUI(options):
          visible=options['transversalium'])],
     [sg.Text('Y/X ratio (blank for auto)', key='Y/X ratio (blank for auto)', size=(32,1)), sg.Input(default_text='', key = '_y/x_ratio', size=(8,1))],
     [sg.Text('Tilt angle (blank for auto)',size=(32,1), key='Tilt angle (blank for auto)'), sg.Input(default_text='',size=(8,1),key='_tilt',enable_events=True)],
-    [sg.Text('Pixel offset',size=(32,1), key='Pixel offset'),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='_pixel_offset',enable_events=True)],
+    [sg.Text('Pixel offset',size=(32,1), key='Pixel offset'),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='_pixel_offset',enable_events=True),
+     sg.Push(), sg.Button("Open spectral analyser", key = "Open spectral analyser", enable_events=True)],
     [sg.Text('Protus adjustment', size=(32,1), key='Protus adjustment'), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='_protus_adjustment')],
     [sg.Button('OK'), sg.Cancel(), sg.Push(), sg.Button("Open output folder", key='Open output folder', enable_events=True)]
     ] 
@@ -265,6 +267,8 @@ def inputUI(options):
                 path = os.startfile(os.path.realpath(x))
             else:
                 sg.Popup(popup_messages['no_folder_error'], keep_on_top=True)
+        if event=='Open spectral analyser':
+            window['_pixel_offset'].update(analyseSpectrum(options, values['-FILE-'], lang_dict))
         if event=='OK':
             selected_mode = tab_group.Get()
             if selected_mode == 'File input mode':

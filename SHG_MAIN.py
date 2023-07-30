@@ -76,7 +76,6 @@ def read_ini():
             global options
             options.update(json.load(fp)) # if config has missing entries keep default   
     except Exception:
-        traceback.print_exc()
         print('note: error reading config file - using default parameters')
 
 

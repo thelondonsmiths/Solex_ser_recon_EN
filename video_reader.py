@@ -124,3 +124,39 @@ class video_reader:
 
     def has_frames(self):
         return self.FrameIndex + 1 < self.FrameCount
+
+# wrapper of video_reader which stores everything in memory
+class all_video_reader:
+    def __init__(self, file, buffer_size = 25):
+        vid_rdr = video_reader(file, buffer_size)
+        self.file = file
+        self.ih = vid_rdr.ih
+        self.iw = vid_rdr.iw
+        self.Width = vid_rdr.Width
+        self.Height = vid_rdr.Height
+        self.FrameCount = vid_rdr.FrameCount
+        self.count = vid_rdr.count
+        self.FrameIndex = -1
+        self.frames = np.zeros((self.FrameCount, self.ih, self.iw), dtype=np.uint16)
+        # load all frames
+        i = 0
+        self.means = np.zeros(self.FrameCount)
+        while vid_rdr.has_frames():
+            frame = vid_rdr.next_frame()
+            self.means[i] = np.mean(frame)
+            self.frames[i, :, :] = frame
+            i+=1
+
+    def has_frames(self):
+        return self.FrameIndex + 1 < self.FrameCount
+
+    def next_frame(self):
+        self.FrameIndex += 1
+        return self.frames[self.FrameIndex, :, :]
+
+    def reset(self):
+        self.FrameIndex = -1
+
+    
+    
+    

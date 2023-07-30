@@ -43,6 +43,8 @@ def write_complete(path, options):
         
 
 def logme(path, options, s):
+    if '_nolog' in options:
+        return
     try:
         with open(output_path(path, options), 'a') as f:
             f.write(s + '\n')
@@ -73,10 +75,12 @@ def reject_outliers(data, m = 2):
     s = d/mdev if mdev else np.zeros(len(d))
     return data[s<m]
 
+#downscale an image
+def downscale(image, f):
+    return cv2.resize(image, (0,0), fx=f, fy=f) 
 
 # read video and return constructed image of sun using fit
-def read_video_improved(file, fit, options):
-    rdr = video_reader(file)
+def read_video_improved(rdr, fit, options):
     ih, iw = rdr.ih, rdr.iw
     FrameMax = rdr.FrameCount
     disk_list = [np.zeros((ih, FrameMax), dtype='uint16')
@@ -109,7 +113,7 @@ def read_video_improved(file, fit, options):
     right_weights = np.ones(ih) - left_weights
 
     # lance la reconstruction du disk a partir des trames
-    print('reader num frames:', rdr.FrameCount)
+    #print('reader num frames:', rdr.FrameCount)
     while rdr.has_frames():
         img = rdr.next_frame()
         for i in range(len(options['shift'])):
@@ -157,14 +161,12 @@ def detect_bord(img, axis):
     ub = img.shape[int(not axis)] - 1 - np.argmax(np.flip(where_sun)) # int(not axis) : get the other axis 1 -> 0 and 0 -> 1
     return lb, ub
 
-def compute_mean_max(file, options):
+def compute_mean_max(rdr, options, basefich0):
     """IN : file path"
     OUT :numpy array
     """
-    basefich0 = os.path.splitext(file)[0] # file name without extension
+    #basefich0 = os.path.splitext(file)[0] # file name without extension #TOTO delete this line
     
-    
-    rdr = video_reader(file)
     logme(basefich0 + '_log.txt', options, 'Width, Height : ' + str(rdr.Width) + ' ' + str(rdr.Height))
     logme(basefich0 + '_log.txt', options, 'Number of frames : ' + str(rdr.FrameCount))
     my_data = np.zeros((rdr.ih, rdr.iw), dtype='uint64')
@@ -176,7 +178,7 @@ def compute_mean_max(file, options):
     return (my_data / rdr.FrameCount).astype('uint16'), max_data
 
 
-def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
+def compute_mean_return_fit(vid_rdr, options, hdr, iw, ih, basefich0):
     """
     ----------------------------------------------------------------------------
     Use the mean image to find the location of the spectral line of maximum darkness
@@ -187,7 +189,7 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
     flag_display = options['flag_display']
     # first compute mean image
     # rdr is the video_reader object
-    mean_img, max_img = compute_mean_max(file, options)
+    mean_img, max_img = compute_mean_max(vid_rdr, options, basefich0)
     
     if options['save_fit']:
         DiskHDU = fits.PrimaryHDU(mean_img, header=hdr)
@@ -259,7 +261,7 @@ def compute_mean_return_fit(file, options, hdr, iw, ih, basefich0):
         ax.set_aspect(0.1)
         fig.tight_layout()
         fig.savefig(output_path(basefich0+'_spectral_line_data.png', options), dpi=400)
-    return fit, y1, y2
+    return mean_img, fit, y1, y2
 
 
 '''
@@ -375,9 +377,10 @@ def image_process(frame, cercle, options, header, basefich):
     cc = np.rot90(cc, options['img_rotate']//90, axes=(0,1))
 
     # save the clahe as a png
-    print('saving image to:' + basefich+'_clahe.png')
     compression = 0
-    cv2.imwrite(output_path(basefich+'_clahe.png', options),cc, [cv2.IMWRITE_PNG_COMPRESSION, compression])   # Modification Jean-Francois: placed before the IF for clear reading
+    if not '_nolog' in options: # '_nolog' is used in spectralAnalyser
+        print('saving image to:' + basefich+'_clahe.png')
+        cv2.imwrite(output_path(basefich+'_clahe.png', options),cc, [cv2.IMWRITE_PNG_COMPRESSION, compression])   # Modification Jean-Francois: placed before the IF for clear reading
     if not options['clahe_only']:
         # save "high-contrast" and "protus" pngs
         cv2.imwrite(output_path(basefich+'_uncontrasted.png', options), frame_raw, [cv2.IMWRITE_PNG_COMPRESSION, compression])
@@ -404,3 +407,4 @@ def image_process(frame, cercle, options, header, basefich):
         # save the fits file
         DiskHDU=fits.PrimaryHDU(cl1,header)
         DiskHDU.writeto(output_path(basefich+ '_clahe.fits', options), overwrite='True')
+    return (cc, frame_protus)
