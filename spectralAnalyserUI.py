@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Andrew Smith
+Version 6 August 2023
+
+------------------------------------------------------------------------
+Spectral Analyser
+-------------------------------------------------------------------------
+
+"""
 import math
 import PySimpleGUI as sg
 import sys
@@ -37,19 +47,23 @@ def select(data, lo, hi):
     v = np.where(indx==1)[0]
     return data[min(v):max(v)+1, :]
 
-def load_anchor_cands():
+def load_lines(path):
     l, names = [], []
-    with open(resource_path('language_data/anchor_candidates.txt')) as f:
+    with open(resource_path(path), encoding='utf-8') as f:
         for line in f:
             v = line.split(' ')
             l.append(float(v[0]))
             names.append(v[1])
-    return l, names
+    names_num = [names[i] + '('+str(l[i])+')' for i in range(len(names))]
+    return l, names, names_num
 
 def analyseSpectrum(options, file, lang_dict):
-    line_data = np.load(resource_path('language_data/reference_lines.npy'))
-    anchor_cands, anchor_cand_names = load_anchor_cands()
-    print(line_data.shape)
+    npzfile = np.load(resource_path('language_data/reference_lines.npz'))
+    line_data = np.vstack((np.arange(npzfile['first'], npzfile['last'], npzfile['step']), npzfile['y']/255)).T
+    
+    anchor_cands, anchor_cand_names, anchors = load_lines('language_data/anchor_candidates.txt')
+    target_nums, target_names, targets = load_lines('language_data/line_targets.txt')
+    
     options_orig = options
     options = options.copy() # deep copy
     options['clahe_only'] = True
@@ -61,6 +75,7 @@ def analyseSpectrum(options, file, lang_dict):
     fig = Figure()
     fig.set_tight_layout(True)
     ((ax1, ax3), (ax2, ax4)) = fig.subplots(2, 2)
+    ax2_twin = ax2.twinx()
     fig_sz = fig.get_size_inches()
     fig.set_size_inches(fig_sz[0]*1.8, fig_sz[1]*2) 
     ax1.set_xlabel("X axis")
@@ -74,14 +89,16 @@ def analyseSpectrum(options, file, lang_dict):
     ]
 
     layout = [
-          [sg.T('shift:', key='shift:'), sg.Spin(list(range(-999, 1000)), initial_value=0, readonly=False, size=4, enable_events=True, key='-shift-')],
-          [sg.T('Anchor line'), sg.Combo([anchor_cand_names[i] + '('+str(anchor_cands[i])+')' for i in range(len(anchor_cands))], readonly=True, key='-anchor-', enable_events=True)],
+          [sg.T('shift:', key='shift:'), sg.Spin(list(range(-999, 1000)), initial_value=0, readonly=False, size=4, enable_events=True, key='-shift-'),
+           sg.T('Anchor line'), sg.Combo(anchors, readonly=True, key='-anchor-', enable_events=True), sg.T('GOTO line'), sg.Combo(targets, readonly=True, key='-target-', enable_events=True)],
+          [sg.T('Dispersion(Å/pixel):'), sg.InputText(options['dispersion'], key='-dispersion-', size=(10, 1)), sg.B('auto dispersion')],
           [sg.Canvas(size=(1000, 800), key='canvas')],
     ]
 
     window = sg.Window('Pixel Offset Live', layout_file_input+layout, finalize=True, resizable=True, keep_on_top=False)
     # needed to access the canvas element prior to reading the window
     window['-shift-'].bind("<Return>", "_Enter")
+    window['-dispersion-'].bind("<Return>", "_Enter")
     canvas_elem = window['canvas']
 
     graph = FigureCanvasTkAgg(fig, master=canvas_elem.TKCanvas)
@@ -97,9 +114,12 @@ def analyseSpectrum(options, file, lang_dict):
     backup_bounds = (-1, -1)
     hdr = None
     spectrum = None
+    spectrum2 = None
     downscale_f = 0.33
     disk_memo = None
     file = None
+    refresh_anchor = False
+    dispersion = None
     while True:
         event, values = window.read(timeout=20)
         if event == 'Exit' or event == sg.WIN_CLOSED:
@@ -107,9 +127,7 @@ def analyseSpectrum(options, file, lang_dict):
             if values is None:
                 return None
             return values['-shift-']
-
-
-            
+     
         display_refresh = False
         if event == 'Choose file' or event == "Start analysis":
             options['ratio_fixe'] = original_ratio
@@ -117,6 +135,7 @@ def analyseSpectrum(options, file, lang_dict):
             window['-shift-'].update(0)
             options['shift'] = [0]
             display_refresh = True
+            anchor_refresh = True
             try:
                 file = values['-FILE2-'].split(';')[0]
                 window['-FILE2-'].update(file)
@@ -158,30 +177,122 @@ def analyseSpectrum(options, file, lang_dict):
                 options['shift'] = [x]
             except Exception as inst:
                 sg.Popup('Error: invalid shift: ' + values['-shift-'], keep_on_top=True)
+
+
+        if event == 'auto dispersion':
+            if not mean is None and values['-anchor-']:
+                display_refresh = True
+                anchor_refresh = True
+            else:
+                sg.Popup('First load and a file and press start analysis and choose anchor line!', keep_on_top=True)
+
+        if event == '-dispersion-_Enter' or event == '-target-':
+            try:
+                dispersion = float(values['-dispersion-'])
+                options['dispersion'] = round(dispersion, 6)
+                options_orig['dispersion'] = round(dispersion, 6)
+                if values['-anchor-']:
+                    display_refresh = True
+                else:
+                    sg.Popup("Choose an anchor first!", keep_on_top=True)
+                
+            except:
+                sg.Popup('Invalid dispersion', keep_on_top=True)
+
+        if event == '-target-':
+            if dispersion is None or values['-anchor-']=='' or mean is None:
+                sg.Popup("Not ready to do that yet: load file and find dispersion first!", keep_on_top=True)
+            else:
+                j = targets.index(values['-anchor-'])
+                anchor_guess = anchor_cands[j]
+                i = targets.index(values['-target-'])
+                shift = int((target_nums[i] - anchor_guess)/dispersion)
+                if 0 <= shift + fit[len(fit)//2][0]+fit[len(fit)//2][1] < spectrum2.shape[0]:          
+                    options['shift'] = [shift]
+                    window['-shift-'].update(shift)
+                    display_refresh = True
+                else:
+                    sg.Popup("That line does not appear to be in image!", keep_on_top=True)
             
         if display_refresh:   
             ax1.cla()
             ax2.cla()
-            ax3.cla()
+            ax2_twin.cla()
             ax2.grid()
+            ax3.cla()   
             ax3.axis('off')
             ax4.axis('off')
 
             if not mean is None:
-                #ax2.plot(np.log(spectrum), color='purple')
-                ax2.plot(np.log(spectrum2), color='green')
-                #low_clip = float(values['-low-'])
-                #hi_clip = float(values['-hi-'])
-                #select_data = select(line_data, low_clip, hi_clip)
-                #ax2.plot(np.linspace(0, spectrum2.shape[0], select_data.shape[0]), np.mean(np.log(spectrum2)) + select_data[:, 1], color = 'purple')
 
+                # fit anchor:
+                if anchor_refresh:
+                    if values['-anchor-']:
+                        anchor_x = fit[len(fit)//2][0]+fit[len(fit)//2][1]
+                        scale_guesses = np.linspace(0.03, 0.12, spectrum2.shape[0]*2)
+                        #scale_guesses = [0.057]
+                        i = anchors.index(values['-anchor-'])
+                        anchor_guess = anchor_cands[i]
+                        corr_values = []
+                        for scale in scale_guesses:
+                            line_data_scaled_x = (line_data[:, 0] - anchor_guess)/scale + anchor_x
+
+                            copy_line_data = np.copy(line_data)
+                            copy_line_data[:, 0] = line_data_scaled_x
+
+                            select_line_data = select(copy_line_data, 0, spectrum2.shape[0])
+                            
+                            #ax1.plot(np.linspace(0, spectrum2.shape[0], select_line_data.shape[0]), select_line_data[:, 1])
+
+                            interp_line_data = np.interp(np.arange(spectrum2.shape[0]), select_line_data[:, 0], select_line_data[:, 1])
+                            #ax1.plot(interp_line_data)
+                            #ax1.set_xlim((0, spectrum2.shape[0]))
+
+                            exc_width = 5
+                            interp_line_data[max(0, int(anchor_x) - exc_width): min(int(anchor_x) + exc_width, interp_line_data.shape[0] - 1)] = np.mean(interp_line_data)
+                            lspec = np.log(spectrum2)
+                            lspec[max(0, int(anchor_x) - exc_width): min(int(anchor_x) + exc_width, lspec.shape[0] - 1)] = np.mean(lspec)
+                            corr_value = np.corrcoef(interp_line_data, lspec)[0, 1]
+                            corr_values.append(corr_value)
+                        max_ind = np.argmax(corr_values)
+                        dispersion = scale_guesses[max_ind]
+                        print(f"the dispersion is:{dispersion}")
+                        window['-dispersion-'].update(f'{dispersion:.6f}')
+                        options['dispersion'] = round(dispersion, 6)
+                        options_orig['dispersion'] = round(dispersion, 6)
+                    else:
+                        dispersion = None
+                
+                if dispersion is None:
+                    ax2.plot(np.log(spectrum2), color='green', label='data')
+                    ax2.set_xlim((0, spectrum.shape[0]-1))
+                    ax2.axvline(x=fit[len(fit)//2][0]+fit[len(fit)//2][1]+options['shift'][0], color='red', linestyle='--')
+                    ax2.axvline(x=fit[len(fit)//2][0]+fit[len(fit)//2][1], color='blue')
+                else:
+                    i = anchors.index(values['-anchor-'])
+                    anchor_val = anchor_cands[i]
+                    anchor_px = fit[len(fit)//2][0]+fit[len(fit)//2][1]
+                    hi_clip = (spectrum2.shape - anchor_px) * dispersion + anchor_val
+                    low_clip = (-anchor_px) * dispersion + anchor_val
+                    
+                    
+                    select_data = select(line_data, low_clip, hi_clip)
+                    
+                    ax2_twin.plot(select_data[:, 0], select_data[:, 1], color = 'purple', label = 'reference')
+                    ax2.plot((np.arange(spectrum2.shape[0]) - anchor_px) * dispersion + anchor_val, np.log(spectrum2), color='green', label='data')
+                    ax2.set_xlabel(f'wavelength(Å); dispersion: {dispersion:.4f} Å/pixel')
+                    ax2_twin.legend()
+                    ax2.set_xlim((low_clip, hi_clip))
+                    ax2_twin.set_xlim((low_clip, hi_clip))
+                    ax2.axvline(x=anchor_val, color='blue')
+                    ax2.axvline(x=anchor_val+options['shift'][0]*dispersion, color='red', linestyle='--')
+
+                ax2.legend()
+                    
                 
                 
-                ax2.set_xlim((0, spectrum.shape[0]-1))
-                ax2.axvline(x=fit[len(fit)//2][0]+fit[len(fit)//2][1]+options['shift'], color='red', linestyle='--')
-                ax2.axvline(x=fit[len(fit)//2][0]+fit[len(fit)//2][1], color='blue')
 
-                if 0:
+                if 1:
                     ax1.imshow(mean, cmap='gray', aspect='auto')
                     ax1.plot([x[0]+x[1]+options['shift'] for x in fit], range(ih), 'r--')
                     ax1.plot([x[0]+x[1] for x in fit], range(ih), 'b')
@@ -208,7 +319,7 @@ def analyseSpectrum(options, file, lang_dict):
                             #ax1.plot(interp_line_data)
                             #ax1.set_xlim((0, spectrum2.shape[0]))
 
-                            exc_width = 0
+                            exc_width = 5
                             interp_line_data[max(0, int(anchor_x) - exc_width): min(int(anchor_x) + exc_width, interp_line_data.shape[0] - 1)] = np.mean(interp_line_data)
                             lspec = np.log(spectrum2)
                             lspec[max(0, int(anchor_x) - exc_width): min(int(anchor_x) + exc_width, lspec.shape[0] - 1)] = np.mean(lspec)
@@ -253,8 +364,11 @@ def analyseSpectrum(options, file, lang_dict):
                 basename = os.path.splitext(file)[0] + '_shift='+str(options['shift'][0])
                 cv2.imwrite(output_path(basename+'_clahe.png', options), clahe, [cv2.IMWRITE_PNG_COMPRESSION, compression])   # Modification Jean-Francois: placed before the IF for clear reading
                 cv2.imwrite(output_path(basename+'_protus.png', options), protus, [cv2.IMWRITE_PNG_COMPRESSION, compression])
+        anchor_refresh = False
+        display_refresh = False
+        
 
-
+'''
 if __name__ == '__main__':
     from matplotlib import image as mpimg
     data = []
@@ -265,12 +379,16 @@ if __name__ == '__main__':
         img = mpimg.imread(file)
         data_x.append(np.arange(10000)/100 + i)
         data.append(img[img.shape[0]//2, :])
+    y = (np.array(data).flatten()*255)
+    print(y)
+    print(np.min(y), np.max(y))
 
-    y = np.array(data).flatten()
+    y = y.astype(np.uint8)
     x = np.array(data_x).flatten()
     xy = np.vstack((x, y)).T
     print(xy)
     print(xy.shape)
-    np.save('reference_lines.npy', xy)
+    np.savez_compressed('reference_lines.npz', y=y, first=3000, last=10000, step=0.01)
     plt.plot(x, y)
     plt.show()
+'''

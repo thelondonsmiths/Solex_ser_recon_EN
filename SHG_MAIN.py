@@ -3,7 +3,7 @@
 @author: Andrew Smith
 based on code by Valerie Desnoux
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 30 July 2023
+Version 6 August 2023
 
 --------------------------------------------------------------
 Front end of spectroheliograph processing of SER and AVI files
@@ -60,6 +60,7 @@ options = {
     'specDir': '',                  # for spectral analyser
     'selected_mode': 'File input mode',
     'continuous_detect_mode': False,#
+    'dispersion':0.05               # for spectral analyser
 }
 
 

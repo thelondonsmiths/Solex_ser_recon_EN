@@ -2,7 +2,7 @@
 @author: Andrew Smith
 based on code by Valerie Desnoux
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 24 July 2023
+Version 6 August 2023
 """
 
 import math
@@ -225,7 +225,7 @@ def inputUI(options):
         layout_title + [[tab_group]] + layout_folder_output + layout_base    
     ]  
     
-    window = sg.Window('SHG Version 4.1', layout, finalize=True)
+    window = sg.Window('SHG Version 4.2', layout, finalize=True)
     window.BringToFront()
 
     if options['language'] in langs:
