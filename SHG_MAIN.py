@@ -57,6 +57,7 @@ options = {
     'fixed_width': None,            # argument: r
     'output_dir': '',               #
     'input_dir': '',                #
+    'specDir': '',                  # for spectral analyser
     'selected_mode': 'File input mode',
     'continuous_detect_mode': False,#
 }
@@ -226,7 +227,10 @@ if __name__ == '__main__':
             # read initial parameters from config.txt file
             read_ini()
             while True:
-                serfiles.extend(UI_handler.inputUI(options)) # get files
+                newfiles = UI_handler.inputUI(options) # get files
+                if newfiles is None:
+                    break # end loop
+                serfiles.extend(newfiles) 
                 if options['selected_mode'] == 'File input mode':
                     handle_files(serfiles, options) # handle files
                 elif options['selected_mode'] == 'Folder input mode':
@@ -234,7 +238,7 @@ if __name__ == '__main__':
                 else:
                     raise Exception('invalid selected_mode: ' + options['selected_mode'])
                 serfiles.clear() # clear files that have been processed
-                    
+            write_ini()       
         else:
             handle_files(serfiles, options, flag_command_line = True) # use inputs from CLI
             

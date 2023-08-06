@@ -15,17 +15,9 @@ from PIL import Image, ImageTk
 import io
 from spectralAnalyserUI import analyseSpectrum
 
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
+from solex_util import resource_path
 
-    return os.path.join(base_path, relative_path)
-
-def interpret_UI_values(options, ui_values):
+def interpret_UI_values(options, ui_values, no_file = False):
     try:
         shift = ui_values['_pixel_offset']
         shift_choice = shift.split(':')
@@ -71,21 +63,23 @@ def interpret_UI_values(options, ui_values):
     if options['selected_mode'] == 'Folder input mode':
         options['input_dir'] = ui_values['input_dir']
     options['continuous_detect_mode'] = ui_values['Continuous detect mode']
-    if options['selected_mode'] == 'File input mode':
-        try:
-            for serfile in serfiles:
-                f=open(serfile, "rb")
-                f.close()
-            return serfiles
-        except:
-            traceback.print_exc()
-            raise Exception('ERROR opening file :'+serfile+'!')
-    elif options['selected_mode'] == 'Folder input mode':
-        if not os.path.isdir(options['input_dir']):
-            raise Exception('ERROR opening folder :'+options['input_dir'])
-        return []
-    else:
-        raise Exception('ERROR: Invalid mode selection: ' + options['selected_mode'])
+
+    if not no_file:
+        if options['selected_mode'] == 'File input mode':
+            try:
+                for serfile in serfiles:
+                    f=open(serfile, "rb")
+                    f.close()
+                return serfiles
+            except:
+                traceback.print_exc()
+                raise Exception('ERROR opening file :'+serfile+'!')
+        elif options['selected_mode'] == 'Folder input mode':
+            if not os.path.isdir(options['input_dir']):
+                raise Exception('ERROR opening folder :'+options['input_dir'])
+            return []
+        else:
+            raise Exception('ERROR: Invalid mode selection: ' + options['selected_mode'])
         
 
 def read_langs():
@@ -221,7 +215,7 @@ def inputUI(options):
     [sg.Text('Y/X ratio (blank for auto)', key='Y/X ratio (blank for auto)', size=(32,1)), sg.Input(default_text='', key = '_y/x_ratio', size=(8,1))],
     [sg.Text('Tilt angle (blank for auto)',size=(32,1), key='Tilt angle (blank for auto)'), sg.Input(default_text='',size=(8,1),key='_tilt',enable_events=True)],
     [sg.Text('Pixel offset',size=(32,1), key='Pixel offset'),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='_pixel_offset',enable_events=True),
-     sg.Push(), sg.Button("Open spectral analyser", key = "Open spectral analyser", enable_events=True)],
+     sg.Push(), sg.Button("Pixel offset live", key = "Pixel offset live", enable_events=True)],
     [sg.Text('Protus adjustment', size=(32,1), key='Protus adjustment'), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='_protus_adjustment')],
     [sg.Button('OK'), sg.Cancel(), sg.Push(), sg.Button("Open output folder", key='Open output folder', enable_events=True)]
     ] 
@@ -246,7 +240,7 @@ def inputUI(options):
         event, values = window.read()
         if event==sg.WIN_CLOSED or event=='Cancel':
             window.close()
-            sys.exit()
+            return None
         if event == 'lang_input':
             lang_dict = lang_dicts[langs.index(values['lang_input'])]
             change_langs(window, popup_messages, lang_dicts[langs.index('English')], flag_change=False) # if missing will be English
@@ -267,8 +261,13 @@ def inputUI(options):
                 path = os.startfile(os.path.realpath(x))
             else:
                 sg.Popup(popup_messages['no_folder_error'], keep_on_top=True)
-        if event=='Open spectral analyser':
-            window['_pixel_offset'].update(analyseSpectrum(options, values['-FILE-'], lang_dict))
+        if event=='Pixel offset live':
+            try:
+                _ = interpret_UI_values(options, values, no_file = True)
+                window['_pixel_offset'].update(analyseSpectrum(options, values['-FILE-'], lang_dict))
+            except Exception as inst:
+                traceback.print_exc()
+                sg.Popup('Error: ' + inst.args[0], keep_on_top=True)
         if event=='OK':
             selected_mode = tab_group.Get()
             if selected_mode == 'File input mode':

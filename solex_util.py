@@ -61,6 +61,15 @@ def output_path(path, options):
         return path
     return os.path.join(options['output_dir'], os.path.basename(path))
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 # return values in an array not "m-far" from mean
 def reject_outliers(data, m = 2):

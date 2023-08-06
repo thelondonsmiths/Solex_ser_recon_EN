@@ -14,18 +14,43 @@ import numpy as np
 from PIL import Image, ImageTk
 from solex_util import compute_mean_return_fit
 from io import BytesIO
+import cv2
 
 from solex_util import *
 from video_reader import *
 from ellipse_to_circle import ellipse_to_circle, correct_image
 from Solex_recon import single_image_process
 
+def tuple_downscale(x, f):
+    return tuple([int(_*f) for _ in x])
 
 def get_spectrum(sample):
     mean = np.mean(sample, axis = 0)
     return mean[mean.shape[0]//2, :]
 
+def select(data, lo, hi):
+    #indx = np.where(lo < data[:, 0] < hi)
+    #print(indx)
+    
+    #return data[min(indx): max(indx)+1, :]
+    indx = np.logical_and(lo <= data[:, 0], data[:, 0] < hi)
+    v = np.where(indx==1)[0]
+    return data[min(v):max(v)+1, :]
+
+def load_anchor_cands():
+    l, names = [], []
+    with open(resource_path('language_data/anchor_candidates.txt')) as f:
+        for line in f:
+            v = line.split(' ')
+            l.append(float(v[0]))
+            names.append(v[1])
+    return l, names
+
 def analyseSpectrum(options, file, lang_dict):
+    line_data = np.load(resource_path('language_data/reference_lines.npy'))
+    anchor_cands, anchor_cand_names = load_anchor_cands()
+    print(line_data.shape)
+    options_orig = options
     options = options.copy() # deep copy
     options['clahe_only'] = True
     options['save_fit'] = False
@@ -34,8 +59,8 @@ def analyseSpectrum(options, file, lang_dict):
     options['shift'] = [0]
     options['basefich0'] = ''
     fig = Figure()
-
-    (ax1, ax2, ax3) = fig.subplots(3, 1, gridspec_kw={'height_ratios': [1, 1, 3.5]})
+    fig.set_tight_layout(True)
+    ((ax1, ax3), (ax2, ax4)) = fig.subplots(2, 2)
     fig_sz = fig.get_size_inches()
     fig.set_size_inches(fig_sz[0]*1.8, fig_sz[1]*2) 
     ax1.set_xlabel("X axis")
@@ -43,19 +68,20 @@ def analyseSpectrum(options, file, lang_dict):
     ax1.grid()
 
     layout_file_input = [
-        [sg.Text('File', size=(7, 1), key = 'File'), sg.InputText(default_text=options['workDir'],size=(75,1),key='-FILE2-'),
-         sg.FilesBrowse('Choose file', key = 'Choose file', file_types=(("Video Files (AVI or SER)", "*.ser *.avi"),),initial_folder=options['workDir'], enable_events=True),
-         sg.Button("Start analysis", key='Start analysis', enable_events=True), sg.Button('Exit')]
+        [sg.Text('File', size=(7, 1), key = 'File'), sg.InputText(default_text=options['specDir'],size=(75,1),key='-FILE2-'),
+         sg.FilesBrowse('Choose file', key = 'Choose file', file_types=(("Video Files (AVI or SER)", "*.ser *.avi"),),initial_folder=options['specDir'], enable_events=True),
+         sg.Button("Start analysis", key='Start analysis', enable_events=True), sg.Button('Save image'), sg.Button('Exit')]
     ]
 
     layout = [
           [sg.T('shift:', key='shift:'), sg.Spin(list(range(-999, 1000)), initial_value=0, readonly=False, size=4, enable_events=True, key='-shift-')],
+          [sg.T('Anchor line'), sg.Combo([anchor_cand_names[i] + '('+str(anchor_cands[i])+')' for i in range(len(anchor_cands))], readonly=True, key='-anchor-', enable_events=True)],
           [sg.Canvas(size=(1000, 800), key='canvas')],
     ]
 
-    window = sg.Window('Demo Application - Embedding Matplotlib In PySimpleGUI', layout_file_input+layout, finalize=True, resizable=True, keep_on_top=True)
+    window = sg.Window('Pixel Offset Live', layout_file_input+layout, finalize=True, resizable=True, keep_on_top=False)
     # needed to access the canvas element prior to reading the window
-
+    window['-shift-'].bind("<Return>", "_Enter")
     canvas_elem = window['canvas']
 
     graph = FigureCanvasTkAgg(fig, master=canvas_elem.TKCanvas)
@@ -72,7 +98,8 @@ def analyseSpectrum(options, file, lang_dict):
     hdr = None
     spectrum = None
     downscale_f = 0.33
-    
+    disk_memo = None
+    file = None
     while True:
         event, values = window.read(timeout=20)
         if event == 'Exit' or event == sg.WIN_CLOSED:
@@ -93,6 +120,8 @@ def analyseSpectrum(options, file, lang_dict):
             try:
                 file = values['-FILE2-'].split(';')[0]
                 window['-FILE2-'].update(file)
+                options['specDir'] = os.path.dirname(file)
+                options_orig['specDir'] = os.path.dirname(file) # this is to feed back into SHG config
                 all_rdr = all_video_reader(file)
                 
                 ih = all_rdr.ih
@@ -106,12 +135,12 @@ def analyseSpectrum(options, file, lang_dict):
                 brightest = np.argmax(all_rdr.means)
                 spectrum = get_spectrum(all_rdr.frames[max(0, brightest - 5) : min(all_rdr.FrameCount - 1, brightest + 5), :, :])
                 spectrum2 = mean[mean.shape[0]//2, :] 
-                backup_bounds = (int(y1*downscale_f), int(y2*downscale_f))
+                backup_bounds = (int(y1), int(y2))
                 if options['ratio_fixe'] is None and options['slant_fix'] is None:
                     options['shift'] = [10]
                     all_rdr.reset()
                     disklist,_,_,_ = read_video_improved(all_rdr, fit, options)
-                    frame_circularized, cercle0, options['ratio_fixe'], phi, borders = ellipse_to_circle(downscale(disklist[0], downscale_f), options, '')
+                    frame_circularized, cercle0, options['ratio_fixe'], phi, borders = ellipse_to_circle(disklist[0], options, '')
                     options['slant_fix'] = math.degrees(phi)
                 options['shift'] = [0] # back to zero now    
             
@@ -121,9 +150,14 @@ def analyseSpectrum(options, file, lang_dict):
                 sg.Popup('Error: ' + inst.args[0], keep_on_top=True)
                 mean = None
 
-        if event == '-shift-':
-            display_refresh = True
-            options['shift'] = [values['-shift-']]
+    
+        if event == '-shift-' or event == '-shift-_Enter':
+            try:
+                x = int(values['-shift-'])
+                display_refresh = True
+                options['shift'] = [x]
+            except Exception as inst:
+                sg.Popup('Error: invalid shift: ' + values['-shift-'], keep_on_top=True)
             
         if display_refresh:   
             ax1.cla()
@@ -131,75 +165,112 @@ def analyseSpectrum(options, file, lang_dict):
             ax3.cla()
             ax2.grid()
             ax3.axis('off')
+            ax4.axis('off')
 
             if not mean is None:
-                ax2.plot(np.log(spectrum), color='purple')
+                #ax2.plot(np.log(spectrum), color='purple')
                 ax2.plot(np.log(spectrum2), color='green')
+                #low_clip = float(values['-low-'])
+                #hi_clip = float(values['-hi-'])
+                #select_data = select(line_data, low_clip, hi_clip)
+                #ax2.plot(np.linspace(0, spectrum2.shape[0], select_data.shape[0]), np.mean(np.log(spectrum2)) + select_data[:, 1], color = 'purple')
+
+                
+                
                 ax2.set_xlim((0, spectrum.shape[0]-1))
                 ax2.axvline(x=fit[len(fit)//2][0]+fit[len(fit)//2][1]+options['shift'], color='red', linestyle='--')
                 ax2.axvline(x=fit[len(fit)//2][0]+fit[len(fit)//2][1], color='blue')
-                ax1.imshow(mean, cmap='gray', aspect='auto')
-                ax1.plot([x[0]+x[1]+options['shift'] for x in fit], range(ih), 'r--')
-                ax1.plot([x[0]+x[1] for x in fit], range(ih), 'b')
-                ax1.set_xlim((0, mean.shape[1]-1))
 
+                if 0:
+                    ax1.imshow(mean, cmap='gray', aspect='auto')
+                    ax1.plot([x[0]+x[1]+options['shift'] for x in fit], range(ih), 'r--')
+                    ax1.plot([x[0]+x[1] for x in fit], range(ih), 'b')
+                    ax1.set_xlim((0, mean.shape[1]-1))
+                else:
+                    anchor_x = fit[len(fit)//2][0]+fit[len(fit)//2][1]
+                    
+                    scale_guesses = np.linspace(0.04, 0.08, spectrum2.shape[0]*2)
+                    #scale_guesses = [0.057]
+                    for i in range(len(anchor_cands)):
+                        anchor_guess = anchor_cands[i]
+                        corr_values = []
+                        for scale in scale_guesses:
+                            line_data_scaled_x = (line_data[:, 0] - anchor_guess)/scale + anchor_x
+
+                            copy_line_data = np.copy(line_data)
+                            copy_line_data[:, 0] = line_data_scaled_x
+
+                            select_line_data = select(copy_line_data, 0, spectrum2.shape[0])
+                            
+                            #ax1.plot(np.linspace(0, spectrum2.shape[0], select_line_data.shape[0]), select_line_data[:, 1])
+
+                            interp_line_data = np.interp(np.arange(spectrum2.shape[0]), select_line_data[:, 0], select_line_data[:, 1])
+                            #ax1.plot(interp_line_data)
+                            #ax1.set_xlim((0, spectrum2.shape[0]))
+
+                            exc_width = 0
+                            interp_line_data[max(0, int(anchor_x) - exc_width): min(int(anchor_x) + exc_width, interp_line_data.shape[0] - 1)] = np.mean(interp_line_data)
+                            lspec = np.log(spectrum2)
+                            lspec[max(0, int(anchor_x) - exc_width): min(int(anchor_x) + exc_width, lspec.shape[0] - 1)] = np.mean(lspec)
+                            corr_value = np.corrcoef(interp_line_data, lspec)[0, 1]
+                            corr_values.append(corr_value)
+                        print(corr_values, scale_guesses)
+                        ax1.plot(scale_guesses, corr_values, label=anchor_cand_names[i])
+                    ax1.grid()
+                    ax1.set_ylim((-0.2, 1))
+                    ax1.legend()
+                    
+                    
                 all_rdr.reset()
                 disklist,_,_,_ = read_video_improved(all_rdr, fit, options)
-                
+                disk_memo = disklist[0]
                 # process
                 ratio = options['ratio_fixe'] if not options['ratio_fixe'] is None else 1.0
                 phi = math.radians(options['slant_fix']) if not options['slant_fix'] is None else 0.0
                 frame_circularized = correct_image(downscale(disklist[0], downscale_f) / 65536, phi, ratio, np.array([-1.0, -1.0]), -1.0, options, print_log=False)[0]  # Note that we assume 16-bit
-                clahe, protus = single_image_process(frame_circularized, hdr, options, cercle0, borders, '', backup_bounds)
-        
+                clahe, protus = single_image_process(frame_circularized, hdr, options, tuple_downscale(cercle0, downscale_f) if not cercle0 == (-1, -1, -1) else (-1, -1, -1), tuple_downscale(borders, downscale_f), '', tuple_downscale(backup_bounds, downscale_f))
+          
+                ax3.imshow(clahe, cmap='gray', aspect='equal')
+                ax4.imshow(protus, cmap='gray', aspect='equal')
 
-                
-                
-                ax3.imshow(np.concatenate((clahe, protus), axis = 1), cmap='gray', aspect='equal')
-
-                '''
-                # update the figure canvas
-                plt.subplots_adjust(0,0,1,1,0,0)
-                for ax in fig.axes:
-                    ax.axis('off')
-                    ax.margins(0,0)
-                    ax.xaxis.set_major_locator(plt.NullLocator())
-                    ax.yaxis.set_major_locator(plt.NullLocator())
-                '''
-                #plt.tight_layout(pad=0)
                 graph.draw()
                 
                 figure_x, figure_y, figure_w, figure_h = fig.bbox.bounds
                 figure_w, figure_h = int(figure_w), int(figure_h)
                 photo = Tk.PhotoImage(master=canvas, width=figure_w, height=figure_h)
 
-                canvas.create_image(1000, 800, image=photo)
+                canvas.create_image(figure_w, figure_h, image=photo)
 
             graph.get_tk_widget().pack(side='top', fill='both', expand=1)
             window.refresh()
+        if event == 'Save image':
+            if not mean is None:                    
+                ratio = options['ratio_fixe'] if not options['ratio_fixe'] is None else 1.0
+                phi = math.radians(options['slant_fix']) if not options['slant_fix'] is None else 0.0
+                frame_circularized = correct_image(disk_memo / 65536, phi, ratio, np.array([-1.0, -1.0]), -1.0, options, print_log=False)[0]  # Note that we assume 16-bit
+                clahe, protus = single_image_process(frame_circularized, hdr, options, cercle0, borders, '', backup_bounds)
+                compression = 0
+                basename = os.path.splitext(file)[0] + '_shift='+str(options['shift'][0])
+                cv2.imwrite(output_path(basename+'_clahe.png', options), clahe, [cv2.IMWRITE_PNG_COMPRESSION, compression])   # Modification Jean-Francois: placed before the IF for clear reading
+                cv2.imwrite(output_path(basename+'_protus.png', options), protus, [cv2.IMWRITE_PNG_COMPRESSION, compression])
 
 
-    '''
-    dpts = [randint(0, 10) for x in range(10000)]
-    # Our event loop      
-    for i in range(len(dpts)):
-        event, values = window.read(timeout=20)
-        if event == 'Exit' or event == sg.WIN_CLOSED:
-            window.close()
-            return
+if __name__ == '__main__':
+    from matplotlib import image as mpimg
+    data = []
+    data_x = []
+    for i in range(3000, 10000, 100):
+        file = 'D:/Spectre solaire 3000-10000 Angströms (Jungfraujoch, auteurs Delbouille et al) avec identification des raies (table de Moore) et facteurs de Landé/'+str(i)+'.png'
+        print(os.path.isfile(file))
+        img = mpimg.imread(file)
+        data_x.append(np.arange(10000)/100 + i)
+        data.append(img[img.shape[0]//2, :])
 
-        ax.cla()
-        ax.grid()
-
-        ax.plot(range(20), dpts[i:i + 20], color='purple')
-        graph.draw()
-        figure_x, figure_y, figure_w, figure_h = fig.bbox.bounds
-        figure_w, figure_h = int(figure_w), int(figure_h)
-        photo = Tk.PhotoImage(master=canvas, width=figure_w, height=figure_h)
-
-        canvas.create_image(640 / 2, 480 / 2, image=photo)
-
-        graph.get_tk_widget().pack(side='top', fill='both', expand=1)
-        #tkagg.FigureCanvasTkAgg.blit(photo, figure_canvas_agg.get_renderer()._renderer)
-        window.refresh()
-    '''
+    y = np.array(data).flatten()
+    x = np.array(data_x).flatten()
+    xy = np.vstack((x, y)).T
+    print(xy)
+    print(xy.shape)
+    np.save('reference_lines.npy', xy)
+    plt.plot(x, y)
+    plt.show()
