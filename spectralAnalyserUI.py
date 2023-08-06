@@ -135,7 +135,6 @@ def analyseSpectrum(options, file, lang_dict):
             window['-shift-'].update(0)
             options['shift'] = [0]
             display_refresh = True
-            anchor_refresh = True
             try:
                 file = values['-FILE2-'].split(';')[0]
                 window['-FILE2-'].update(file)
