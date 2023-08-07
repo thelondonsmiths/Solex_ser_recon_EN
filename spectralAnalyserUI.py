@@ -88,16 +88,26 @@ def analyseSpectrum(options, file, lang_dict):
          sg.Button("Start analysis", key='Start analysis', enable_events=True), sg.Button('Save image'), sg.Button('Exit')]
     ]
 
+
+    c1 = sg.Combo(anchors, readonly=True, key='-anchor-', enable_events=True)
+    c2 = sg.Combo(targets, readonly=True, key='-target-', enable_events=True)
+    s1 = sg.Spin(list(range(-999, 1000)), initial_value=0, readonly=False, size=4, enable_events=True, key='-shift-')
+
+    in1 = sg.InputText('', key='-ashift-', size=(10, 1))
+    in2 = sg.InputText(options['dispersion'], key='-dispersion-', size=(10, 1))
+    
+    
     layout = [
-          [sg.T('Pixel shift', key='shift:'), sg.Spin(list(range(-999, 1000)), initial_value=0, readonly=False, size=4, enable_events=True, key='-shift-'),
-           sg.T('Anchor line'), sg.Combo(anchors, readonly=True, key='-anchor-', enable_events=True), sg.T('GOTO line'), sg.Combo(targets, readonly=True, key='-target-', enable_events=True)],
-          [sg.T('Dispersion (Å/pixel)'), sg.InputText(options['dispersion'], key='-dispersion-', size=(10, 1)), sg.B('Auto dispersion')],
-          [sg.Canvas(size=(1000, 800), key='canvas')],
+          
+        [sg.T('Anchor line'), c1, sg.T('GOTO line'), c2, sg.T("GOTO wavelength(Å)"), in1, sg.T('Pixel shift', key='shift:'), s1, sg.T("Wavelength shift: None", key="Ångstrom Shift:")],
+        [sg.T('Dispersion (Å/pixel)'), in2, sg.B('Auto dispersion')],
+        [sg.Canvas(size=(1000, 800), key='canvas')],
     ]
 
     window = sg.Window('Pixel Offset Live', layout_file_input+layout, finalize=True, resizable=True, keep_on_top=False)
     # needed to access the canvas element prior to reading the window
     window['-shift-'].bind("<Return>", "_Enter")
+    window['-ashift-'].bind("<Return>", "_Enter")
     window['-dispersion-'].bind("<Return>", "_Enter")
     canvas_elem = window['canvas']
 
@@ -133,6 +143,7 @@ def analyseSpectrum(options, file, lang_dict):
             options['ratio_fixe'] = original_ratio
             options['slant_fix'] = original_slant
             window['-shift-'].update(0)
+            window["Ångstrom Shift:"].update("Wavelength shift: None")
             options['shift'] = [0]
             display_refresh = True
             try:
@@ -168,6 +179,24 @@ def analyseSpectrum(options, file, lang_dict):
                 sg.Popup('Error: ' + inst.args[0], keep_on_top=True)
                 mean = None
 
+        if event == '-ashift-_Enter':
+            if mean is None or dispersion is None or values['-anchor-']=='':
+                sg.Popup("Not ready to GOTO wavelength. First load and a file and press start analysis and choose anchor line!", keep_on_top=True)
+            else:
+                try:
+                    gotolambda = float(values['-ashift-'])
+                    j = anchors.index(values['-anchor-'])
+                    anchor_guess = anchor_cands[j]
+                    shift = int((gotolambda - anchor_guess)/dispersion)
+                    if 0 <= shift + fit[len(fit)//2][0]+fit[len(fit)//2][1] < spectrum2.shape[0]:          
+                        options['shift'] = [shift]
+                        window['-shift-'].update(shift)
+                        display_refresh = True
+                    else:
+                        sg.Popup("That line does not appear to be in image!", keep_on_top=True)
+                except:
+                    sg.Popup("invalid wavelength", keep_on_top=True)
+                
     
         if event == '-shift-' or event == '-shift-_Enter':
             try:
@@ -185,9 +214,11 @@ def analyseSpectrum(options, file, lang_dict):
             else:
                 sg.Popup('First load and a file and press start analysis and choose anchor line!', keep_on_top=True)
 
-        if event == '-dispersion-_Enter' or event == '-target-':
+        if event == '-dispersion-_Enter' or event == '-target-' or event == '-anchor-':
             try:
                 dispersion = float(values['-dispersion-'])
+                if dispersion <= 0:
+                    raise Exception("dispersion must be positive")
                 options['dispersion'] = round(dispersion, 6)
                 options_orig['dispersion'] = round(dispersion, 6)
                 if values['-anchor-']:
@@ -262,7 +293,9 @@ def analyseSpectrum(options, file, lang_dict):
                     ax2.set_xlim((0, spectrum.shape[0]-1))
                     ax2.axvline(x=fit[len(fit)//2][0]+fit[len(fit)//2][1]+options['shift'][0], color='red', linestyle='--')
                     ax2.axvline(x=fit[len(fit)//2][0]+fit[len(fit)//2][1], color='blue')
+                    ax2.legend()
                 else:
+                    # update plot
                     i = anchors.index(values['-anchor-'])
                     anchor_val = anchor_cands[i]
                     anchor_px = fit[len(fit)//2][0]+fit[len(fit)//2][1]
@@ -272,16 +305,24 @@ def analyseSpectrum(options, file, lang_dict):
                     
                     select_data = select(line_data, low_clip, hi_clip)
                     
-                    ax2_twin.plot(select_data[:, 0], select_data[:, 1], color = 'purple', label = 'reference')
-                    ax2.plot((np.arange(spectrum2.shape[0]) - anchor_px) * dispersion + anchor_val, np.log(spectrum2), color='green', label='data')
+                    ln1 = ax2_twin.plot(select_data[:, 0], select_data[:, 1], color = 'purple', label = 'reference')
+                    ln2 = ax2.plot((np.arange(spectrum2.shape[0]) - anchor_px) * dispersion + anchor_val, np.log(spectrum2), color='green', label='data')
                     ax2.set_xlabel(f'wavelength(Å); dispersion: {dispersion:.4f} Å/pixel')
-                    ax2_twin.legend()
                     ax2.set_xlim((low_clip, hi_clip))
                     ax2_twin.set_xlim((low_clip, hi_clip))
                     ax2.axvline(x=anchor_val, color='blue')
-                    ax2.axvline(x=anchor_val+options['shift'][0]*dispersion, color='red', linestyle='--')
+                    myline = anchor_val+options['shift'][0]*dispersion
+                    ax2.axvline(x=myline, color='red', linestyle='--')
+                    lns = ln1+ln2
+                    labs = [l.get_label() for l in lns]
+                    ax2.legend(lns, labs) # shared legend for it and twin
+                    # update Angstrom shift
+                    window['-ashift-'].update(f'{myline:.3f}')
+                    ashift = options['shift'][0]*dispersion
+                    window["Ångstrom Shift:"].update(f"Wavelength shift: {options['shift'][0]*dispersion:.3f}Å")
 
-                ax2.legend()
+
+                
                     
                 ax1.imshow(mean, cmap='gray', aspect='auto')
                 ax1.plot([x[0]+x[1]+options['shift'] for x in fit], range(ih), 'r--')
