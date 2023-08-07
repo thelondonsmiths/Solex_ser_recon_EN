@@ -202,7 +202,7 @@ def analyseSpectrum(options, file, lang_dict):
             if dispersion is None or values['-anchor-']=='' or mean is None:
                 sg.Popup("Not ready to do that yet: load file and find dispersion first!", keep_on_top=True)
             else:
-                j = targets.index(values['-anchor-'])
+                j = anchors.index(values['-anchor-'])
                 anchor_guess = anchor_cands[j]
                 i = targets.index(values['-target-'])
                 shift = int((target_nums[i] - anchor_guess)/dispersion)
