@@ -89,9 +89,9 @@ def analyseSpectrum(options, file, lang_dict):
     ]
 
     layout = [
-          [sg.T('shift:', key='shift:'), sg.Spin(list(range(-999, 1000)), initial_value=0, readonly=False, size=4, enable_events=True, key='-shift-'),
+          [sg.T('Pixel shift', key='shift:'), sg.Spin(list(range(-999, 1000)), initial_value=0, readonly=False, size=4, enable_events=True, key='-shift-'),
            sg.T('Anchor line'), sg.Combo(anchors, readonly=True, key='-anchor-', enable_events=True), sg.T('GOTO line'), sg.Combo(targets, readonly=True, key='-target-', enable_events=True)],
-          [sg.T('Dispersion(Å/pixel):'), sg.InputText(options['dispersion'], key='-dispersion-', size=(10, 1)), sg.B('auto dispersion')],
+          [sg.T('Dispersion (Å/pixel)'), sg.InputText(options['dispersion'], key='-dispersion-', size=(10, 1)), sg.B('Auto dispersion')],
           [sg.Canvas(size=(1000, 800), key='canvas')],
     ]
 
@@ -373,7 +373,7 @@ if __name__ == '__main__':
     data = []
     data_x = []
     for i in range(3000, 10000, 100):
-        file = 'D:/Spectre solaire 3000-10000 Angströms (Jungfraujoch, auteurs Delbouille et al) avec identification des raies (table de Moore) et facteurs de Landé/'+str(i)+'.png'
+        file = 'D:\Solar spectral lines/Solar Spectrum 3000-10000 Angstroms/'+str(i)+'.png'
         print(os.path.isfile(file))
         img = mpimg.imread(file)
         data_x.append(np.arange(10000)/100 + i)
