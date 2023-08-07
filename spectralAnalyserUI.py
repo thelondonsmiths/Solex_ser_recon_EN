@@ -240,12 +240,7 @@ def analyseSpectrum(options, file, lang_dict):
                             copy_line_data[:, 0] = line_data_scaled_x
 
                             select_line_data = select(copy_line_data, 0, spectrum2.shape[0])
-                            
-                            #ax1.plot(np.linspace(0, spectrum2.shape[0], select_line_data.shape[0]), select_line_data[:, 1])
-
                             interp_line_data = np.interp(np.arange(spectrum2.shape[0]), select_line_data[:, 0], select_line_data[:, 1])
-                            #ax1.plot(interp_line_data)
-                            #ax1.set_xlim((0, spectrum2.shape[0]))
 
                             exc_width = 5
                             interp_line_data[max(0, int(anchor_x) - exc_width): min(int(anchor_x) + exc_width, interp_line_data.shape[0] - 1)] = np.mean(interp_line_data)
@@ -288,49 +283,11 @@ def analyseSpectrum(options, file, lang_dict):
 
                 ax2.legend()
                     
-                
-                
-
-                if 1:
-                    ax1.imshow(mean, cmap='gray', aspect='auto')
-                    ax1.plot([x[0]+x[1]+options['shift'] for x in fit], range(ih), 'r--')
-                    ax1.plot([x[0]+x[1] for x in fit], range(ih), 'b')
-                    ax1.set_xlim((0, mean.shape[1]-1))
-                else:
-                    anchor_x = fit[len(fit)//2][0]+fit[len(fit)//2][1]
-                    
-                    scale_guesses = np.linspace(0.04, 0.08, spectrum2.shape[0]*2)
-                    #scale_guesses = [0.057]
-                    for i in range(len(anchor_cands)):
-                        anchor_guess = anchor_cands[i]
-                        corr_values = []
-                        for scale in scale_guesses:
-                            line_data_scaled_x = (line_data[:, 0] - anchor_guess)/scale + anchor_x
-
-                            copy_line_data = np.copy(line_data)
-                            copy_line_data[:, 0] = line_data_scaled_x
-
-                            select_line_data = select(copy_line_data, 0, spectrum2.shape[0])
-                            
-                            #ax1.plot(np.linspace(0, spectrum2.shape[0], select_line_data.shape[0]), select_line_data[:, 1])
-
-                            interp_line_data = np.interp(np.arange(spectrum2.shape[0]), select_line_data[:, 0], select_line_data[:, 1])
-                            #ax1.plot(interp_line_data)
-                            #ax1.set_xlim((0, spectrum2.shape[0]))
-
-                            exc_width = 5
-                            interp_line_data[max(0, int(anchor_x) - exc_width): min(int(anchor_x) + exc_width, interp_line_data.shape[0] - 1)] = np.mean(interp_line_data)
-                            lspec = np.log(spectrum2)
-                            lspec[max(0, int(anchor_x) - exc_width): min(int(anchor_x) + exc_width, lspec.shape[0] - 1)] = np.mean(lspec)
-                            corr_value = np.corrcoef(interp_line_data, lspec)[0, 1]
-                            corr_values.append(corr_value)
-                        print(corr_values, scale_guesses)
-                        ax1.plot(scale_guesses, corr_values, label=anchor_cand_names[i])
-                    ax1.grid()
-                    ax1.set_ylim((-0.2, 1))
-                    ax1.legend()
-                    
-                    
+                ax1.imshow(mean, cmap='gray', aspect='auto')
+                ax1.plot([x[0]+x[1]+options['shift'] for x in fit], range(ih), 'r--')
+                ax1.plot([x[0]+x[1] for x in fit], range(ih), 'b')
+                ax1.set_xlim((0, mean.shape[1]-1))
+                         
                 all_rdr.reset()
                 disklist,_,_,_ = read_video_improved(all_rdr, fit, options)
                 disk_memo = disklist[0]
@@ -365,29 +322,3 @@ def analyseSpectrum(options, file, lang_dict):
                 cv2.imwrite(output_path(basename+'_protus.png', options), protus, [cv2.IMWRITE_PNG_COMPRESSION, compression])
         anchor_refresh = False
         display_refresh = False
-        
-
-'''
-if __name__ == '__main__':
-    from matplotlib import image as mpimg
-    data = []
-    data_x = []
-    for i in range(3000, 10000, 100):
-        file = 'D:\Solar spectral lines/Solar Spectrum 3000-10000 Angstroms/'+str(i)+'.png'
-        print(os.path.isfile(file))
-        img = mpimg.imread(file)
-        data_x.append(np.arange(10000)/100 + i)
-        data.append(img[img.shape[0]//2, :])
-    y = (np.array(data).flatten()*255)
-    print(y)
-    print(np.min(y), np.max(y))
-
-    y = y.astype(np.uint8)
-    x = np.array(data_x).flatten()
-    xy = np.vstack((x, y)).T
-    print(xy)
-    print(xy.shape)
-    np.savez_compressed('reference_lines.npz', y=y, first=3000, last=10000, step=0.01)
-    plt.plot(x, y)
-    plt.show()
-'''
