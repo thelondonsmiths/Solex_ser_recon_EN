@@ -178,7 +178,7 @@ def analyseSpectrum(options, file, lang_dict):
                 sg.Popup('Error: invalid shift: ' + values['-shift-'], keep_on_top=True)
 
 
-        if event == 'auto dispersion':
+        if event == 'Auto dispersion':
             if not mean is None and values['-anchor-']:
                 display_refresh = True
                 anchor_refresh = True
