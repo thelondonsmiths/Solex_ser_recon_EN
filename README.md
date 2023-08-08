@@ -112,9 +112,9 @@ It should be possible to reduce this to around 0.5 degrees without too much diff
 
 **Pixel Offset Live**:
 
-This tool is useful to find specific spectral lines vs notable anchor lines. The disperion can be entered manually or the **Auto Dispersion** function can very accurately calculate it if there are enough well-defined spectral lines visible.
-The choice of spectral line can be entered with "GOTO line", "GOTO wavelength" or by "Pixel shift" (from the anchor line).
-After choosing the file, do "Start analysis". The resulting displayed CLAHE and Protus images can be saved (to the output folder specified in the main menu).
+This tool is useful to find specific spectral lines vs notable anchor lines. The disperion can be entered manually (type then enter) or the **Auto Dispersion** function can very accurately calculate it if there are enough well-defined spectral lines visible.
+The choice of spectral line can be entered with "GOTO line", "GOTO wavelength" or by "Pixel shift" from the anchor line.
+After choosing the file, do "Start analysis". The resulting displayed CLAHE and Protus images can be saved to the output folder specified in the main menu.
 The processing parameters (rotate, transversalium, etc) are also specified by selections on the main menu.
 The dispersion is saved so a wide calibration spectrum can be run first and then the resulting dispersion can be used for a narrow spectral range.
 One use case would be to find the Helium emission line; another would be to step accurately through the Hydrogen-alpha line.
