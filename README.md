@@ -109,3 +109,10 @@ If it is smaller than 0.9, then oversampling is probably occurring and the scan 
 - **Unrotation**: this approximately corresponds to the misorientation of the SHG instrument with the scan direction (i.e. RA or DEC).
 It should be possible to reduce this to around 0.5 degrees without too much difficulty, at which point the raw scan will show very little instrument tilt.
 - **Disk radius**: this figure is useful for a number of post-processing steps. If doing a "fixed image width" crop, then chose a value at least 2.2 times the radius.
+
+Pixel Offset Live:
+This tool is useful to find specific spectral lines vs notable "anchor lines". The disperion can be entered manually, or the Auto Dispersion function can calculate if there are enough well-defined spectral lines visible.
+The choice of spectral line can be entered with 'GOTO line', 'GOTO wavelength' or by pixel shift (from the anchor line).
+After choosing the file, do 'Start analysis'. The resulting displayed CLAHE and Protus images can be saved (to the output folder specfied in the main menu).
+The processing parameters (rotate, transversalium, etc) are determined on the main menu.
+The Dispersion is saved so a wide calibration spectrum can be run first and then the resulting dispersion can be used for a narrow spectral range.
