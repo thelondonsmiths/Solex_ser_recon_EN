@@ -1,4 +1,4 @@
-Solar disk reconstruction from SHG (spectroheliograph) video files. Both 16bit and 8bit files are accepted. SER and AVI files are accepted.
+Solar disk reconstruction from spectroheliograph (SHG) video files. Both 16bit and 8bit files are accepted. SER and AVI files are accepted.
 If no spectral line can recognised in the video file, the program will stop.
 
 - Install the most recent version of Python from python.org. During Windows installation, check the box to update the PATH.
