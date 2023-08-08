@@ -58,11 +58,11 @@ def load_lines(path):
     return l, names, names_num
 
 def analyseSpectrum(options, file, lang_dict):
-    npzfile = np.load(resource_path('language_data/reference_lines.npz'))
+    npzfile = np.load(resource_path('language_data/alps.npz'))
     line_data = np.vstack((np.arange(npzfile['first'], npzfile['last'], npzfile['step']), npzfile['y']/255)).T
     
-    anchor_cands, anchor_cand_names, anchors = load_lines('language_data/anchor_candidates.txt')
-    target_nums, target_names, targets = load_lines('language_data/line_targets.txt')
+    anchor_cands, anchor_cand_names, anchors = load_lines('line_data/anchor_candidates.txt')
+    target_nums, target_names, targets = load_lines('line_data/line_targets.txt')
     
     options_orig = options
     options = options.copy() # deep copy
@@ -169,6 +169,8 @@ def analyseSpectrum(options, file, lang_dict):
                     options['shift'] = [10]
                     all_rdr.reset()
                     disklist,_,_,_ = read_video_improved(all_rdr, fit, options)
+                    if options['flip_x']:
+                        disklist[0] = np.flip(disklist[0], axis = 1)
                     frame_circularized, cercle0, options['ratio_fixe'], phi, borders = ellipse_to_circle(disklist[0], options, '')
                     options['slant_fix'] = math.degrees(phi)
                 options['shift'] = [0] # back to zero now    
@@ -331,6 +333,8 @@ def analyseSpectrum(options, file, lang_dict):
                          
                 all_rdr.reset()
                 disklist,_,_,_ = read_video_improved(all_rdr, fit, options)
+                if options['flip_x']:
+                    disklist[0] = np.flip(disklist[0], axis = 1)
                 disk_memo = disklist[0]
                 # process
                 ratio = options['ratio_fixe'] if not options['ratio_fixe'] is None else 1.0
