@@ -99,7 +99,7 @@ def analyseSpectrum(options, file, lang_dict):
     
     layout = [
           
-        [sg.T('Anchor line'), c1, sg.T('GOTO line'), c2, sg.T("GOTO wavelength(Å)"), in1, sg.T('Pixel shift', key='shift:'), s1, sg.T("Wavelength shift: None", key="Ångstrom Shift:")],
+        [sg.T('Anchor line'), c1, sg.T('GOTO line'), c2, sg.T("GOTO wavelength (Å)"), in1, sg.T('Pixel shift', key='shift:'), s1, sg.T("Wavelength shift: None", key="Ångstrom Shift:")],
         [sg.T('Dispersion (Å/pixel)'), in2, sg.B('Auto dispersion')],
         [sg.Canvas(size=(1000, 800), key='canvas')],
     ]
