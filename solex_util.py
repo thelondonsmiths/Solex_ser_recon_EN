@@ -255,11 +255,11 @@ def compute_mean_return_fit(vid_rdr, options, hdr, iw, ih, basefich0):
     logme(basefich0 + '_log.txt', options, 'Spectral line polynomial fit: ' + str(p))
     
     curve = polyval(np.asarray(np.arange(ih), dtype='d'), p)
-    fit = [[math.floor(curve[y]), curve[y] - math.floor(curve[y]), y] for y in range(ih)]
+    fit = [[math.floor(curve[y]), curve[y] - math.floor(curve[y]), y, curve[y]] for y in range(ih)]
 
     
     
-    if not options['clahe_only']:
+    if not options['clahe_only'] and not options['protus_only']:
         fig = matplotlib.figure.Figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.imshow(mean_img, cmap=matplotlib.pyplot.cm.gray)
@@ -270,8 +270,82 @@ def compute_mean_return_fit(vid_rdr, options, hdr, iw, ih, basefich0):
         ax.set_aspect(0.1)
         fig.tight_layout()
         fig.savefig(output_path(basefich0+'_spectral_line_data.png', options), dpi=400)
-    return mean_img, fit, y1, y2
+    return mean_img, np.array(fit), y1, y2
 
+
+def apply_lin_filter(img, linlen, half_width, spurious_flag, y1, y2):
+    ## counts of spurious
+    s_cumsum = np.cumsum(spurious_flag)
+    delayed = np.roll(s_cumsum, half_width)
+    advanced = np.roll(s_cumsum, -half_width)
+    delayed[:half_width] = 0
+    advanced[-half_width:] = advanced[-half_width-1]
+    rolling_sums = 2*half_width - (advanced - delayed - spurious_flag)
+    #plt.plot(rolling_sums)
+    #plt.show()
+
+    filtered = np.log(img)
+    for j in np.where(spurious_flag):
+        filtered[j, :] = 0
+    #plt.imshow(filtered)
+    #plt.show()
+    kernel = np.ones((half_width*2+1, linlen))
+    kernel[half_width, :] = 0
+    result = cv2.filter2D(filtered, -1, kernel)
+    result2 = result / (linlen * np.tile(rolling_sums, (img.shape[1], 1)).T)
+
+    #plt.imshow(result)
+    #plt.show()
+
+    #plt.imshow(result2)
+    #plt.show()
+
+    filt2 = np.log(img)
+    prev = np.zeros(img.shape[1])
+    for i in range(img.shape[0]):
+        if spurious_flag[i]:
+            filt2[i, :] = prev/2
+        else:
+            prev = filt2[i, :]
+    prev = np.zeros(img.shape[1])
+    for i in range(img.shape[0]-1, -1, -1):
+        if spurious_flag[i]:
+            filt2[i, :] += prev/2
+        else:
+            prev = filt2[i, :]            
+    result3 = cv2.filter2D(filt2, -1, kernel/np.sum(kernel))
+    #plt.imshow(result3)
+    #plt.show()
+
+    kernelLin = np.ones((1, linlen))
+
+    result4 = cv2.filter2D(np.log(img), -1, kernelLin/np.sum(kernelLin))
+
+    delta = result4 - result3
+
+    #plt.imshow(delta, cmap='bwr')
+    #plt.show()
+
+    a = 0.05 # taper width
+    N = y2 - y1
+    # Tukey taper function
+    def t(x):
+        if 0 <= x < a*N/2:
+            return 1/2 * (1-math.cos(2*math.pi*x/(a*N)))
+        elif a*N/2 <= x <= N/2:
+            return 1
+        elif N/2 <= x <= N:
+            return t(N - x)
+        print('error: weird input for taper function: ' + str(x))
+        return 1
+
+    taper = np.array([t(x) for x in range(N)])
+    
+    c = np.zeros(img.shape[0])
+    c[y1:y2] = taper
+
+
+    return img * np.exp(-delta*c.reshape(-1, 1))
 
 '''
 img: np array
@@ -302,7 +376,7 @@ def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
     detrended -= np.mean(detrended) # remove DC bias
     correction = np.exp(-np.cumsum(detrended))
 
-    '''    
+    ''' 
     plt.plot(y_ratios)
     plt.plot(y_ratios_r)
     plt.plot(trend)
@@ -310,6 +384,47 @@ def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
     plt.plot(correction)
     plt.show()
     '''
+
+    if options['stubborn_transversalium']:
+        ### spurious lines
+        c = np.zeros(img.shape[0])
+        c[y1:y2] = np.log(correction)
+        thresh_spur = np.where(np.abs(c) > np.std(np.log(correction))*2.5)
+        spurious_flag = np.abs(c) > np.std(np.log(correction))*2.5
+        spurious_flag = np.logical_or(spurious_flag, np.logical_or(np.roll(spurious_flag, -1), np.roll(spurious_flag, 1)))
+        img_filt2 = apply_lin_filter(img, 101, 5, spurious_flag, y1, y2)
+        return np.minimum(img_filt2, 65535).astype('uint16')
+    
+    ### new test
+    '''
+    linlen = 301
+    ylen = 15
+    kernel = np.zeros((ylen, linlen))
+    kernel[:, :] = -1
+    kernel[ylen//2, :] = ylen-1#ylen//2
+
+    #kernel[ylen//2+1:, :] = 0
+    
+    kernel = kernel / np.sum(np.abs(kernel))
+    result = cv2.filter2D(np.log(img), -1, kernel)
+    plt.imshow(result, cmap='bwr')
+    plt.show()
+
+    ###
+    fig, axs = plt.subplots(2, 3)
+    for i, yr in enumerate([1065, 1500, 2498, 2499, 2500, 2501]):
+        axs[i//3, i%3].plot(result[yr, :])
+        axs[i//3, i%3].set_title(str(yr))
+    plt.show()
+
+    for i, yr in enumerate(list(range(2496, 2505))+[2530, 2470]):
+        plt.plot(result[yr, :], label=str(yr))
+    plt.legend()
+    plt.show()
+    '''
+    ###
+    
+    ###
         
     a = 0.05 # taper width
     N = correction.shape[0]
@@ -337,7 +452,7 @@ def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
     c[y1:y2] = correction_t
     #c[c<1] = 1
     options['_transversalium_cache'] = c
-    if (not reqFlag) and (not options['clahe_only']):
+    if (not reqFlag) and (not options['clahe_only'] and not options['protus_only']):
         fig = matplotlib.figure.Figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.plot(c)
@@ -345,6 +460,31 @@ def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
         ax.set_ylabel('transversalium correction factor')
         fig.savefig(output_path(basefich+'_transversalium_correction.png', options), dpi=300)
     ret = (img.T * c).T # multiply each row in image by correction factor
+
+    '''
+    ### new test
+    linlen = 301
+    ylen = 9
+    kernel = np.zeros((ylen, linlen))
+    kernel[:, :] = -1
+    kernel[ylen//2, :] = ylen - 1#ylen//2
+
+    #kernel[ylen//2+1:, :] = 0
+    
+    kernel = kernel / np.sum(np.abs(kernel))
+    result = cv2.filter2D(np.log(ret), -1, kernel)
+    plt.imshow(result, cmap='bwr')
+    plt.show()
+    ###
+
+    correct_kernel = ret / np.exp(result)
+    plt.imshow(correct_kernel, cmap='gray')
+    plt.show()
+    return correct_kernel
+    ###
+    '''
+    
+    
     ret[ret > 65535] = 65535 # prevent overflow
     return np.array(ret, dtype='uint16')
 
@@ -388,14 +528,16 @@ def image_process(frame, cercle, options, header, basefich):
     # save the clahe as a png
     compression = 0
     if not '_nolog' in options: # '_nolog' is used in spectralAnalyser
-        print('saving image to:' + basefich+'_clahe.png')
-        cv2.imwrite(output_path(basefich+'_clahe.png', options),cc, [cv2.IMWRITE_PNG_COMPRESSION, compression])   # Modification Jean-Francois: placed before the IF for clear reading
-    if not options['clahe_only']:
-        # save "high-contrast" and "protus" pngs
-        cv2.imwrite(output_path(basefich+'_uncontrasted.png', options), frame_raw, [cv2.IMWRITE_PNG_COMPRESSION, compression])
-        cv2.imwrite(output_path(basefich+'_high_contrast.png', options), frame_HC, [cv2.IMWRITE_PNG_COMPRESSION, compression])
-        cv2.imwrite(output_path(basefich+'_protus.png', options), frame_protus, [cv2.IMWRITE_PNG_COMPRESSION, compression])
-    
+        if options['clahe_only'] or not options['protus_only']:
+            print('saving image to:' + basefich+'_clahe.png')
+            cv2.imwrite(output_path(basefich+'_clahe.png', options),cc, [cv2.IMWRITE_PNG_COMPRESSION, compression])
+        if options['protus_only'] or not options['clahe_only']:
+            cv2.imwrite(output_path(basefich+'_protus.png', options), frame_protus, [cv2.IMWRITE_PNG_COMPRESSION, compression])
+        if not options['clahe_only'] and not options['protus_only']:
+            # save "high-contrast" and "unconstrasted" pngs
+            cv2.imwrite(output_path(basefich+'_uncontrasted.png', options), frame_raw, [cv2.IMWRITE_PNG_COMPRESSION, compression])
+            cv2.imwrite(output_path(basefich+'_high_contrast.png', options), frame_HC, [cv2.IMWRITE_PNG_COMPRESSION, compression])
+        
     # The 3 images are concatenated together in 1 image => 'Sun images'
     # The 'Sun images' is scaled for the monitor maximal dimension ... it is scaled to match the dimension of the monitor without 
     # changing the Y/X scale of the images 

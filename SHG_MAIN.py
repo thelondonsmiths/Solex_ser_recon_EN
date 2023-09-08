@@ -46,10 +46,12 @@ options = {
     'slant_fix' : None ,            #
     'save_fit' : False,             # argument: f
     'clahe_only' : False,           # argument: c
+    'protus_only': False,
     'disk_display' : True,          # argument: p
     'delta_radius' : 0,             #
     'crop_width_square' : False,    # argument: s
     'transversalium' : True,        # argument: t
+    'stubborn_transversalium': False,
     'trans_strength': 301,          #
     'img_rotate': 0,                #
     'flip_x': False,                # argument: m

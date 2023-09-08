@@ -24,7 +24,7 @@ input: tasks: list of tuples (file, option)
 '''
 
 def solex_do_work(tasks, flag_command_line = False):
-    multi = True
+    multi = False
     with Pool(4) as p:
         results = []
         for i, (file, options) in enumerate(tasks):

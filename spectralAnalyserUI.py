@@ -150,6 +150,7 @@ def analyseSpectrum(options, file, lang_dict):
                 file = values['-FILE2-'].split(';')[0]
                 window['-FILE2-'].update(file)
                 options['specDir'] = os.path.dirname(file)
+                window['Choose file'].InitialFolder = options['specDir']
                 options_orig['specDir'] = os.path.dirname(file) # this is to feed back into SHG config
                 all_rdr = all_video_reader(file)
                 
@@ -157,7 +158,6 @@ def analyseSpectrum(options, file, lang_dict):
                 iw = all_rdr.iw
                 hdr = make_header(all_rdr)
                 mean, fit, y1, y2 = compute_mean_return_fit(all_rdr, options, hdr, iw, ih, '')
-
                 target_height = max(1000, ih / 3)
                 downscale_f = target_height / ih
                 
@@ -190,10 +190,16 @@ def analyseSpectrum(options, file, lang_dict):
                     j = anchors.index(values['-anchor-'])
                     anchor_guess = anchor_cands[j]
                     shift = int((gotolambda - anchor_guess)/dispersion)
-                    if 0 <= shift + fit[len(fit)//2][0]+fit[len(fit)//2][1] < spectrum2.shape[0]:          
+                    positions = shift + fit[:, 3]
+                    print(positions, positions >= 0)
+                    is_within = np.logical_and(0 <= positions, positions <= spectrum2.shape[0])
+                    print(is_within)
+                    if is_within.any():       
                         options['shift'] = [shift]
                         window['-shift-'].update(shift)
                         display_refresh = True
+                        if np.logical_not(is_within).any():
+                            sg.Popup("Warning: Line is only partially within frame")
                     else:
                         sg.Popup("That line does not appear to be in image!", keep_on_top=True)
                 except:
@@ -239,12 +245,17 @@ def analyseSpectrum(options, file, lang_dict):
                 anchor_guess = anchor_cands[j]
                 i = targets.index(values['-target-'])
                 shift = int((target_nums[i] - anchor_guess)/dispersion)
-                if 0 <= shift + fit[len(fit)//2][0]+fit[len(fit)//2][1] < spectrum2.shape[0]:          
+                positions = shift + fit[:, 3]
+                is_within = np.logical_and(0 <= positions, positions <= spectrum2.shape[0])
+                if is_within.any():       
                     options['shift'] = [shift]
                     window['-shift-'].update(shift)
                     display_refresh = True
+                    if np.logical_not(is_within).any():
+                        sg.Popup("Warning: Line is only partially within frame")
                 else:
                     sg.Popup("That line does not appear to be in image!", keep_on_top=True)
+                
             
         if display_refresh:   
             ax1.cla()
@@ -260,7 +271,7 @@ def analyseSpectrum(options, file, lang_dict):
                 # fit anchor:
                 if anchor_refresh:
                     if values['-anchor-']:
-                        anchor_x = fit[len(fit)//2][0]+fit[len(fit)//2][1]
+                        anchor_x = fit[fit.shape[0]//2, 3]
                         scale_guesses = np.linspace(0.03, 0.12, spectrum2.shape[0]*2)
                         #scale_guesses = [0.057]
                         i = anchors.index(values['-anchor-'])
@@ -293,14 +304,14 @@ def analyseSpectrum(options, file, lang_dict):
                 if dispersion is None:
                     ax2.plot(np.log(spectrum2), color='green', label='data')
                     ax2.set_xlim((0, spectrum.shape[0]-1))
-                    ax2.axvline(x=fit[len(fit)//2][0]+fit[len(fit)//2][1]+options['shift'][0], color='red', linestyle='--')
-                    ax2.axvline(x=fit[len(fit)//2][0]+fit[len(fit)//2][1], color='blue')
+                    ax2.axvline(x=fit[fit.shape[0]//2, 3]+options['shift'][0], color='red', linestyle='--')
+                    ax2.axvline(x=fit[fit.shape[0]//2, 3], color='blue')
                     ax2.legend()
                 else:
                     # update plot
                     i = anchors.index(values['-anchor-'])
                     anchor_val = anchor_cands[i]
-                    anchor_px = fit[len(fit)//2][0]+fit[len(fit)//2][1]
+                    anchor_px = fit[fit.shape[0]//2, 3]
                     hi_clip = (spectrum2.shape - anchor_px) * dispersion + anchor_val
                     low_clip = (-anchor_px) * dispersion + anchor_val
                     
@@ -327,8 +338,8 @@ def analyseSpectrum(options, file, lang_dict):
                 
                     
                 ax1.imshow(mean, cmap='gray', aspect='auto')
-                ax1.plot([x[0]+x[1]+options['shift'] for x in fit], range(ih), 'r--')
-                ax1.plot([x[0]+x[1] for x in fit], range(ih), 'b')
+                ax1.plot(fit[:, 3] + options['shift'], range(ih), 'r--')
+                ax1.plot(fit[:, 3], range(ih), 'b')
                 ax1.set_xlim((0, mean.shape[1]-1))
                          
                 all_rdr.reset()

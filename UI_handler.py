@@ -53,8 +53,10 @@ def interpret_UI_values(options, ui_values, no_file = False):
         raise Exception('invalid protus_radius_adjustment')
     options['save_fit'] = ui_values['Save fits files']
     options['clahe_only'] = ui_values['Save clahe.png only']
+    options['protus_only'] = ui_values['Save protus.png only']
     options['crop_width_square'] = ui_values['Crop square']
     options['transversalium'] = ui_values['Correct transversalium lines']
+    options['stubborn_transversalium'] = ui_values['Stubborn transversalium']
     options['trans_strength'] = int(ui_values['-trans_strength-']*100) + 1
     options['flip_x'] = ui_values['Mirror X']
     options['img_rotate'] = int(ui_values['img_rotate'])
@@ -188,9 +190,8 @@ def inputUI(options):
 
     layout_base = [
     
-    [sg.Checkbox('Show graphics', default=options['flag_display'], key='Show graphics')],
-    [sg.Checkbox('Save fits files', default=options['save_fit'], key='Save fits files')],
-    [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='Save clahe.png only')],
+    [sg.Checkbox('Show graphics', default=options['flag_display'], key='Show graphics'), sg.Checkbox('Save fits files', default=options['save_fit'], key='Save fits files')],
+    [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='Save clahe.png only'), sg.Checkbox('Save protus.png only', default=options['protus_only'], key='Save protus.png only')],
     [sg.Checkbox('Crop square', default=options['crop_width_square'], key='Crop square')],
     [sg.Text('Fixed image width (blank for none)', size=(32,1), key='Fixed image width (blank for none)'), sg.Input(default_text=options['fixed_width'], size=(8,1),key='_fixed_width')],
     [sg.Checkbox('Mirror X', default=False, key='Mirror X')],
@@ -202,7 +203,7 @@ def inputUI(options):
          orientation='horizontal',
          font=('Helvetica', 12),
          key='img_rotate')],
-    [sg.Checkbox('Correct transversalium lines', default=options['transversalium'], key='Correct transversalium lines', enable_events=True)],
+    [sg.Checkbox('Correct transversalium lines', default=options['transversalium'], key='Correct transversalium lines', enable_events=True), sg.Checkbox('Stubborn transversalium', default=options['stubborn_transversalium'], key='Stubborn transversalium')],
     [sg.Text("Transversalium correction strength (pixels x 100) :", key='Transversalium correction strength (pixels x 100) :', visible=options['transversalium'])],
     [sg.Slider(range=(0.25,7),
          default_value=options['trans_strength']/100,
@@ -225,7 +226,7 @@ def inputUI(options):
         layout_title + [[tab_group]] + layout_folder_output + layout_base    
     ]  
     
-    window = sg.Window('SHG Version 4.2', layout, finalize=True)
+    window = sg.Window('SHG Version 4.3', layout, finalize=True)
     window.BringToFront()
 
     if options['language'] in langs:
