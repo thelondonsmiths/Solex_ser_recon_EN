@@ -1,7 +1,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 6 August 2023
+Version 14 September 2023
 
 """
 
@@ -273,7 +273,7 @@ def compute_mean_return_fit(vid_rdr, options, hdr, iw, ih, basefich0):
     return mean_img, np.array(fit), y1, y2
 
 
-def apply_lin_filter(img, linlen, half_width, spurious_flag, y1, y2):
+def apply_lin_filter(img, linlen, half_width, spurious_flag, y1, y2, circle):
     ## counts of spurious
     s_cumsum = np.cumsum(spurious_flag)
     delayed = np.roll(s_cumsum, half_width)
@@ -344,8 +344,34 @@ def apply_lin_filter(img, linlen, half_width, spurious_flag, y1, y2):
     c = np.zeros(img.shape[0])
     c[y1:y2] = taper
 
+    delta = fix_edge_effect(delta, circle, linlen)
 
+
+    plt.imshow(delta, cmap='bwr')
+    plt.show()
+    
     return img * np.exp(-delta*c.reshape(-1, 1))
+
+
+def fix_edge_effect(multiplier, circle, linlen):
+    y1 = math.ceil(max(circle[1] - circle[2], 0))
+    y2 = math.floor(min(circle[1] + circle[2], multiplier.shape[0] - 1))
+    halflen = linlen // 2
+    for y in range(y1, y2):
+        dx = math.floor((circle[2]**2 - (y-circle[1])**2)**0.5)
+        x2 = math.floor(min(circle[0] + dx, multiplier.shape[1] - 1))
+        x1 = math.ceil(max(circle[0] - dx, 0))
+        multiplier[y, :x1] = 0
+        multiplier[y, x2:] = 0
+        if x2 - x1 < linlen:
+            continue # no reliable transversalium correction, just leave what we have
+        if x1 > 0:
+            multiplier[y, x1:x1+halflen] = multiplier[y, x1+halflen]
+        if x2 < multiplier.shape[1] - 1:
+            multiplier[y, x2-halflen:x2] = multiplier[y, x2-halflen-1]
+
+        
+    return multiplier
 
 '''
 img: np array
@@ -392,7 +418,7 @@ def correct_transversalium2(img, circle, borders, options, reqFlag, basefich):
         thresh_spur = np.where(np.abs(c) > np.std(np.log(correction))*2.5)
         spurious_flag = np.abs(c) > np.std(np.log(correction))*2.5
         spurious_flag = np.logical_or(spurious_flag, np.logical_or(np.roll(spurious_flag, -1), np.roll(spurious_flag, 1)))
-        img_filt2 = apply_lin_filter(img, 101, 5, spurious_flag, y1, y2)
+        img_filt2 = apply_lin_filter(img, 101, 5, spurious_flag, y1, y2, circle)
         return np.minimum(img_filt2, 65535).astype('uint16')
     
     ### new test

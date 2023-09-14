@@ -62,7 +62,8 @@ options = {
     'specDir': '',                  # for spectral analyser
     'selected_mode': 'File input mode',
     'continuous_detect_mode': False,#
-    'dispersion':0.05               # for spectral analyser
+    'dispersion':0.05,              # for spectral analyser
+    'ellipse_fit_shift':10          # secret parameter for ellipse fit
 }
 
 

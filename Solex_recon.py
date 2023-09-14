@@ -2,7 +2,7 @@
 """
 @author: Andrew Smith
 contributors: Valerie Desnoux, Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 6 August 2023
+Version 14 September 2023
 
 ------------------------------------------------------------------------
 Reconstruction of an image from the deviations between the minimum of the line and a reference line
@@ -25,6 +25,8 @@ input: tasks: list of tuples (file, option)
 
 def solex_do_work(tasks, flag_command_line = False):
     multi = False
+    if not multi:
+        print("WARNING: multithreading is off")
     with Pool(4) as p:
         results = []
         for i, (file, options) in enumerate(tasks):
@@ -50,7 +52,7 @@ def solex_read(file, options):
     clearlog(basefich0 + '_log.txt', options)
     logme(basefich0 + '_log.txt', options, 'Pixel shift : ' + str(options['shift']))
     options['shift_requested'] = options['shift']
-    options['shift'] = list(dict.fromkeys([10, 0] + options['shift']))  # 10, 0 are "fake", but if they are requested, then don't double count
+    options['shift'] = list(dict.fromkeys([options['ellipse_fit_shift'], 0] + options['shift']))  # options['ellipse_fit_shift'], 0 are "fake", but if they are requested, then don't double count
     rdr = video_reader(file)
     hdr = make_header(rdr)
     ih = rdr.ih
