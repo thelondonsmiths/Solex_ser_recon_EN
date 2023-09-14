@@ -24,7 +24,7 @@ input: tasks: list of tuples (file, option)
 '''
 
 def solex_do_work(tasks, flag_command_line = False):
-    multi = False
+    multi = True
     if not multi:
         print("WARNING: multithreading is off")
     with Pool(4) as p:

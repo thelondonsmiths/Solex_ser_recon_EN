@@ -24,6 +24,7 @@ import ctypes # Modification Jean-Francois: for reading the monitor size
 import cv2
 from scipy.optimize import curve_fit
 import datetime
+import traceback
 
 def clearlog(path, options):
     try:
@@ -344,11 +345,11 @@ def apply_lin_filter(img, linlen, half_width, spurious_flag, y1, y2, circle):
     c = np.zeros(img.shape[0])
     c[y1:y2] = taper
 
-    delta = fix_edge_effect(delta, circle, linlen)
+    delta = fix_edge_effect(delta, circle, linlen+20) # add fudge factor of "+20"
 
 
-    plt.imshow(delta, cmap='bwr')
-    plt.show()
+    #plt.imshow(delta, cmap='bwr')
+    #plt.show()
     
     return img * np.exp(-delta*c.reshape(-1, 1))
 
@@ -357,6 +358,8 @@ def fix_edge_effect(multiplier, circle, linlen):
     y1 = math.ceil(max(circle[1] - circle[2], 0))
     y2 = math.floor(min(circle[1] + circle[2], multiplier.shape[0] - 1))
     halflen = linlen // 2
+    multiplier[:y1, :] = 0
+    multiplier[y2+1:, :] = 0
     for y in range(y1, y2):
         dx = math.floor((circle[2]**2 - (y-circle[1])**2)**0.5)
         x2 = math.floor(min(circle[0] + dx, multiplier.shape[1] - 1))
@@ -369,8 +372,6 @@ def fix_edge_effect(multiplier, circle, linlen):
             multiplier[y, x1:x1+halflen] = multiplier[y, x1+halflen]
         if x2 < multiplier.shape[1] - 1:
             multiplier[y, x2-halflen:x2] = multiplier[y, x2-halflen-1]
-
-        
     return multiplier
 
 '''

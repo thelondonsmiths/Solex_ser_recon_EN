@@ -62,6 +62,8 @@ def interpret_UI_values(options, ui_values, no_file = False):
     options['img_rotate'] = int(ui_values['img_rotate'])
     serfiles=ui_values['-FILE-'].split(';')
     options['output_dir'] = ui_values['output_dir']
+    if options['output_dir'] and not os.path.isdir(options['output_dir']):
+        raise Exception('ERROR opening output folder :'+options['output_dir'])
     if options['selected_mode'] == 'Folder input mode':
         options['input_dir'] = ui_values['input_dir']
     options['continuous_detect_mode'] = ui_values['Continuous detect mode']
@@ -128,7 +130,6 @@ def get_img_data(f, maxsize=(30, 18), first=False):
 
 def change_langs(window, popup_messages, lang_dict, flag_change=True):
     flag_ok = 0
-    checkboxes = set(['Show graphics', 'Save fits files', 'Save clahe.png only', 'Crop square', 'Mirror X', 'Correct transversalium lines', 'Continuous detect mode'])
     popup_ids = set(['no_file_error', 'no_folder_error'])
     for k, v in lang_dict.items():
         if k == '_flag_icon':
@@ -146,7 +147,7 @@ def change_langs(window, popup_messages, lang_dict, flag_change=True):
         else:
             try:
                 if k in window.AllKeysDict:
-                    if k in checkboxes:
+                    if isinstance(window[k], sg.PySimpleGUI.Checkbox):
                         window[k].update(text=v)
                     else:
                         window[k].update(v)
