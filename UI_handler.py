@@ -204,7 +204,7 @@ def inputUI(options):
          orientation='horizontal',
          font=('Helvetica', 12),
          key='img_rotate')],
-    [sg.Checkbox('Correct transversalium lines', default=options['transversalium'], key='Correct transversalium lines', enable_events=True), sg.Checkbox('Stubborn transversalium', default=options['stubborn_transversalium'], key='Stubborn transversalium')],
+    [sg.Checkbox('Correct transversalium lines', default=options['transversalium'], key='Correct transversalium lines', enable_events=True), sg.Checkbox('Stubborn transversalium', default=options['stubborn_transversalium'], key='Stubborn transversalium', visible=options['transversalium'])],
     [sg.Text("Transversalium correction strength (pixels x 100) :", key='Transversalium correction strength (pixels x 100) :', visible=options['transversalium'])],
     [sg.Slider(range=(0.25,7),
          default_value=options['trans_strength']/100,
@@ -300,4 +300,5 @@ def inputUI(options):
                     
         
         window.Element('-trans_strength-').Update(visible = values['Correct transversalium lines'])
-        window.Element('Transversalium correction strength (pixels x 100) :').Update(visible = values['Correct transversalium lines'])    
+        window.Element('Transversalium correction strength (pixels x 100) :').Update(visible = values['Correct transversalium lines'])
+        window.Element('Stubborn transversalium').Update(visible = values['Correct transversalium lines'])
