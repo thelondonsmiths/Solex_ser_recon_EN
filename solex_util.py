@@ -586,3 +586,61 @@ def image_process(frame, cercle, options, header, basefich):
         DiskHDU=fits.PrimaryHDU(cl1,header)
         DiskHDU.writeto(output_path(basefich+ '_clahe.fits', options), overwrite='True')
     return (cc, frame_protus)
+
+def removeVignette(frame_circularized, cercle0):
+    y_arr = np.percentile(frame_circularized, 90, axis = 0)
+    y_arr2 = np.percentile(frame_circularized, 90, axis = 1)
+    shrink = 25 # tuning parameter
+    start1 = max(0, int(cercle0[0] - cercle0[2] + shrink))
+    end1 = min(y_arr.shape[0], int(cercle0[0] + cercle0[2] + 1 - shrink))
+
+    start2 = max(0, int(cercle0[1] - cercle0[2] + shrink))
+    end2 = min(y_arr2.shape[0], int(cercle0[1] + cercle0[2] + 1 - shrink))
+
+    y1 = y_arr[start1:end1]
+    y2 = y_arr2[start2:end2]
+
+    x1 = np.arange(y1.shape[0]) + start1 - int(cercle0[0])
+    x2 = np.arange(y2.shape[0]) + start2 - int(cercle0[1])
+    trend1 = savgol_filter(y1, min(801, min(y1.shape[0], y2.shape[0]) // 2 * 2 - 1), 3)
+    trend2 = savgol_filter(y2, min(801, min(y1.shape[0], y2.shape[0]) // 2 * 2 - 1), 3)
+    '''
+    plt.plot(x1, y1)
+    plt.plot(x2, y2)
+    plt.plot(x1, trend1)
+    plt.plot(x2, trend2)
+    plt.show()
+    '''
+    mm = min(np.min(x1), np.min(x2))
+    dest = np.zeros((3, int(max(np.max(x1), np.max(x2)) - mm + 1)))
+    dest.fill(np.NaN)
+    dest[0, :] = np.arange(dest.shape[1]) + mm
+    dest[1, int(x1[0] - mm) : int(x1[-1] - mm + 1)] = trend1
+    dest[2, int(x2[0] - mm) : int(x2[-1] - mm + 1)] = trend2
+
+    ratio_axes = dest[1, :] / dest[2, :]
+    ratio_axes[dest[1, :] == 0] = np.NaN
+    ratio_axes[dest[2, :] == 0] = np.NaN
+
+    '''
+    plt.plot(dest[0, :], ratio_axes)
+    plt.show()
+    '''
+    
+    correction_factor = np.zeros(frame_circularized.shape[0])
+    correction_factor.fill(np.NaN)
+    correction_factor[dest[0, :].astype(int) + int(cercle0[1])] = ratio_axes
+    # forward and backward fill
+    for i in range(1, len(correction_factor)):
+        if np.isnan(correction_factor[i]):
+            correction_factor[i] = correction_factor[i-1]
+    for i in range(len(correction_factor) - 2, -1, -1):
+        if np.isnan(correction_factor[i]):
+            correction_factor[i] = correction_factor[i+1]
+    correction_factor = gaussian_filter1d(correction_factor, 150)
+    '''
+    plt.plot(correction_factor)
+    plt.plot(y_arr2 / np.max(y_arr2))
+    plt.show()
+    '''
+    return frame_circularized * correction_factor.reshape((-1, 1))

@@ -16,7 +16,7 @@ from ellipse_to_circle import ellipse_to_circle, correct_image
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
 import PySimpleGUI as sg # for progress bar
-
+from scipy.ndimage import gaussian_filter1d
 
 '''
 process files: call solex_read and solex_proc to process a list of files with specified options
@@ -58,12 +58,14 @@ def solex_read(file, options):
     ih = rdr.ih
     iw = rdr.iw
 
-    _, fit, backup_y1, backup_y2 = compute_mean_return_fit(video_reader(file), options, hdr, iw, ih, basefich0)
+    mean_img, fit, backup_y1, backup_y2 = compute_mean_return_fit(video_reader(file), options, hdr, iw, ih, basefich0)
 
     disk_list, ih, iw, FrameCount = read_video_improved(video_reader(file), fit, options)
     
     hdr['NAXIS1'] = iw  # note: slightly dodgy, new width for subsequent fits file
 
+
+    
     # sauve fichier disque reconstruit
 
     if options['flag_display']:
@@ -97,6 +99,7 @@ def solex_process(options, disk_list, backup_bounds, hdr):
     logme(basefich0 + '_log.txt', options, 'Mirror X : ' + str(options['flip_x']))
     logme(basefich0 + '_log.txt', options, 'Post-rotation : ' + str(options['img_rotate']) + ' degrees')
     logme(basefich0 + '_log.txt', options, f'Protus adjustment : {options["delta_radius"]}')
+    logme(basefich0 + '_log.txt', options, f'de-vignette : {options["de-vignette"]}')
     borders = [0,0,0,0]
     cercle0 = (-1, -1, -1)
     for i in range(len(disk_list)):
@@ -118,7 +121,11 @@ def solex_process(options, disk_list, backup_bounds, hdr):
             phi = math.radians(options['slant_fix']) if not options['slant_fix'] is None else 0.0
             if flag_requested:
                 frame_circularized = correct_image(disk_list[i] / 65536, phi, ratio, np.array([-1.0, -1.0]), -1.0, options, print_log=i == 0)[0]  # Note that we assume 16-bit
-
+                if options['de-vignette']:
+                    if cercle0 == (-1, -1, -1):
+                        print("WARNING: cannot de-vignette without ellipse fit")
+                    else:
+                        frame_circularized = removeVignette(frame_circularized, cercle0)
         if not flag_requested:
             continue # skip processing if shift is not desired
         

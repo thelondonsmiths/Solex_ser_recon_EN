@@ -67,7 +67,7 @@ def interpret_UI_values(options, ui_values, no_file = False):
     if options['selected_mode'] == 'Folder input mode':
         options['input_dir'] = ui_values['input_dir']
     options['continuous_detect_mode'] = ui_values['Continuous detect mode']
-
+    options['de-vignette'] = ui_values['de-vignette']
     if not no_file:
         if options['selected_mode'] == 'File input mode':
             try:
@@ -204,7 +204,7 @@ def inputUI(options):
          orientation='horizontal',
          font=('Helvetica', 12),
          key='img_rotate')],
-    [sg.Checkbox('Correct transversalium lines', default=options['transversalium'], key='Correct transversalium lines', enable_events=True), sg.Checkbox('Stubborn transversalium', default=options['stubborn_transversalium'], key='Stubborn transversalium', visible=options['transversalium'])],
+    [sg.Checkbox('Correct transversalium lines', default=options['transversalium'], key='Correct transversalium lines', enable_events=True), sg.Checkbox('Stubborn transversalium', default=options['stubborn_transversalium'], key='Stubborn transversalium', visible=options['transversalium']), sg.Checkbox('de-vignette', default=options['de-vignette'], key='de-vignette')],
     [sg.Text("Transversalium correction strength (pixels x 100) :", key='Transversalium correction strength (pixels x 100) :', visible=options['transversalium'])],
     [sg.Slider(range=(0.25,7),
          default_value=options['trans_strength']/100,

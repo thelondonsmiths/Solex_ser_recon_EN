@@ -27,6 +27,7 @@
 	"Protus adjustment": "Protus adjustment",
 	"Pixel offset live": "Pixel offset live",
 	"Stubborn transversalium": "Stubborn transversalium",
+	"de-vignette": "de-vignette",
 	"no_file_error": "Error: file not entered! Please enter file(s)",
 	"no_folder_error": "Error: folder not entered! Please enter folder",
 	"Open output folder": "Open output folder",

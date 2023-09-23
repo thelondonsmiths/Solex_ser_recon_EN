@@ -166,7 +166,7 @@ def analyseSpectrum(options, file, lang_dict):
                 spectrum2 = mean[mean.shape[0]//2, :] 
                 backup_bounds = (int(y1), int(y2))
                 if options['ratio_fixe'] is None and options['slant_fix'] is None:
-                    options['shift'] = [10]
+                    options['shift'] = [options['ellipse_fit_shift']]
                     all_rdr.reset()
                     disklist,_,_,_ = read_video_improved(all_rdr, fit, options)
                     if options['flip_x']:
@@ -272,7 +272,7 @@ def analyseSpectrum(options, file, lang_dict):
                 if anchor_refresh:
                     if values['-anchor-']:
                         anchor_x = fit[fit.shape[0]//2, 3]
-                        scale_guesses = np.linspace(0.03, 0.12, spectrum2.shape[0]*2)
+                        scale_guesses = np.linspace(0.02, 0.12, spectrum2.shape[0]*3)
                         #scale_guesses = [0.057]
                         i = anchors.index(values['-anchor-'])
                         anchor_guess = anchor_cands[i]
