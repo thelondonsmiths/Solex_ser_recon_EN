@@ -602,8 +602,15 @@ def removeVignette(frame_circularized, cercle0):
 
     x1 = np.arange(y1.shape[0]) + start1 - int(cercle0[0])
     x2 = np.arange(y2.shape[0]) + start2 - int(cercle0[1])
-    trend1 = savgol_filter(y1, min(801, min(y1.shape[0], y2.shape[0]) // 2 * 2 - 1), 3)
-    trend2 = savgol_filter(y2, min(801, min(y1.shape[0], y2.shape[0]) // 2 * 2 - 1), 3)
+
+    if y1.shape[0] < 20 or y2.shape[0] < 20:
+        print("no de-vignette, due to not enough data")
+        return frame_circularized
+    print("vignette shapes:", y1.shape, y2.shape)
+    scale_pix = int(min(y1.shape[0]//2.75, y2.shape[0]//2.75)) // 2 * 2 - 1
+    trend1 = savgol_filter(y1, min(801, scale_pix), 3)
+    trend2 = savgol_filter(y2, min(801, scale_pix), 3)
+
     '''
     plt.plot(x1, y1)
     plt.plot(x2, y2)
@@ -611,6 +618,7 @@ def removeVignette(frame_circularized, cercle0):
     plt.plot(x2, trend2)
     plt.show()
     '''
+    
     mm = min(np.min(x1), np.min(x2))
     dest = np.zeros((3, int(max(np.max(x1), np.max(x2)) - mm + 1)))
     dest.fill(np.NaN)
@@ -637,7 +645,7 @@ def removeVignette(frame_circularized, cercle0):
     for i in range(len(correction_factor) - 2, -1, -1):
         if np.isnan(correction_factor[i]):
             correction_factor[i] = correction_factor[i+1]
-    correction_factor = gaussian_filter1d(correction_factor, 150)
+    correction_factor = gaussian_filter1d(correction_factor, max(2, min(150, scale_pix//4)))
     '''
     plt.plot(correction_factor)
     plt.plot(y_arr2 / np.max(y_arr2))

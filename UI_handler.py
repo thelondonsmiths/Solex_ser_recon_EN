@@ -51,6 +51,10 @@ def interpret_UI_values(options, ui_values, no_file = False):
         options['disk_display'] = True
     except ValueError:
         raise Exception('invalid protus_radius_adjustment')
+    try : 
+        options['ellipse_fit_shift'] = int(ui_values['ellipse_fit_shift']) if ui_values['ellipse_fit_shift'] else 10
+    except ValueError : 
+        raise Exception('invalid ellipse_fit_shift!')
     options['save_fit'] = ui_values['Save fits files']
     options['clahe_only'] = ui_values['Save clahe.png only']
     options['protus_only'] = ui_values['Save protus.png only']
@@ -142,6 +146,8 @@ def change_langs(window, popup_messages, lang_dict, flag_change=True):
             window['_pixel_offset'].TooltipObject.text = v
         elif k == 'protus_adjustment_tooltip':
             window['_protus_adjustment'].TooltipObject.text = v
+        elif k == 'ellipse_fit_shift_tooltip':
+            window['ellipse_fit_shift'].TooltipObject.text = v
         elif k == '_lang_name':
             pass
         else:
@@ -219,6 +225,7 @@ def inputUI(options):
     [sg.Text('Pixel offset',size=(32,1), key='Pixel offset'),sg.Input(default_text='0',size=(8,1),tooltip= "a,b,c will produce images at a, b and c\n x:y:w will produce images starting at x, finishing at y, every w pixels",key='_pixel_offset',enable_events=True),
      sg.Push(), sg.Button("Pixel offset live", key = "Pixel offset live", enable_events=True)],
     [sg.Text('Protus adjustment', size=(32,1), key='Protus adjustment'), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='_protus_adjustment')],
+    [sg.Text('Ellipse fit shift [advanced]', size=(32,1), key='Ellipse fit shift [advanced]'), sg.Input(default_text=str(options['ellipse_fit_shift']), size=(8,1), tooltip = 'default: 10, use higher value (e.g. 20) for very high dispersion', key='ellipse_fit_shift')],
     [sg.Button('OK'), sg.Cancel(), sg.Push(), sg.Button("Open output folder", key='Open output folder', enable_events=True)]
     ] 
 

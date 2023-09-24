@@ -25,7 +25,7 @@
 "Tilt angle (blank for auto)": "Angle d'inclinaison (vide pour auto)",
 "Pixel offset" : "Décalage de pixel",
 "Protus adjustment": "Ajustement Protus",
-"Pixel offset live": "Pixel offset live",
+"Pixel offset live": "Spectral analyser",
 "Stubborn transversalium": "Transversalium tenace",
 "no_file_error": "Erreur : fichier non saisi ! Veuillez entrer le(s) fichier(s)",
 "no_folder_error": "Erreur : dossier non saisi ! Veuillez entrer le dossier",

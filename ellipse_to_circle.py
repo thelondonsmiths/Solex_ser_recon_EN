@@ -161,11 +161,17 @@ def get_flood_image(image):
     print(image.shape[1])
     blur_width = int(image.shape[0] * 0.01)
     img_blurred = cv2.blur(image, ksize=(blur_width, blur_width))
-    n, bins = np.histogram(img_blurred.flatten(), bins=20)
+
+    very_bright = np.percentile(img_blurred, 99)
+    print(f"very bright: {very_bright}")
+    data = img_blurred.flatten()
+    data = data[data < very_bright]
+    n, bins = np.histogram(data, bins=20)
     '''
     plt.hist(img_blurred.flatten(), bins=20)
     plt.show()
     '''
+    
     # fit the histogram to a cubic graph
     coeff = polynomial.polynomial.Polynomial.fit(bins[1:], n, 3).convert().coef
     print('cubic fit coeffs. :', coeff)

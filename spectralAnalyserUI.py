@@ -104,7 +104,7 @@ def analyseSpectrum(options, file, lang_dict):
         [sg.Canvas(size=(1000, 800), key='canvas')],
     ]
 
-    window = sg.Window('Pixel Offset Live', layout_file_input+layout, finalize=True, resizable=True, keep_on_top=False)
+    window = sg.Window('Spectral Analyser', layout_file_input+layout, finalize=True, resizable=True, keep_on_top=False)
     # needed to access the canvas element prior to reading the window
     window['-shift-'].bind("<Return>", "_Enter")
     window['-ashift-'].bind("<Return>", "_Enter")
@@ -351,6 +351,11 @@ def analyseSpectrum(options, file, lang_dict):
                 ratio = options['ratio_fixe'] if not options['ratio_fixe'] is None else 1.0
                 phi = math.radians(options['slant_fix']) if not options['slant_fix'] is None else 0.0
                 frame_circularized = correct_image(downscale(disklist[0], downscale_f) / 65536, phi, ratio, np.array([-1.0, -1.0]), -1.0, options, print_log=False)[0]  # Note that we assume 16-bit
+                if options['de-vignette']:
+                    if cercle0 == (-1, -1, -1):
+                        print("WARNING: cannot de-vignette without ellipse fit")
+                    else:
+                        frame_circularized = removeVignette(frame_circularized, tuple_downscale(cercle0, downscale_f) if not cercle0 == (-1, -1, -1) else (-1, -1, -1))
                 clahe, protus = single_image_process(frame_circularized, hdr, options, tuple_downscale(cercle0, downscale_f) if not cercle0 == (-1, -1, -1) else (-1, -1, -1), tuple_downscale(borders, downscale_f), '', tuple_downscale(backup_bounds, downscale_f))
           
                 ax3.imshow(clahe, cmap='gray', aspect='equal')
@@ -371,6 +376,11 @@ def analyseSpectrum(options, file, lang_dict):
                 ratio = options['ratio_fixe'] if not options['ratio_fixe'] is None else 1.0
                 phi = math.radians(options['slant_fix']) if not options['slant_fix'] is None else 0.0
                 frame_circularized = correct_image(disk_memo / 65536, phi, ratio, np.array([-1.0, -1.0]), -1.0, options, print_log=False)[0]  # Note that we assume 16-bit
+                if options['de-vignette']:
+                    if cercle0 == (-1, -1, -1):
+                        print("WARNING: cannot de-vignette without ellipse fit")
+                    else:
+                        frame_circularized = removeVignette(frame_circularized, cercle0)
                 clahe, protus = single_image_process(frame_circularized, hdr, options, cercle0, borders, '', backup_bounds)
                 compression = 0
                 basename = os.path.splitext(file)[0] + '_shift='+str(options['shift'][0])

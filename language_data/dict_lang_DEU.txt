@@ -25,7 +25,7 @@
 "Tilt angle (blank for auto)": "Neigungswinkel (leer für auto)",
 "Pixel offset" : "Pixel-Offset",
 "Protus adjustment": "Protus-Anpassung",
-"Pixel offset live": "Pixel offset live",
+"Pixel offset live": "Spectral analyser",
 "Stubborn transversalium": "Schwierig transversalium",
 "no_file_error": "Fehler: Keine Datei eingegeben! Bitte Datei(en) eingeben",
 "no_folder_error": "Fehler: Ordner nicht eingegeben! Bitte Ordner eingeben",
