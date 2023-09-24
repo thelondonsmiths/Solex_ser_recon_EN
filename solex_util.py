@@ -588,9 +588,9 @@ def image_process(frame, cercle, options, header, basefich):
     return (cc, frame_protus)
 
 def removeVignette(frame_circularized, cercle0):
-    y_arr = np.percentile(frame_circularized, 90, axis = 0)
-    y_arr2 = np.percentile(frame_circularized, 90, axis = 1)
-    shrink = 25 # tuning parameter
+    y_arr = np.percentile(frame_circularized, 85, axis = 0)
+    y_arr2 = np.percentile(frame_circularized, 85, axis = 1)
+    shrink = 65 # tuning parameter
     start1 = max(0, int(cercle0[0] - cercle0[2] + shrink))
     end1 = min(y_arr.shape[0], int(cercle0[0] + cercle0[2] + 1 - shrink))
 
