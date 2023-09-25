@@ -56,6 +56,7 @@ If the "Save fits files" box is checked, the following files will be stored:
 
 If the "Save clahe.png only" box is checked, then only the png image with Contrast Limited Adaptive Histogram Equalization will be saved.
 This is typically the most useful output file for stacking purposes.
+"Save protus.png only" works the same way (protus images are typically better without any transversalium correction).
 
 If the "Crop width square" box is checked, the width is cropped to be the same as the height, with the Sun centred.
 This feature is particularly helpful for stacking frames (which typically require them to all be the same dimensions) and creating animations and mosaics.
@@ -73,7 +74,8 @@ The choice of "Mirror X" is deliberately not remembered.
 The "Rotate png images" silder applies only to the final png output images. Rotation is counterclockwise in degrees (0, 90, 180, 270).
 
 If "Correct transversalium lines" is not checked, then the program makes no attempt to fix line defects. The default should be for this box to be checked.
-The function for fixing line defects works well if they are fairly narrow. Wide, dark lines may require a more manual process.
+The function for fixing line defects works well if they are fairly narrow. 
+For Wide, dark lines try using the "Stubborn transversalium" feature.
 For protuberance images, the ones with the black disc, turning off the transversalium is recommended. This because the transversalium filter affects the dark sky background but is irrelevant if the surface is masked.
 
 The slider for "Transversalium correction strength" can be adjusted from low (weak) to high (strong).
@@ -81,7 +83,7 @@ The number corresponds to the width of a window in hundreds of pixels for the cr
 The default setting of 3 seems to work well for most spectral lines. Very wide defects may be improved by using a higher value.
 It is recommended to use the lowest setting possible that removes visible lines defects.
 
-"Stubborn transversalium" can be used in the lines are unusually strong. The function can introduce artefacts so should be used sparingly.
+"Stubborn transversalium" can be used if the line defects are unusually strong. The function can introduce artefacts so should be used sparingly.
 
 "De-vignette" will attempt to equalise the illumination along the slit. This function is unlikely to introduce artefacts but it is possible it will attempt to overly lighten the very edges of the sun.
 
