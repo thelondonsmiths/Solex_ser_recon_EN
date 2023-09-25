@@ -2,7 +2,7 @@
 @author: Andrew Smith
 based on code by Valerie Desnoux
 contributors: Jean-Francois Pittet, Jean-Baptiste Butet, Pascal Berteau, Matt Considine
-Version 6 August 2023
+Version 24 September 2023
 """
 
 import math

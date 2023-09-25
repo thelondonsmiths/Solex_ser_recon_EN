@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @author: Andrew Smith
-Version 6 August 2023
+Version 24 September 2023
 
 ------------------------------------------------------------------------
 Spectral Analyser
