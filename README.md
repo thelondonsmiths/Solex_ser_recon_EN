@@ -75,17 +75,17 @@ The "Rotate png images" silder applies only to the final png output images. Rota
 
 If "Correct transversalium lines" is not checked, then the program makes no attempt to fix line defects. The default should be for this box to be checked.
 The function for fixing line defects works well if they are fairly narrow. 
-For Wide, dark lines try using the "Stubborn transversalium" feature.
+If there are wide dark lines, try using the "Stubborn transversalium" feature.
 For protuberance images, the ones with the black disc, turning off the transversalium is recommended. This because the transversalium filter affects the dark sky background but is irrelevant if the surface is masked.
 
 The slider for "Transversalium correction strength" can be adjusted from low (weak) to high (strong).
 The number corresponds to the width of a window in hundreds of pixels for the creation of a "flat".
 The default setting of 3 seems to work well for most spectral lines. Very wide defects may be improved by using a higher value.
-It is recommended to use the lowest setting possible that removes visible lines defects.
+It is recommended to use the lowest setting possible that removes the visible line defects.
 
 "Stubborn transversalium" can be used if the line defects are unusually strong. The function can introduce artefacts so should be used sparingly.
 
-"De-vignette" will attempt to equalise the illumination along the slit. This function is unlikely to introduce artefacts but it is possible it will attempt to overly lighten the very edges of the sun.
+"De-vignette" will attempt to equalise the illumination along the slit. This function is unlikely to introduce artefacts but it is possible it will attempt to over-lighten the very edges of the sun.
 
 Y/X ratio: enter a specific Y/X ratio, if this is known. Leave blank for auto-correction. Enter 1 if no correction is desired.
 
@@ -97,7 +97,7 @@ The spectral line will typically be curved and the apex of the parabolic curve w
 - For no shift, leave the "Pixel offset" box at the default of '0'
 - Specify the output of a particular shift by entering a single number or particular values separated by commas: 'a,b,c,d,e' etc
 - For a range x to y with an interval of w, use colons: 'x:y:w'
-- If 'w' not specified, the default is 1 so  'x:y' will produce the range x, x+1, x+2, ... y-2, y-1, y
+- If 'w' is not specified, the default is 1 so  'x:y' will produce the range x, x+1, x+2, ... y-2, y-1, y
 - x, y, a, b, c can be positive or negative integers; the number w can only be a positive integer
 - Batch pixel shift processing of a batch of files is allowed
 
@@ -105,7 +105,7 @@ Protus adjustment: make the black circle larger or smaller in radius by inputtin
 If you want to turn off the black disk altogether, then enter a negative number greater than the radius (e.g. -9999). The protus adjustment setting is remembered.
 
 Ellipse fit shift (advanced): the default setting of 10 pixels increases the contrast between the solar disk and the sky background. This greatly improves the edge detection function, which is used for the ellipse fit.
-For very high dispersion (e.g. with a stronger diffraction grating) this may have to be increased (e.g. to 20) since the same wavelength shift will corresponds to more pixels.
+For very high dispersion (e.g. with a diffraction grating of 3600 l/mm) this may have to be increased (e.g. to 20) since the same wavelength shift will corresponds to more pixels.
 
 Geometry correction may fail under certain circumstances (one example being a partial eclipse). In this case, enter the Y/X ratio and Tilt angle manually (try 1, 0 initially).
 
@@ -124,9 +124,10 @@ It should be possible to reduce this to around 0.5 degrees without too much diff
 
 This tool is useful to find specific spectral lines vs notable anchor lines.
 After choosing the video file, do "Start analysis", followed by choosing the **Anchor line**.
-The dispersion can be entered manually (type number then enter) or the **Auto Dispersion** function can very accurately calculate it if there are enough well-defined spectral lines visible. 
+The dispersion can be entered manually (type number then enter) or the **Auto Dispersion** function can very accurately calculate the dispersion if there are enough well-defined spectral lines visible. 
 The choice of spectral line to be found can be entered with "GOTO line", "GOTO wavelength" or by "Pixel shift" from the anchor line. 
 The resulting displayed CLAHE and Protus images can be saved to the output folder specified in the main menu. 
-The image processing parameters (rotate, transversalium, de-vignette, etc) are specified by selections on the main menu. 
+The image processing parameters (rotate, crop square, mirror x, transversalium, de-vignette, etc) are specified by selections on the main menu. 
 The value of the dispersion is saved so a wide calibration spectrum can be run first; the resulting dispersion can afterwards be used for a narrow spectral range. 
 One use case is to find the Helium emission line; another is to step accurately through the Hydrogen-alpha line.
+If using the Python code, the "anchor candidates" and "line targets" can be changed by editing the files in the _line_data_ folder.
