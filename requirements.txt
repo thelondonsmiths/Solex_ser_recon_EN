@@ -3,7 +3,7 @@ NumPy
 SciPy
 Astropy
 Matplotlib
-PySimpleGUI
+PySimpleGUI 4.60.5
 OpenCV-python
 scikit-image
 lsq-ellipse
