@@ -26,7 +26,7 @@ import UI_handler
 import CLI_handler
 from astropy.io import fits
 import cProfile
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 import traceback
 import cv2
 import json
@@ -80,7 +80,7 @@ def read_ini():
         mydir_ini=os.path.join(os.path.dirname(sys.argv[0]),'SHG_config.txt')
         with open(mydir_ini, 'r', encoding="utf-8") as fp:
             global options
-            options.update(json.load(fp)) # if config has missing entries keep default   
+            options.update(json.load(fp)) # if config has missing entries keep default
     except Exception:
         print('note: error reading config file - using default parameters')
 
@@ -120,7 +120,7 @@ def precheck_files(serfiles, options):
             traceback.print_exc()
             print('ERROR opening file : ', serfile)
             continue
-        
+
         if not good_tasks:
             # save parameters to config file if this is the first good task
             if options['selected_mode'] == 'File input mode':
@@ -133,7 +133,7 @@ def precheck_files(serfiles, options):
 
 def handle_files(files, options, flag_command_line = False):
     good_tasks = precheck_files(files, options)
-    try : 
+    try :
        Solex_recon.solex_do_work(good_tasks, flag_command_line)
     except:
         print('ERROR ENCOUNTERED')
@@ -157,19 +157,19 @@ def handle_folder(options):
         print(f'number of files todo: {len(files_todo)}')
         handle_files(files_todo, options)
         return
-    
+
     files_processed = set()
     layout = [
         [sg.Text('Auto processing of SHG video files', font='Any 12', key='Auto processing of SHG video files'), sg.Push(), sg.Button('Stop')],
         [sg.Text(f'Number of files processed: {len(files_processed)}', key='auto_info'), sg.Push(), sg.Text('Looking for files ...', key='status_info')],
         [sg.Image(UI_handler.resource_path(os.path.join('language_data', 'Black.png')), size=(600, 600), key='_prev_img')],
-        [sg.Text('Last: none', key='last')],        
+        [sg.Text('Last: none', key='last')],
     ]
     window = sg.Window('Continuous processing mode', layout, keep_on_top=True)
     window.finalize()
     stop=False
-    
-    
+
+
     window.perform_long_operation(lambda : time.sleep(0.01), '-END SLEEP-') # dummy function to get started
     prev=None
     while True:
@@ -202,12 +202,12 @@ def handle_folder(options):
                 window['status_info'].update('Looking for files ...')
                 window.perform_long_operation(lambda : time.sleep(1), '-END KEY-')
             files_processed.update(files_todo)
-            
+
         if event == 'Stop':
             stop=True
             window['status_info'].update(f'WILL STOP AFTER PROCESSING CURRENT BATCH OF {len(files_todo)} FILE(S)')
-        
-        
+
+
 
 
 """
@@ -217,11 +217,11 @@ le programme commence ici !
 """
 if __name__ == '__main__':
     freeze_support() # enables multiprocessing for py-2-exe
-    
+
     # check for CLI input
-    if len(sys.argv)>1: 
+    if len(sys.argv)>1:
         serfiles.extend(CLI_handler.handle_CLI(options))
-        
+
     if 0: #test code for performance test
         read_ini()
         serfiles.extend(UI_handler.inputUI(options))
@@ -235,7 +235,7 @@ if __name__ == '__main__':
                 newfiles = UI_handler.inputUI(options) # get files
                 if newfiles is None:
                     break # end loop
-                serfiles.extend(newfiles) 
+                serfiles.extend(newfiles)
                 if options['selected_mode'] == 'File input mode':
                     handle_files(serfiles, options) # handle files
                 elif options['selected_mode'] == 'Folder input mode':
@@ -243,8 +243,8 @@ if __name__ == '__main__':
                 else:
                     raise Exception('invalid selected_mode: ' + options['selected_mode'])
                 serfiles.clear() # clear files that have been processed
-            write_ini()       
+            write_ini()
         else:
             handle_files(serfiles, options, flag_command_line = True) # use inputs from CLI
-            
+
 

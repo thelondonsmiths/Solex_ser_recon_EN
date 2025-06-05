@@ -15,7 +15,7 @@ from video_reader import *
 from ellipse_to_circle import ellipse_to_circle, correct_image
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
-import PySimpleGUI as sg # for progress bar
+import FreeSimpleGUI as sg # for progress bar
 from scipy.ndimage import gaussian_filter1d
 
 '''
@@ -31,7 +31,7 @@ def solex_do_work(tasks, flag_command_line = False):
         results = []
         for i, (file, options) in enumerate(tasks):
             print('file %s is processing'%file)
-            if len(tasks) > 1 and not flag_command_line:  
+            if len(tasks) > 1 and not flag_command_line:
                 sg.one_line_progress_meter('Progress Bar', i, len(tasks), '','Reading file...')
             disk_list, backup_bounds, hdr = solex_read(file, options)
             if multi:
@@ -40,9 +40,9 @@ def solex_do_work(tasks, flag_command_line = False):
             else:
                 solex_process(options, disk_list, backup_bounds, hdr)
         [result.get() for result in results]
-        if len(tasks) > 1 and not flag_command_line:  
+        if len(tasks) > 1 and not flag_command_line:
             sg.one_line_progress_meter('Progress Bar', len(tasks), len(tasks), '','Done.')
-        
+
 '''
 read a solex file and return a list of numpy arrays representing the raw result
 '''
@@ -61,11 +61,11 @@ def solex_read(file, options):
     mean_img, fit, backup_y1, backup_y2 = compute_mean_return_fit(video_reader(file), options, hdr, iw, ih, basefich0)
 
     disk_list, ih, iw, FrameCount = read_video_improved(video_reader(file), fit, options)
-    
+
     hdr['NAXIS1'] = iw  # note: slightly dodgy, new width for subsequent fits file
 
 
-    
+
     # sauve fichier disque reconstruit
 
     if options['flag_display']:
@@ -76,12 +76,12 @@ def solex_read(file, options):
             disk_list[i] = np.flip(disk_list[i], axis = 1)
         basefich = basefich0 + '_shift=' + str(options['shift'][i])
         flag_requested = options['shift'][i] in options['shift_requested']
-        
+
         if options['save_fit'] and flag_requested:
             DiskHDU = fits.PrimaryHDU(disk_list[i], header=hdr)
             DiskHDU.writeto(output_path(basefich + '_raw.fits', options), overwrite='True')
     return disk_list, (backup_y1, backup_y2), hdr
-    
+
 '''
 process the raw disks: circularise, detransversalium, crop, and adjust contrast
 
@@ -128,7 +128,7 @@ def solex_process(options, disk_list, backup_bounds, hdr):
                         frame_circularized = removeVignette(frame_circularized, cercle0)
         if not flag_requested:
             continue # skip processing if shift is not desired
-        
+
         single_image_process(frame_circularized, hdr, options, cercle0, borders, basefich, backup_bounds)
         write_complete(basefich0 + '_log.txt', options)
 
@@ -161,14 +161,14 @@ def single_image_process(frame_circularized, hdr, options, cercle0, borders, bas
         new_img = np.full((h, nw), detransversaliumed[0, 0], dtype=detransversaliumed.dtype)
 
         new_img[:, :min(cx + nw2, detransversaliumed.shape[1]) - max(0, cx - nw2)] = detransversaliumed[:, max(0, cx - nw2) : min(cx + nw2, detransversaliumed.shape[1])]
-        
+
         if tx > 0:
             new_img = np.roll(new_img, tx, axis = 1)
             new_img[:, :tx] = detransversaliumed[0, 0]
 
         if not cercle == (-1, -1, -1):
             cercle = (nw2, cercle[1], cercle[2])
-        detransversaliumed = new_img    
-   
+        detransversaliumed = new_img
+
 
     return image_process(detransversaliumed, cercle, options, hdr, basefich)
