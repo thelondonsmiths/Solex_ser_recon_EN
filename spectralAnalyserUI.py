@@ -9,7 +9,7 @@ Spectral Analyser
 
 """
 import math
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 import sys
 import json
 import os
@@ -41,7 +41,7 @@ def get_spectrum(sample):
 def select(data, lo, hi):
     #indx = np.where(lo < data[:, 0] < hi)
     #print(indx)
-    
+
     #return data[min(indx): max(indx)+1, :]
     indx = np.logical_and(lo <= data[:, 0], data[:, 0] < hi)
     v = np.where(indx==1)[0]
@@ -60,10 +60,10 @@ def load_lines(path):
 def analyseSpectrum(options, file, lang_dict):
     npzfile = np.load(resource_path('language_data/alps.npz'))
     line_data = np.vstack((np.arange(npzfile['first'], npzfile['last'], npzfile['step']), npzfile['y']/255)).T
-    
+
     anchor_cands, anchor_cand_names, anchors = load_lines('line_data/anchor_candidates.txt')
     target_nums, target_names, targets = load_lines('line_data/line_targets.txt')
-    
+
     options_orig = options
     options = options.copy() # deep copy
     options['clahe_only'] = True
@@ -77,7 +77,7 @@ def analyseSpectrum(options, file, lang_dict):
     ((ax1, ax3), (ax2, ax4)) = fig.subplots(2, 2)
     ax2_twin = ax2.twinx()
     fig_sz = fig.get_size_inches()
-    fig.set_size_inches(fig_sz[0]*1.8, fig_sz[1]*2) 
+    fig.set_size_inches(fig_sz[0]*1.8, fig_sz[1]*2)
     ax1.set_xlabel("X axis")
     ax1.set_ylabel("Y axis")
     ax1.grid()
@@ -95,10 +95,10 @@ def analyseSpectrum(options, file, lang_dict):
 
     in1 = sg.InputText('', key='-ashift-', size=(10, 1))
     in2 = sg.InputText(options['dispersion'], key='-dispersion-', size=(10, 1))
-    
-    
+
+
     layout = [
-          
+
         [sg.T('Anchor line'), c1, sg.T('GOTO line'), c2, sg.T("GOTO wavelength (Å)"), in1, sg.T('Pixel shift', key='shift:'), s1, sg.T("Wavelength shift: None", key="Ångstrom Shift:")],
         [sg.T('Dispersion (Å/pixel)'), in2, sg.B('Auto dispersion')],
         [sg.Canvas(size=(1000, 800), key='canvas')],
@@ -116,7 +116,7 @@ def analyseSpectrum(options, file, lang_dict):
 
     original_ratio = options['ratio_fixe']
     original_slant = options['slant_fix']
-    
+
     mean, fit, y1, y2 = None, None, None, None
     all_rdr = None
     borders = [0,0,0,0]
@@ -137,7 +137,7 @@ def analyseSpectrum(options, file, lang_dict):
             if values is None:
                 return None
             return values['-shift-']
-     
+
         display_refresh = False
         if event == 'Choose file' or event == "Start analysis":
             options['ratio_fixe'] = original_ratio
@@ -153,17 +153,17 @@ def analyseSpectrum(options, file, lang_dict):
                 window['Choose file'].InitialFolder = options['specDir']
                 options_orig['specDir'] = os.path.dirname(file) # this is to feed back into SHG config
                 all_rdr = all_video_reader(file)
-                
+
                 ih = all_rdr.ih
                 iw = all_rdr.iw
                 hdr = make_header(all_rdr)
                 mean, fit, y1, y2 = compute_mean_return_fit(all_rdr, options, hdr, iw, ih, '')
                 target_height = max(1000, ih / 3)
                 downscale_f = target_height / ih
-                
+
                 brightest = np.argmax(all_rdr.means)
                 spectrum = get_spectrum(all_rdr.frames[max(0, brightest - 5) : min(all_rdr.FrameCount - 1, brightest + 5), :, :])
-                spectrum2 = mean[mean.shape[0]//2, :] 
+                spectrum2 = mean[mean.shape[0]//2, :]
                 backup_bounds = (int(y1), int(y2))
                 if options['ratio_fixe'] is None and options['slant_fix'] is None:
                     options['shift'] = [options['ellipse_fit_shift']]
@@ -173,8 +173,8 @@ def analyseSpectrum(options, file, lang_dict):
                         disklist[0] = np.flip(disklist[0], axis = 1)
                     frame_circularized, cercle0, options['ratio_fixe'], phi, borders = ellipse_to_circle(disklist[0], options, '')
                     options['slant_fix'] = math.degrees(phi)
-                options['shift'] = [0] # back to zero now    
-            
+                options['shift'] = [0] # back to zero now
+
 
             except Exception as inst:
                 traceback.print_exc()
@@ -194,7 +194,7 @@ def analyseSpectrum(options, file, lang_dict):
                     print(positions, positions >= 0)
                     is_within = np.logical_and(0 <= positions, positions <= spectrum2.shape[0])
                     print(is_within)
-                    if is_within.any():       
+                    if is_within.any():
                         options['shift'] = [shift]
                         window['-shift-'].update(shift)
                         display_refresh = True
@@ -204,8 +204,8 @@ def analyseSpectrum(options, file, lang_dict):
                         sg.Popup("That line does not appear to be in image!", keep_on_top=True)
                 except:
                     sg.Popup("invalid wavelength", keep_on_top=True)
-                
-    
+
+
         if event == '-shift-' or event == '-shift-_Enter':
             try:
                 x = int(values['-shift-'])
@@ -233,7 +233,7 @@ def analyseSpectrum(options, file, lang_dict):
                     display_refresh = True
                 else:
                     sg.Popup("Choose an anchor first!", keep_on_top=True)
-                
+
             except:
                 sg.Popup('Invalid dispersion', keep_on_top=True)
 
@@ -247,7 +247,7 @@ def analyseSpectrum(options, file, lang_dict):
                 shift = int((target_nums[i] - anchor_guess)/dispersion)
                 positions = shift + fit[:, 3]
                 is_within = np.logical_and(0 <= positions, positions <= spectrum2.shape[0])
-                if is_within.any():       
+                if is_within.any():
                     options['shift'] = [shift]
                     window['-shift-'].update(shift)
                     display_refresh = True
@@ -255,14 +255,14 @@ def analyseSpectrum(options, file, lang_dict):
                         sg.Popup("Warning: Line is only partially within frame")
                 else:
                     sg.Popup("That line does not appear to be in image!", keep_on_top=True)
-                
-            
-        if display_refresh:   
+
+
+        if display_refresh:
             ax1.cla()
             ax2.cla()
             ax2_twin.cla()
             ax2.grid()
-            ax3.cla()   
+            ax3.cla()
             ax3.axis('off')
             ax4.axis('off')
 
@@ -300,7 +300,7 @@ def analyseSpectrum(options, file, lang_dict):
                         options_orig['dispersion'] = round(dispersion, 6)
                     else:
                         dispersion = None
-                
+
                 if dispersion is None:
                     ax2.plot(np.log(spectrum2), color='green', label='data')
                     ax2.set_xlim((0, spectrum.shape[0]-1))
@@ -314,10 +314,10 @@ def analyseSpectrum(options, file, lang_dict):
                     anchor_px = fit[fit.shape[0]//2, 3]
                     hi_clip = (spectrum2.shape - anchor_px) * dispersion + anchor_val
                     low_clip = (-anchor_px) * dispersion + anchor_val
-                    
-                    
+
+
                     select_data = select(line_data, low_clip, hi_clip)
-                    
+
                     ln1 = ax2_twin.plot(select_data[:, 0], select_data[:, 1], color = 'purple', label = 'reference')
                     ln2 = ax2.plot((np.arange(spectrum2.shape[0]) - anchor_px) * dispersion + anchor_val, np.log(spectrum2), color='green', label='data')
                     ax2.set_xlabel(f'wavelength(Å); dispersion: {dispersion:.4f} Å/pixel')
@@ -335,13 +335,13 @@ def analyseSpectrum(options, file, lang_dict):
                     window["Ångstrom Shift:"].update(f"Wavelength shift: {options['shift'][0]*dispersion:.3f}Å")
 
 
-                
-                    
+
+
                 ax1.imshow(mean, cmap='gray', aspect='auto')
                 ax1.plot(fit[:, 3] + options['shift'], range(ih), 'r--')
                 ax1.plot(fit[:, 3], range(ih), 'b')
                 ax1.set_xlim((0, mean.shape[1]-1))
-                         
+
                 all_rdr.reset()
                 disklist,_,_,_ = read_video_improved(all_rdr, fit, options)
                 if options['flip_x']:
@@ -357,12 +357,12 @@ def analyseSpectrum(options, file, lang_dict):
                     else:
                         frame_circularized = removeVignette(frame_circularized, tuple_downscale(cercle0, downscale_f) if not cercle0 == (-1, -1, -1) else (-1, -1, -1))
                 clahe, protus = single_image_process(frame_circularized, hdr, options, tuple_downscale(cercle0, downscale_f) if not cercle0 == (-1, -1, -1) else (-1, -1, -1), tuple_downscale(borders, downscale_f), '', tuple_downscale(backup_bounds, downscale_f))
-          
+
                 ax3.imshow(clahe, cmap='gray', aspect='equal')
                 ax4.imshow(protus, cmap='gray', aspect='equal')
 
                 graph.draw()
-                
+
                 figure_x, figure_y, figure_w, figure_h = fig.bbox.bounds
                 figure_w, figure_h = int(figure_w), int(figure_h)
                 photo = Tk.PhotoImage(master=canvas, width=figure_w, height=figure_h)
@@ -372,7 +372,7 @@ def analyseSpectrum(options, file, lang_dict):
             graph.get_tk_widget().pack(side='top', fill='both', expand=1)
             window.refresh()
         if event == 'Save image':
-            if not mean is None:                    
+            if not mean is None:
                 ratio = options['ratio_fixe'] if not options['ratio_fixe'] is None else 1.0
                 phi = math.radians(options['slant_fix']) if not options['slant_fix'] is None else 0.0
                 frame_circularized = correct_image(disk_memo / 65536, phi, ratio, np.array([-1.0, -1.0]), -1.0, options, print_log=False)[0]  # Note that we assume 16-bit

@@ -6,7 +6,7 @@ Version 24 September 2023
 """
 
 import math
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 import sys
 import json
 import os
@@ -31,29 +31,29 @@ def interpret_UI_values(options, ui_values, no_file = False):
             raise Exception('invalid offset input!')
         if len(options['shift']) == 0:
             raise Exception('Error: pixel offset input lower bound greater than upper bound!')
-    except ValueError : 
-        raise Exception('invalid pixel offset value!')        
+    except ValueError :
+        raise Exception('invalid pixel offset value!')
     options['flag_display'] = ui_values['Show graphics']
-    try : 
+    try :
         options['ratio_fixe'] = float(ui_values['_y/x_ratio']) if ui_values['_y/x_ratio'] else None
-    except ValueError : 
+    except ValueError :
         raise Exception('invalid Y/X ratio value')
-    try : 
+    try :
         options['slant_fix'] = float(ui_values['_tilt']) if ui_values['_tilt'] else None
-    except ValueError : 
+    except ValueError :
         raise Exception('invalid tilt angle value!')
-    try : 
+    try :
         options['fixed_width'] = int(ui_values['_fixed_width']) if ui_values['_fixed_width'] else None
-    except ValueError : 
+    except ValueError :
         raise Exception('invalid fixed width value!')
     try:
         options['delta_radius'] = int(ui_values['_protus_adjustment'])
         options['disk_display'] = True
     except ValueError:
         raise Exception('invalid protus_radius_adjustment')
-    try : 
+    try :
         options['ellipse_fit_shift'] = int(ui_values['ellipse_fit_shift']) if ui_values['ellipse_fit_shift'] else 10
-    except ValueError : 
+    except ValueError :
         raise Exception('invalid ellipse_fit_shift!')
     options['save_fit'] = ui_values['Save fits files']
     options['clahe_only'] = ui_values['Save clahe.png only']
@@ -88,7 +88,7 @@ def interpret_UI_values(options, ui_values, no_file = False):
             return []
         else:
             raise Exception('ERROR: Invalid mode selection: ' + options['selected_mode'])
-        
+
 
 def read_langs():
     prefixed = sorted([filename for filename in os.listdir(resource_path('language_data')) if filename.startswith('dict_lang') and filename.endswith('.txt')])
@@ -153,7 +153,7 @@ def change_langs(window, popup_messages, lang_dict, flag_change=True):
         else:
             try:
                 if k in window.AllKeysDict:
-                    if isinstance(window[k], sg.PySimpleGUI.Checkbox):
+                    if isinstance(window[k], sg.Checkbox):
                         window[k].update(text=v)
                     else:
                         window[k].update(v)
@@ -164,13 +164,13 @@ def change_langs(window, popup_messages, lang_dict, flag_change=True):
                 print(f'ERROR: language error for setting text: "{k}" : "{v}"')
     if not flag_ok:
         window['_flag_icon'].update(data=None)
-    
+
 
 def inputUI(options):
     langs, lang_dicts = read_langs()
     popup_messages = {"no_file_error": "Error: file not entered! Please enter file(s)", "no_folder_error": "Error: folder not entered! Please enter folder"}
     image_elem = sg.Image(data=get_img_data(resource_path(os.path.join('language_data', 'flagEN.png')), first=True), key = '_flag_icon')
-        
+
     sg.theme('Dark2')
     sg.theme_button_color(('white', '#500000'))
 
@@ -196,7 +196,7 @@ def inputUI(options):
     ]
 
     layout_base = [
-    
+
     [sg.Checkbox('Show graphics', default=options['flag_display'], key='Show graphics'), sg.Checkbox('Save fits files', default=options['save_fit'], key='Save fits files')],
     [sg.Checkbox('Save clahe.png only', default=options['clahe_only'], key='Save clahe.png only'), sg.Checkbox('Save protus.png only', default=options['protus_only'], key='Save protus.png only')],
     [sg.Checkbox('Crop square', default=options['crop_width_square'], key='Crop square')],
@@ -205,7 +205,7 @@ def inputUI(options):
     [sg.Text("Rotate png images:", key='Rotate png images:')],
     [sg.Slider(range=(0,270),
          default_value=options['img_rotate'],
-         resolution=90,     
+         resolution=90,
          size=(30,15),
          orientation='horizontal',
          font=('Helvetica', 12),
@@ -214,7 +214,7 @@ def inputUI(options):
     [sg.Text("Transversalium correction strength (pixels x 100) :", key='Transversalium correction strength (pixels x 100) :', visible=options['transversalium'])],
     [sg.Slider(range=(0.25,7),
          default_value=options['trans_strength']/100,
-         resolution=0.25,     
+         resolution=0.25,
          size=(30,15),
          orientation='horizontal',
          font=('Helvetica', 12),
@@ -227,13 +227,13 @@ def inputUI(options):
     [sg.Text('Protus adjustment', size=(32,1), key='Protus adjustment'), sg.Input(default_text=str(options['delta_radius']), size=(8,1), tooltip = 'make the black circle bigger or smaller by inputting an integer', key='_protus_adjustment')],
     [sg.Text('Ellipse fit shift [advanced]', size=(32,1), key='Ellipse fit shift [advanced]'), sg.Input(default_text=str(options['ellipse_fit_shift']), size=(8,1), tooltip = 'default: 10, use higher value (e.g. 20) for very high dispersion', key='ellipse_fit_shift')],
     [sg.Button('OK'), sg.Cancel(), sg.Push(), sg.Button("Open output folder", key='Open output folder', enable_events=True)]
-    ] 
+    ]
 
     tab_group = sg.TabGroup([[sg.Tab('File input mode', layout_file_input, tooltip='', key='File input mode'), sg.Tab('Folder input mode', layout_folder_input, key='Folder input mode')]])
     layout = [
-        layout_title + [[tab_group]] + layout_folder_output + layout_base    
-    ]  
-    
+        layout_title + [[tab_group]] + layout_folder_output + layout_base
+    ]
+
     window = sg.Window('SHG Version 4.3', layout, finalize=True)
     window.BringToFront()
 
@@ -304,8 +304,8 @@ def inputUI(options):
                 except Exception as inst:
                     traceback.print_exc()
                     sg.Popup('Error: ' + inst.args[0], keep_on_top=True)
-                    
-        
+
+
         window.Element('-trans_strength-').Update(visible = values['Correct transversalium lines'])
         window.Element('Transversalium correction strength (pixels x 100) :').Update(visible = values['Correct transversalium lines'])
         window.Element('Stubborn transversalium').Update(visible = values['Correct transversalium lines'])
