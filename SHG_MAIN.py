@@ -121,6 +121,17 @@ def precheck_files(serfiles, options):
             print('ERROR opening file : ', serfile)
             continue
 
+        #-------wait for serfile completely wrote to disk-------------------
+        fsize = os.path.getsize(serfile)
+        while fsize>0:
+            time.sleep(3)
+            fsize2 = os.path.getsize(serfile)
+            if fsize==fsize2:
+                break
+            else:
+                fsize = fsize2
+        #--------------------------
+        
         if not good_tasks:
             # save parameters to config file if this is the first good task
             if options['selected_mode'] == 'File input mode':
