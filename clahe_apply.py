@@ -4,7 +4,7 @@ Version 18 July 2023
 """
 from solex_util import rescale_brightness
 import math
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 import sys
 import json
 import os
@@ -108,13 +108,13 @@ def change_langs(window, popup_messages, lang_dict, flag_change=True):
                 print(f'ERROR: language error for setting text: "{k}" : "{v}"')
     if not flag_ok:
         window['_flag_icon'].update(data=None)
-    
-    
+
+
 def inputUI(options):
     langs, lang_dicts = read_langs()
     popup_messages = {"no_file_error": "Error: file not entered! Please enter file(s)", "hi_less_than_lo_error": "Error: the low percentile must be less than the high percentile!"}
     image_elem = sg.Image(data=get_img_data(os.path.join('language_data', 'flagEN.png'), first=True), key = '_flag_icon')
-        
+
     sg.theme('Dark2')
     sg.theme_button_color(('white', '#500000'))
 
@@ -125,16 +125,16 @@ def inputUI(options):
         [sg.Text("Tile size:", key='Tile size')],
         [sg.Slider(range=(1,4),
              default_value=options['tile_size'],
-             resolution=1,     
+             resolution=1,
              size=(30,15),
              orientation='horizontal',
              font=('Helvetica', 12),
-             key='tile_size')], 
+             key='tile_size')],
         [sg.Checkbox('Use high/low stretch', default=options['do_stretch'], key='Use high/low stretch', enable_events=True)],
         [sg.Text("Low threshhold:", key='Low threshhold', visible=options['do_stretch'])],
         [sg.Slider(range=(0,100),
              default_value=options['lo'],
-             resolution=1,     
+             resolution=1,
              size=(30,15),
              orientation='horizontal',
              font=('Helvetica', 12),
@@ -143,7 +143,7 @@ def inputUI(options):
         [sg.Text("High threshhold:", key='High threshhold', visible=options['do_stretch'])],
         [sg.Slider(range=(0,100),
              default_value=options['hi'],
-             resolution=1,     
+             resolution=1,
              size=(30,15),
              orientation='horizontal',
              font=('Helvetica', 12),
@@ -152,15 +152,15 @@ def inputUI(options):
         [sg.Text("Saturation percentage:", key='Saturation percentage', visible=options['do_stretch'])],
         [sg.Slider(range=(50,100),
              default_value=options['sat'],
-             resolution=1,     
+             resolution=1,
              size=(30,15),
              orientation='horizontal',
              font=('Helvetica', 12),
              key='sat',
              visible=options['do_stretch'])],
         [sg.Button('OK'), sg.Cancel()]
-    ] 
-    
+    ]
+
     window = sg.Window('CLAHE_Apply v1.0', layout, finalize=True)
     window.BringToFront()
 
@@ -171,7 +171,7 @@ def inputUI(options):
         change_langs(window, popup_messages, lang_dict)
     else:
         print(f'ERROR: language not available: "{options["language"]}"')
-    
+
     while True:
         event, values = window.read()
         if event==sg.WIN_CLOSED or event=='Cancel':
@@ -183,7 +183,7 @@ def inputUI(options):
             change_langs(window, popup_messages, lang_dict)
             options['language'] = values['lang_input']
         if event=='OK':
-            
+
             if not values['-FILE-'] == options['workDir'] and not values['-FILE-'] == '':
                 try:
                     print('before:', options)
@@ -198,7 +198,7 @@ def inputUI(options):
                 except Exception as inst:
                     traceback.print_exc()
                     sg.Popup('Error: ' + inst.args[0], keep_on_top=True)
-                    
+
             else:
                 # display pop-up file not entered
                 sg.Popup(popup_messages['no_file_error'], keep_on_top=True)
@@ -223,7 +223,7 @@ def read_ini():
         mydir_ini=os.path.join(os.path.dirname(sys.argv[0]),'clahe_config.txt')
         with open(mydir_ini, 'r', encoding="utf-8") as fp:
             global options
-            options.update(json.load(fp)) # if config has missing entries keep default   
+            options.update(json.load(fp)) # if config has missing entries keep default
     except Exception:
         traceback.print_exc()
         print('note: error reading config file - using default parameters')
@@ -254,7 +254,7 @@ def apply_clahe(file, options, write_file=True):
         print('save:', os.path.splitext(file)[0]+'_clahe.png')
         cv2.imwrite(os.path.splitext(file)[0]+'_clahe.png',cl1)
     return cl1
-    
+
 options = {'workDir':'', 'language':'English', 'lo':0, 'hi':100, 'do_stretch':False, 'sat':80, 'tile_size':2}
 
 if __name__ == '__main__':
