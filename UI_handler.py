@@ -115,11 +115,13 @@ def read_langs():
 # ------------------------------------------------------------------------------
 
 
-def get_img_data(f, maxsize=(30, 18), first=False):
+def get_img_data(f, maxsize=(30, 18), first=False, convertI=False):
     """Generate image data using PIL
     """
     try:
         img = Image.open(f)
+        if convertI:
+            img = img.convert('I')
         img.thumbnail(maxsize)
         if first:                     # tkinter is inactive the first time
             bio = io.BytesIO()

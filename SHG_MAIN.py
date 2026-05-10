@@ -194,7 +194,7 @@ def handle_folder(options):
                 break
             time.sleep(0.1)
             if not prev is None:
-                window['_prev_img'].update(data=UI_handler.get_img_data(prev, maxsize=(600,600), first=True))
+                window['_prev_img'].update(data=UI_handler.get_img_data(prev, maxsize=(600,600), first=True, convertI=True)) # use convertI to propertly handle variety of image formats (8-bit etc.)
                 window['last'].update('Last: ' + prev)
             window.perform_long_operation(lambda : time.sleep(1), '-END SLEEP-')
 
