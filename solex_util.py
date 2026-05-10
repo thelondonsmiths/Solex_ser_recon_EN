@@ -621,14 +621,14 @@ def removeVignette(frame_circularized, cercle0):
     
     mm = min(np.min(x1), np.min(x2))
     dest = np.zeros((3, int(max(np.max(x1), np.max(x2)) - mm + 1)))
-    dest.fill(np.NaN)
+    dest.fill(np.nan)
     dest[0, :] = np.arange(dest.shape[1]) + mm
     dest[1, int(x1[0] - mm) : int(x1[-1] - mm + 1)] = trend1
     dest[2, int(x2[0] - mm) : int(x2[-1] - mm + 1)] = trend2
 
     ratio_axes = dest[1, :] / dest[2, :]
-    ratio_axes[dest[1, :] == 0] = np.NaN
-    ratio_axes[dest[2, :] == 0] = np.NaN
+    ratio_axes[dest[1, :] == 0] = np.nan
+    ratio_axes[dest[2, :] == 0] = np.nan
 
     '''
     plt.plot(dest[0, :], ratio_axes)
@@ -636,7 +636,7 @@ def removeVignette(frame_circularized, cercle0):
     '''
     
     correction_factor = np.zeros(frame_circularized.shape[0])
-    correction_factor.fill(np.NaN)
+    correction_factor.fill(np.nan)
     correction_factor[dest[0, :].astype(int) + int(cercle0[1])] = ratio_axes
     # forward and backward fill
     for i in range(1, len(correction_factor)):
